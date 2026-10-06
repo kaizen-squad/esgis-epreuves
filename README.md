@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Épreuves ESGIS
 
-## Getting Started
+Plateforme web de consultation et de téléchargement des épreuves d'examens et devoirs de l'ESGIS, avec un espace de gestion pour le BDE et l'administration.
 
-First, run the development server:
+Stack : Next.js (App Router), React, TypeScript, Tailwind CSS. Base de données et authentification via Supabase, stockage des PDF sur Cloudflare R2, hébergement sur Vercel.
+
+## Prérequis
+
+- Node.js 22 ou plus (la version de référence est dans `.nvmrc`)
+- pnpm, activé via Corepack : `corepack enable pnpm` (la version exacte est fixée par `packageManager` dans `package.json`)
+
+## Démarrage
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L'application tourne sur http://localhost:3000. `pnpm install` active aussi les hooks Git (voir plus bas).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Commande            | Rôle                                      |
+| ------------------- | ----------------------------------------- |
+| `pnpm dev`          | Serveur de développement                  |
+| `pnpm build`        | Build de production                       |
+| `pnpm start`        | Lance le build de production              |
+| `pnpm lint`         | ESLint, sans aucun warning toléré         |
+| `pnpm typecheck`    | Génération des types de routes puis `tsc` |
+| `pnpm test`         | Tests unitaires (Vitest)                  |
+| `pnpm format`       | Formate le code avec Prettier             |
+| `pnpm format:check` | Vérifie le formatage sans modifier        |
 
-## Learn More
+## Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/app/   routes et layouts (App Router)
+public/    fichiers statiques
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Les autres dossiers (`src/components`, `src/lib`, `scripts`) sont créés avec le premier code qui en a besoin.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Conventions de travail
 
-## Deploy on Vercel
+- Aucun commit direct sur `main` : une branche par ticket, nommée `type/numéro-sujet` (ex. `feat/9-recherche-filtres`), puis une Pull Request.
+- Commits au format [Conventional Commits](https://www.conventionalcommits.org/fr) (`feat(search): ...`, `fix(upload): ...`), vérifié par commitlint.
+- Une PR est relue par l'autre membre de l'équipe avant d'être mergée. Historique linéaire (rebase) avant ouverture de la PR.
+- Hooks Git installés automatiquement : à chaque commit, lint et formatage des fichiers modifiés, détection de secrets avec [gitleaks](https://github.com/gitleaks/gitleaks) si l'outil est installé en local, et contrôle du message de commit.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Intégration continue
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Le workflow `.github/workflows/ci.yml` s'exécute sur chaque Pull Request et sur `main` :
+
+1. `quality` : formatage, lint, typecheck, tests, build.
+2. `security` : recherche de secrets dans l'historique (gitleaks) et audit des dépendances de production.
+
+Les actions sont épinglées par SHA et le `GITHUB_TOKEN` est limité à la lecture. Dependabot propose chaque semaine les mises à jour des dépendances npm et des actions.
+
+## Déploiement
+
+Le déploiement est assuré par Vercel. Vérifier le résultat de la CI et du build Vercel avant de merger.
