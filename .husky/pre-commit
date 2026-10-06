@@ -1,0 +1,6 @@
+pnpm lint-staged
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --staged --redact --no-banner
+else
+  echo "gitleaks absent : scan des secrets differe a la CI"
+fi
