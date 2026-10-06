@@ -31,14 +31,35 @@ L'application tourne sur http://localhost:3000. `pnpm install` active aussi les 
 | `pnpm format`       | Formate le code avec Prettier             |
 | `pnpm format:check` | Vérifie le formatage sans modifier        |
 
-## Structure
+## Architecture
+
+Monolithe Next.js (App Router, Server Actions), découpé par fonctionnalité.
 
 ```
-src/app/   routes et layouts (App Router)
-public/    fichiers statiques
+src/
+  app/
+    (public)/            pages étudiants : accueil, liste, détail d'une épreuve
+    (admin)/admin/       espace BDE : login, gestion des épreuves
+  features/
+    exams/               components/, queries.ts, actions.ts, schemas.ts, types.ts
+    auth/
+    referentials/        filières, niveaux, matières
+  components/ui/         composants génériques réutilisables
+  lib/
+    supabase/            clients navigateur, serveur, middleware
+    r2/                  stockage des PDF
+supabase/migrations/     SQL versionné
+scripts/                 seed en masse (créé avec le ticket dédié)
+public/                  fichiers statiques
 ```
 
-Les autres dossiers (`src/components`, `src/lib`, `scripts`) sont créés avec le premier code qui en a besoin.
+Règles :
+
+- Les pages (`src/app`) restent fines : elles composent des éléments de `features/` et n'ont pas de logique métier.
+- L'accès aux données (Supabase, R2) se fait uniquement dans `queries.ts` et `actions.ts` d'une feature, jamais dans un composant.
+- Les entrées utilisateur sont validées avec zod dans `schemas.ts`.
+- Le `types.ts` d'une feature est le contrat entre les composants et les requêtes : à convenir avant de coder chaque côté.
+- Les dossiers contenant un `.gitkeep` sont vides en attendant leur premier fichier : supprimer le `.gitkeep` au premier ajout.
 
 ## Conventions de travail
 
