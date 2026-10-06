@@ -44,7 +44,7 @@ Les autres dossiers (`src/components`, `src/lib`, `scripts`) sont créés avec l
 
 - Aucun commit direct sur `main` : une branche par ticket, nommée `type/numéro-sujet` (ex. `feat/9-recherche-filtres`), puis une Pull Request.
 - Commits au format [Conventional Commits](https://www.conventionalcommits.org/fr) (`feat(search): ...`, `fix(upload): ...`), vérifié par commitlint.
-- Une PR est relue par l'autre membre de l'équipe avant d'être mergée. Historique linéaire (rebase) avant ouverture de la PR.
+- Pas de relecture obligatoire des PR : une PR se merge une fois la CI verte, en rebase pour garder un historique linéaire.
 - Hooks Git installés automatiquement : à chaque commit, lint et formatage des fichiers modifiés, détection de secrets avec [gitleaks](https://github.com/gitleaks/gitleaks) si l'outil est installé en local, et contrôle du message de commit.
 
 ## Intégration continue
