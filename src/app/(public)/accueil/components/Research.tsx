@@ -1,11 +1,7 @@
 import Image from "next/image";
 import { FiArrowRight } from "react-icons/fi";
 
-interface ResearchProps {
-  label: string | React.ReactNode;
-}
-
-const Research = ({ label }: ResearchProps) => {
+const Research = () => {
   return (
     <div className="mb-8 px-6 text-center">
       <div className="mb-8 text-center text-lg lg:text-3xl">
