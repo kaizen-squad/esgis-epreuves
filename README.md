@@ -26,6 +26,8 @@ Copier `.env.example` vers `.env.local` et renseigner les valeurs. `.env.local` 
 - Le projet `esgis-epreuves` est la production : ne pas s'y connecter depuis une machine de développement.
 - `SUPABASE_SECRET_KEY` donne un accès total à la base : serveur uniquement, jamais préfixée par `NEXT_PUBLIC_`, jamais dans un commit, un ticket ou un message.
 - Le projet `dev` sera arrêté après la mise en production définitive (limite d'instances actives de l'offre gratuite).
+- Les PDF sont stockés sur Cloudflare R2, avec un compartiment par environnement : `esgis-epreuves-dev` en local, `esgis-epreuves-prod` en production. Chaque compartiment a sa propre clé d'accès, limitée à lui seul. En local, n'utiliser que la clé `dev`. Les compartiments sont privés.
+- Les clés R2 sont serveur uniquement, comme `SUPABASE_SECRET_KEY`. Le Secret Access Key n'est affiché qu'une fois à la création : le conserver dans un gestionnaire de mots de passe.
 
 ## Scripts
 
