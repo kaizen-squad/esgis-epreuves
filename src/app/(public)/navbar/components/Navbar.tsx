@@ -48,8 +48,9 @@ const Navbar = () => {
           })}
         </div>
 
+        {/** Mobile Navbar */}
         {isOpen && (
-          <div className="flex flex-col">
+          <div className="flex flex-col py-4">
             {navLinks.map((link) => {
               const isActive = pathname === link.link;
               return (
