@@ -2,11 +2,14 @@
 
 @theme {
   /* Backgrounds */
-  --color-background: #f4f4f4;
+  --color-background-default: #f4f4f4;
   --color-background-primary: #ffffff;
   --color-background-secondary: #1d1d28;
+  --color-background-accent: #c41c2d;
 
   /* Textes */
   --color-text-primary: #ffffff;
+  --color-text-default: #111624;
   --color-text-secondary: #0f2155;
+  --color-text-title: #0c0407;
 }
