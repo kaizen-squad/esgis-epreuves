@@ -23,7 +23,12 @@ const WelcomeSection = () => {
       </button>
 
       <div className="relative">
-        <Image src="/images/accueil_image.png" alt="Esgis Image Accueil" fill />
+        <Image
+          src="/images/accueil_image.png"
+          alt="Esgis Image Accueil"
+          width={width}
+          height={50}
+        />
       </div>
     </div>
   );
