@@ -4,31 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
-
-const navLinks = [
-  {
-    name: "Accueil",
-    link: "/",
-  },
-  {
-    name: "Catalogue",
-    link: "/catalogue",
-  },
-  {
-    name: "Filières",
-    link: "/filiere",
-  },
-];
+import { navLinks } from "../../constants/navLinks";
 
 const Navbar = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   return (
     <header className="px-4 py-8">
-      <nav className="md:grid md:grid-cols-[1fr_auto_1fr]">
+      <nav className="lg:grid lg:grid-cols-[1fr_auto_1fr]">
         <div className="flex items-center justify-between">
           <Link
-            className="text text-text-title justify-self-start text-2xl font-extrabold"
+            className="text-text-title justify-self-start text-2xl font-extrabold"
             href="/"
           >
             Alexandria.
@@ -36,7 +22,7 @@ const Navbar = () => {
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="bg-background-accent rounded p-2 md:hidden"
+            className="bg-background-accent rounded p-2 lg:hidden"
           >
             {isOpen ? (
               <FiX size={24} color="#fff" />
@@ -47,7 +33,7 @@ const Navbar = () => {
         </div>
 
         {/** Desktop Navbar */}
-        <div className="hidden gap-6 md:flex">
+        <div className="hidden gap-6 lg:flex">
           {navLinks.map((link) => {
             const isActive = pathname === link.link;
             return (
