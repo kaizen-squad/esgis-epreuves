@@ -6,7 +6,7 @@ import { FiArrowRight } from "react-icons/fi";
 const WelcomeSection = () => {
   const width = window.innerWidth;
   return (
-    <div className="w-full text-center">
+    <div className="mb-10 w-full text-center">
       <h1 className="text-text-title text- mb-8 font-medium">
         Bienvenue sur Alexandria
       </h1>
