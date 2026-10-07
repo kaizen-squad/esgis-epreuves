@@ -6,7 +6,7 @@ import { FiArrowRight } from "react-icons/fi";
 const WelcomeSection = () => {
   const width = window.innerWidth;
   return (
-    <div className="mb-10 w-full text-center">
+    <div className="mb-16 w-full text-center">
       <h1 className="text-text-title text- mb-8 font-medium">
         Bienvenue sur Alexandria
       </h1>
@@ -18,7 +18,7 @@ const WelcomeSection = () => {
         académique en réussissant tous vos examens.
       </p>
 
-      <button className="bg-background-accent text-text-primary mx-auto mb-6 flex items-center gap-2 rounded-lg border border-black px-4 py-2">
+      <button className="bg-background-accent text-text-primary mx-auto mb-10 flex items-center gap-2 rounded-lg border border-black px-4 py-2">
         Voir le Catalogue <FiArrowRight />
       </button>
 
