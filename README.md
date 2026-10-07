@@ -18,6 +18,15 @@ pnpm dev
 
 L'application tourne sur http://localhost:3000. `pnpm install` active aussi les hooks Git (voir plus bas).
 
+## Variables d'environnement
+
+Copier `.env.example` vers `.env.local` et renseigner les valeurs. `.env.local` n'est jamais versionné.
+
+- En local, utiliser le projet Supabase `esgis-epreuves-dev` (organisation KAIZEN). L'URL et la clé publique se trouvent dans le tableau de bord Supabase, sous Project Settings puis API Keys.
+- Le projet `esgis-epreuves` est la production : ne pas s'y connecter depuis une machine de développement.
+- `SUPABASE_SECRET_KEY` donne un accès total à la base : serveur uniquement, jamais préfixée par `NEXT_PUBLIC_`, jamais dans un commit, un ticket ou un message.
+- Le projet `dev` sera arrêté après la mise en production définitive (limite d'instances actives de l'offre gratuite).
+
 ## Scripts
 
 | Commande            | Rôle                                      |
