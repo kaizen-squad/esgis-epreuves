@@ -46,6 +46,22 @@ const Navbar = () => {
           </button>
         </div>
 
+        {/** Desktop Navbar */}
+        <div className="hidden gap-6 md:flex">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.link;
+            return (
+              <Link
+                className={`${isActive ? "underline" : ""}`}
+                href={link.link}
+                key={link.name}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
+        </div>
+
         {isOpen && (
           <div className="flex flex-col">
             {navLinks.map((link) => {
