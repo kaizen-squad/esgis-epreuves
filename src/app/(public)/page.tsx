@@ -1,7 +1,9 @@
-export default function Home() {
+import PublicLayout from "./components/PublicLayout";
+
+export default function Accueil() {
   return (
-    <main className="flex flex-1 items-center justify-center p-6">
-      <h1 className="text-2xl font-semibold">Épreuves ESGIS</h1>
-    </main>
+    <PublicLayout>
+      <div>Épreuve Esgis</div>
+    </PublicLayout>
   );
 }
