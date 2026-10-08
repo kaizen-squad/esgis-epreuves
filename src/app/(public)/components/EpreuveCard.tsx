@@ -12,17 +12,18 @@ interface EpreuveCard {
 
 const EpreuveCard = (data: EpreuveCard) => {
   return (
-    <div className="bg-background-primary mb-6 w-full rounded-lg p-3 lg:w-1/3">
+    <div className="bg-background-primary relative w-full rounded-lg p-3 lg:w-1/2">
       <div className="relative mb-4 h-64 w-full">
         <Image
           src={data.img_src}
           alt={data.name}
           fill
-          objectFit="cover"
-          className="rounded-lg"
+          sizes="(max-width: 768px) auto, (max-width: 1200px) auto"
+          className="rounded-lg object-cover"
+          loading="eager"
         />
       </div>
-      <div className="mb-3 flex items-start justify-between">
+      <div className="mb-4 flex items-start justify-between">
         <p className="flex w-1/2 shrink-0 items-center gap-1.5 text-sm">
           <FiClock size={18} className="shrink-0" />{" "}
           {`${data.year - 1} - ${data.year}`}
@@ -35,20 +36,15 @@ const EpreuveCard = (data: EpreuveCard) => {
           {data.matter}
         </span>
       </div>
-      <p className="mb-4 line-clamp-2 max-w-2/3 text-base font-medium">
+      <p className="line-clamp-1 max-w-3/4 text-base font-medium">
         {data.name}
       </p>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="font-medium uppercase">L3 GESTION</p>
-        <p className="font-medium text-gray-500">{data.type}</p>
-      </div>
 
       <div className="flex items-center justify-between">
+        <p className="font-medium uppercase">L3 GESTION</p>
+        <p className="font-medium text-gray-500">{data.type}</p>
         <button className="bg-background-accent text-text-primary flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1">
           Télécharger <FiDownload />
-        </button>
-        <button>
-          <FiArrowRight />
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
-const Slider = (children: React.ReactNode) => {
+const Slider = ({ children }: { children: React.ReactNode }) => {
   const containerRef = useRef<null | HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
@@ -16,7 +16,7 @@ const Slider = (children: React.ReactNode) => {
 
   return (
     <div className="relative">
-      <div className="flex snap-x overflow-x-hidden" ref={containerRef}>
+      <div className="flex snap-x gap-8 overflow-x-hidden" ref={containerRef}>
         {children}
       </div>
 

@@ -6,22 +6,24 @@ const Research = () => {
     <div className="mb-8 px-6 text-center">
       <div className="mb-8 text-center text-lg lg:text-3xl">
         Des sujets{" "}
-        <Image
-          src="/images/accueil_span_page.jpeg"
-          alt="Paragraphe image 1"
-          className="hidden rounded-full align-middle lg:inline-block"
-          width={70}
-          height={20}
-        />{" "}
+        <div className="relative hidden h-10 w-17.5 align-middle lg:inline-block">
+          <Image
+            src="/images/accueil_span_page.jpeg"
+            alt="Paragraphe image 1"
+            className="hidden rounded-full object-cover align-middle lg:inline-block"
+            fill
+          />
+        </div>{" "}
         gratuits et accessibles même <br className="hidden lg:block" /> sans
         compte pour préparer{" "}
         <div className="relative my-auto hidden h-10 w-25 align-middle lg:inline-block">
           <Image
             src="/images/study.png"
             alt="Paragraphe image 1"
-            className="hidden rounded-full lg:inline-block"
-            objectFit="cover"
+            className="hidden rounded-full object-cover lg:inline-block"
+
             fill
+            sizes="(max-width: 768px) 100%, (max-width: 1200px) 100%"
           />
         </div>{" "}
         vos examens.

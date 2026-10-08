@@ -1,15 +1,18 @@
+"use client";
+
+import Slider from "@/components/ui/Slider";
 import EpreuveCard from "../../components/EpreuveCard";
 import { epreuvesMock } from "../../constants/epreuve_constants";
 
 const RecentlyAdded = () => {
   return (
-    <div className="px-4">
+    <div className="px-10">
       <h3>Récemment ajoutées...</h3>
-      <div>
+      <Slider>
         {epreuvesMock.map((epreuve) => (
           <EpreuveCard {...epreuve} key={epreuve.name} />
         ))}
-      </div>
+      </Slider>
     </div>
   );
 };
