@@ -4,7 +4,6 @@ import Image from "next/image";
 import { FiArrowRight } from "react-icons/fi";
 
 const WelcomeSection = () => {
-  const width = window.innerWidth;
   return (
     <div className="mb-16 w-full text-center">
       <h1 className="text-text-title text- mb-8 font-medium">
@@ -22,12 +21,13 @@ const WelcomeSection = () => {
         Voir le Catalogue <FiArrowRight />
       </button>
 
-      <div className="relative">
+      <div className="relative h-50 w-full bg-black md:h-150">
         <Image
           src="/images/accueil_image.png"
           alt="Esgis Image Accueil"
-          width={width}
-          height={50}
+          fill
+          sizes="(max-width: 1200px) 100%"
+          loading="eager"
         />
       </div>
     </div>

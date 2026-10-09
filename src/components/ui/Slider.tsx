@@ -7,16 +7,19 @@ const Slider = ({ children }: { children: React.ReactNode }) => {
   const scroll = (direction: "left" | "right") => {
     const container = containerRef.current;
     if (!container) return;
+    const move = 16 + container.clientWidth;
     container.scrollBy({
-      left:
-        direction === "left" ? -container.clientWidth : container.clientWidth,
+      left: direction === "left" ? -move : move,
       behavior: "smooth",
     });
   };
 
   return (
     <div className="relative">
-      <div className="flex snap-x gap-8 overflow-x-hidden" ref={containerRef}>
+      <div
+        className="flex snap-x snap-mandatory gap-4 overflow-x-hidden bg-red-300 py-4"
+        ref={containerRef}
+      >
         {children}
       </div>
 

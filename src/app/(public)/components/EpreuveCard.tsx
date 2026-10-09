@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { FiArrowRight, FiBook, FiClock, FiDownload } from "react-icons/fi";
+import { FiBook, FiClock, FiDownload } from "react-icons/fi";
 
 interface EpreuveCard {
   img_src: string;
@@ -12,7 +12,7 @@ interface EpreuveCard {
 
 const EpreuveCard = (data: EpreuveCard) => {
   return (
-    <div className="bg-background-primary relative w-full rounded-lg p-3 lg:w-1/2">
+    <div className="bg-background-primary relative w-full shrink-0 snap-start rounded-lg p-3 md:w-[calc((100%-2rem)/3)]">
       <div className="relative mb-4 h-64 w-full">
         <Image
           src={data.img_src}
@@ -36,7 +36,7 @@ const EpreuveCard = (data: EpreuveCard) => {
           {data.matter}
         </span>
       </div>
-      <p className="line-clamp-1 max-w-3/4 text-base font-medium">
+      <p className="mb-6 line-clamp-1 max-w-3/4 text-base font-medium">
         {data.name}
       </p>
 

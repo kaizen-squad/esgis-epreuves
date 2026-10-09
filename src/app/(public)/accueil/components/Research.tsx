@@ -12,6 +12,7 @@ const Research = () => {
             alt="Paragraphe image 1"
             className="hidden rounded-full object-cover align-middle lg:inline-block"
             fill
+            sizes="(max-width: 768px) 100%, (max-width: 1200px): 100%"
           />
         </div>{" "}
         gratuits et accessibles même <br className="hidden lg:block" /> sans
