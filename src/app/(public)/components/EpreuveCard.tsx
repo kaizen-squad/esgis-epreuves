@@ -12,7 +12,7 @@ interface EpreuveCard {
 
 const EpreuveCard = (data: EpreuveCard) => {
   return (
-    <div className="w-full">
+    <div className="bg-background-primary w-full rounded-lg p-3">
       <div className="relative mb-4 h-64 w-full">
         <Image
           src={data.img_src}
@@ -41,7 +41,7 @@ const EpreuveCard = (data: EpreuveCard) => {
       </p>
 
       <div className="flex items-center justify-between">
-        <p className="font-medium uppercase">L3 GESTION</p>
+        <p className="text-sm font-medium uppercase lg:text-base">L3 GESTION</p>
         <p className="font-medium text-gray-500">{data.type}</p>
         <button className="bg-background-accent text-text-primary flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1">
           Télécharger <FiDownload />
