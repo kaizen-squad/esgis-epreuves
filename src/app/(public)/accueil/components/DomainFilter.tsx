@@ -13,7 +13,7 @@ const activityDomain = [
 const DomainFilter = () => {
   const [currentDomain, setCurrentDomain] = useState("Toutes");
   return (
-    <div className="w-full px-4">
+    <div className="mb-16 w-full px-6">
       <h3 className="text-text-secondary mb-8 text-center text-3xl font-semibold">
         Filtrez par domaine d&apos;activité
       </h3>
@@ -32,7 +32,7 @@ const DomainFilter = () => {
         })}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-3">
         {epreuvesMock.map((epreuve) => (
           <div key={epreuve.name} className="">
             <EpreuveCard {...epreuve} />

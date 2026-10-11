@@ -6,7 +6,7 @@ import { epreuvesMock } from "../../constants/epreuve_constants";
 
 const RecentlyAdded = () => {
   return (
-    <div className="mb-12 px-10">
+    <div className="mb-16 px-6">
       <h3 className="text-text-secondary mb-1 text-3xl font-semibold">
         Récemment ajoutées...
       </h3>

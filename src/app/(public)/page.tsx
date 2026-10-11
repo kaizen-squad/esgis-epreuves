@@ -1,4 +1,5 @@
 import DomainFilter from "./accueil/components/DomainFilter";
+import Filieres from "./accueil/components/Filieres";
 import RecentlyAdded from "./accueil/components/RecentlyAdded";
 import Research from "./accueil/components/Research";
 import WelcomeSection from "./accueil/components/WelcomeSection";
@@ -11,6 +12,7 @@ export default function Accueil() {
       <Research />
       <RecentlyAdded />
       <DomainFilter />
+      <Filieres />
     </PublicLayout>
   );
 }
