@@ -12,7 +12,12 @@ const RecentlyAdded = () => {
       </h3>
       <Slider>
         {epreuvesMock.map((epreuve) => (
-          <EpreuveCard {...epreuve} key={epreuve.name} />
+          <div
+            key={epreuve.name}
+            className="bg-background-primary relative w-full shrink-0 snap-start rounded-lg p-3 md:w-[calc((100%-2rem)/3)]"
+          >
+            <EpreuveCard {...epreuve} key={epreuve.name} />
+          </div>
         ))}
       </Slider>
     </div>

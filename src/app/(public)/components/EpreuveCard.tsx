@@ -12,7 +12,7 @@ interface EpreuveCard {
 
 const EpreuveCard = (data: EpreuveCard) => {
   return (
-    <div className="bg-background-primary relative w-full shrink-0 snap-start rounded-lg p-3 md:w-[calc((100%-2rem)/3)]">
+    <div className="w-full">
       <div className="relative mb-4 h-64 w-full">
         <Image
           src={data.img_src}
