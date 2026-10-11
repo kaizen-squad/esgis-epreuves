@@ -1,3 +1,4 @@
+import DomainFilter from "./accueil/components/DomainFilter";
 import RecentlyAdded from "./accueil/components/RecentlyAdded";
 import Research from "./accueil/components/Research";
 import WelcomeSection from "./accueil/components/WelcomeSection";
@@ -9,6 +10,7 @@ export default function Accueil() {
       <WelcomeSection />
       <Research />
       <RecentlyAdded />
+      <DomainFilter />
     </PublicLayout>
   );
 }

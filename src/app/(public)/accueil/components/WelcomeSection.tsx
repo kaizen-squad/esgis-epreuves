@@ -21,7 +21,7 @@ const WelcomeSection = () => {
         Voir le Catalogue <FiArrowRight />
       </button>
 
-      <div className="relative h-50 w-full bg-black md:h-150">
+      <div className="relative h-50 w-full md:h-250">
         <Image
           src="/images/accueil_image.png"
           alt="Esgis Image Accueil"

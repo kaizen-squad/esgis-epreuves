@@ -17,7 +17,7 @@ const Slider = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="relative">
       <div
-        className="flex snap-x snap-mandatory gap-4 overflow-x-hidden bg-red-300 py-4"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-hidden py-4"
         ref={containerRef}
       >
         {children}
