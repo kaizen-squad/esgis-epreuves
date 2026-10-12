@@ -34,7 +34,7 @@ const FiliereCard = ({
             <span>fichiers</span>
           </p>
         </div>
-        <button className="cursor-pointer transition-all duration-300 ease-in-out hover:scale-105">
+        <button className="cursor-pointer transition-all ease-in-out hover:scale-105">
           <FiArrowRightCircle
             className="bg-background-accent text-text-default rounded-full"
             size={40}
