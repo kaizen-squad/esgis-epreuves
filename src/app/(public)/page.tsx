@@ -9,10 +9,12 @@ export default function Accueil() {
   return (
     <PublicLayout>
       <WelcomeSection />
-      <Research />
-      <RecentlyAdded />
-      <DomainFilter />
-      <Filieres />
+      <div className="px-6">
+        <Research />
+        <RecentlyAdded />
+        <DomainFilter />
+        <Filieres />
+      </div>
     </PublicLayout>
   );
 }

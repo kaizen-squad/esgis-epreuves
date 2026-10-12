@@ -28,7 +28,7 @@ const WelcomeSection = () => {
           src="/images/accueil_image2.png"
           alt="Esgis Image Accueil"
           fill
-          className="object-cover object-center object-top"
+          className="object-cover object-top"
           sizes="(max-width: 1200px) 100%"
           loading="eager"
         />

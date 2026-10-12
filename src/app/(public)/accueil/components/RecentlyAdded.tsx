@@ -2,11 +2,11 @@
 
 import Slider from "@/components/ui/Slider";
 import EpreuveCard from "../../components/EpreuveCard";
-import { epreuvesMock } from "../../constants/epreuve_constants";
+import { epreuvesMock } from "../../constants/epreuve.constants";
 
 const RecentlyAdded = () => {
   return (
-    <div className="mb-16 px-6">
+    <div className="mb-16">
       <h3 className="text-text-secondary mb-1 text-3xl font-semibold">
         Récemment ajoutées...
       </h3>

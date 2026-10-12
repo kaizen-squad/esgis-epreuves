@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { epreuvesMock } from "../../constants/epreuve_constants";
+import { epreuvesMock } from "../../constants/epreuve.constants";
 import EpreuveCard from "../../components/EpreuveCard";
 import { FiArrowRight } from "react-icons/fi";
 
@@ -13,7 +13,7 @@ const activityDomain = [
 const DomainFilter = () => {
   const [currentDomain, setCurrentDomain] = useState("Toutes");
   return (
-    <div className="mb-16 w-full px-6">
+    <div className="mb-16 w-full lg:px-30">
       <h3 className="text-text-secondary mb-8 text-center text-3xl font-semibold">
         Filtrez par domaine d&apos;activité
       </h3>
