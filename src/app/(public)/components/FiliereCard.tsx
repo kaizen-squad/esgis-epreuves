@@ -15,29 +15,31 @@ const FiliereCard = ({
   className,
 }: FiliereProps) => {
   return (
-    <div className={`${className} relative h-100 w-full`}>
-      <div className="text-text-primary absolute top-[52%] left-[18%] z-10">
+    <div className={`${className} relative aspect-square w-full`}>
+      <div className="text-text-primary absolute inset-x-[20%] top-[52%] z-10">
         <p className="mb-2 text-xl font-semibold uppercase">{name}</p>
         <p className="text-lg font-medium text-gray-400">Épreuves</p>
       </div>
       <Image
         src="/images/filierecard.svg"
         alt="Filiere Carte"
-        className="z-0 object-cover md:object-contain"
+        className="z-0 object-contain"
         fill
         loading="eager"
       />
-      <div className="text-text-primary absolute bottom-[8%] left-[50%] flex translate-x-[-50%] items-center justify-between gap-30">
+      <div className="text-text-primary absolute inset-x-[20%] bottom-[8%] flex items-center justify-between md:bottom-[12%]">
         <div>
           <p className="whitespace-nowrap">
             <span className="text-4xl font-semibold">{num_epreuve} </span>
             <span>fichiers</span>
           </p>
         </div>
-        <FiArrowRightCircle
-          className="bg-background-accent text-text-default rounded-full"
-          size={40}
-        />
+        <button className="cursor-pointer transition-all duration-300 ease-in-out hover:scale-105">
+          <FiArrowRightCircle
+            className="bg-background-accent text-text-default rounded-full"
+            size={40}
+          />
+        </button>
       </div>
     </div>
   );
