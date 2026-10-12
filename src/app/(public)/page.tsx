@@ -1,3 +1,4 @@
+import CTACatalogue from "./accueil/components/CTACatalogue";
 import DomainFilter from "./accueil/components/DomainFilter";
 import Filieres from "./accueil/components/Filieres";
 import RecentlyAdded from "./accueil/components/RecentlyAdded";
@@ -16,6 +17,7 @@ export default function Accueil() {
         <DomainFilter />
         <Filieres />
         <ResultsResume />
+        <CTACatalogue />
       </div>
     </PublicLayout>
   );

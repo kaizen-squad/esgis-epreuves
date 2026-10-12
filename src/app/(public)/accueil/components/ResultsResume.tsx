@@ -26,7 +26,7 @@ const ResultsResume = () => {
           <ResumeCard
             icon={<SiSatellite size={20} />}
             title="Ressources exhaustives"
-            text="Accédez à notre sélection de sujets et ressources clés pour réussir vos examens."
+            text="Notre espace propose des épreuves, adaptées à votre parcours."
           />
         </div>
       </div>
