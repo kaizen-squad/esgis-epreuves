@@ -29,7 +29,7 @@ const EpreuveCard = (data: EpreuveCard) => {
           className="z-0 object-cover"
         />
       </div>
-      <div className="px-2 py-2">
+      <div className="px-4 py-2">
         <div className="-2 mb-4 flex items-center justify-between text-sm lg:text-base">
           <div className="flex items-center gap-2">
             <span>Licence 2</span>
@@ -41,7 +41,7 @@ const EpreuveCard = (data: EpreuveCard) => {
           </span>
         </div>
         <p className="mb-4 line-clamp-1 text-xl font-semibold lg:text-2xl">
-          Administration des systèmes Linux
+          {data.name}
         </p>
         <div className="mb-4 flex items-center gap-2 text-sm lg:text-base">
           <span>2024-2025</span>
