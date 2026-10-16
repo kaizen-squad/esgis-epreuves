@@ -4,7 +4,7 @@ import { FiArrowRight } from "react-icons/fi";
 const Research = () => {
   return (
     <div className="mb-8 px-6 text-center">
-      <div className="mb-8 text-center text-lg lg:text-3xl">
+      <div className="mb-8 w-full text-center text-lg md:text-2xl lg:text-3xl">
         Des sujets{" "}
         <div className="relative hidden h-10 w-17.5 align-middle lg:inline-block">
           <Image
@@ -30,7 +30,7 @@ const Research = () => {
         vos examens.
       </div>
 
-      <div className="bg-background-primary flex border border-gray-300 py-1 pr-2 pl-4 lg:mx-auto lg:w-1/3">
+      <div className="bg-background-primary mx-auto flex border border-gray-300 py-1 pr-2 pl-4 md:w-2/3 lg:w-1/3">
         <input
           className="min-w-0 flex-1 outline-none"
           type="search"

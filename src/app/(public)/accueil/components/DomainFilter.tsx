@@ -18,7 +18,7 @@ const DomainFilter = () => {
         Filtrez par domaine d&apos;activité
       </h3>
 
-      <div className="mb-4 flex w-full max-w-full gap-4 overflow-x-auto md:mx-auto md:w-fit">
+      <div className="mb-8 flex w-full max-w-full gap-4 overflow-x-auto md:mx-auto md:w-fit">
         {["Toutes", ...activityDomain].map((domain) => {
           return (
             <button
@@ -32,7 +32,7 @@ const DomainFilter = () => {
         })}
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {epreuvesMock.map((epreuve) => (
           <div key={epreuve.name} className="">
             <EpreuveCard {...epreuve} />
