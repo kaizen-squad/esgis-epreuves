@@ -23,7 +23,7 @@ const WelcomeSection = () => {
         Voir le Catalogue <FiArrowRight />
       </button>
 
-      <div className="relative mx-auto h-50 w-full overflow-x-hidden md:h-180 lg:h-200">
+      <div className="relative mx-auto h-90 w-full overflow-x-hidden md:h-180 lg:h-200">
         <Image
           src="/images/accueil_image2.png"
           alt="Esgis Image Accueil"

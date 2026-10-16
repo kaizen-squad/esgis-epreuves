@@ -11,8 +11,8 @@ export default function Accueil() {
   return (
     <PublicLayout>
       <WelcomeSection />
+      <Research />
       <div className="px-6">
-        <Research />
         <RecentlyAdded />
         <DomainFilter />
         <Filieres />
