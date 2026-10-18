@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { navLinks } from "../../constants/navLinks";
+import { navLinks } from "@/app/(public)/constants/navLinks";
 import { FiLinkedin } from "react-icons/fi";
 
 const Footer = () => {

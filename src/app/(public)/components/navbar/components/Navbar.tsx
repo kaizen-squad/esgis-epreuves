@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
-import { navLinks } from "../../constants/navLinks";
+import { navLinks } from "@/app/(public)/constants/navLinks";
 
 const Navbar = () => {
   const pathname = usePathname();
