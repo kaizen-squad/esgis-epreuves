@@ -16,9 +16,9 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "next": "16.4.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-icons": "^5.7.0"
   },
   "devDependencies": {
@@ -29,14 +29,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "16.4.2",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
-    "prettier": "^3.9.9",
+    "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   },
   "packageManager": "pnpm@10.32.0",
   "engines": {
