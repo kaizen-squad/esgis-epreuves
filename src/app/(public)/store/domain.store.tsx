@@ -6,6 +6,6 @@ interface DomainStoreProps {
 }
 
 export const useDomainStore = create<DomainStoreProps>((set) => ({
-  currentDomain: "Tous",
+  currentDomain: "Toutes",
   setDomain: (domain: string) => set({ currentDomain: domain }),
 }));
