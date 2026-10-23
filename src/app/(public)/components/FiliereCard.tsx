@@ -15,9 +15,11 @@ const FiliereCard = ({
   className,
 }: FiliereProps) => {
   return (
-    <div className={`${className} relative aspect-square w-full`}>
+    <div className={`${className} @container relative aspect-square w-full`}>
       <div className="text-text-primary absolute inset-x-[20%] top-[52%] z-10">
-        <p className="mb-2 text-xl font-semibold uppercase">{name}</p>
+        <p className="mb-2 text-[clamp(0.875rem,7cqw,1.5rem)] font-semibold uppercase">
+          {name}
+        </p>
         <p className="text-lg font-medium text-gray-400">Épreuves</p>
       </div>
       <Image
@@ -30,7 +32,9 @@ const FiliereCard = ({
       <div className="text-text-primary absolute inset-x-[20%] bottom-[8%] flex items-center justify-between md:bottom-[12%]">
         <div>
           <p className="whitespace-nowrap">
-            <span className="text-4xl font-semibold">{num_epreuve} </span>
+            <span className="text-[clamp(1.5rem,12cqw,2.5rem)] font-semibold">
+              {num_epreuve}{" "}
+            </span>
             <span>fichiers</span>
           </p>
         </div>
