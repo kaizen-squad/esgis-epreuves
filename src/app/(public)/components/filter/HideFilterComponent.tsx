@@ -16,7 +16,7 @@ const HideFilterComponent = ({ children, label }: HideFilterComponentProps) => {
       <button
         type="button"
         onClick={onHide}
-        className="text-text-secondary mb-4 flex w-full items-center justify-between font-semibold"
+        className="text-text-secondary mb-4 flex w-full cursor-pointer items-center justify-between font-semibold"
       >
         <h3 className="text-lg">{label}</h3>
         <IoIosArrowUp

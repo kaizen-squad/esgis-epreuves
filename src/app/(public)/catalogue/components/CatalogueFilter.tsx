@@ -12,7 +12,7 @@ const CatalogueFilter = ({
   return mode === "desktop" ? (
     <div>
       {isMobileOpen && (
-        <div className="bg-background-primary w-fuullrounded-lg px-2 py-4">
+        <div className="bg-background-primary w-full rounded-lg px-2 py-4">
           <FilterComponents />
         </div>
       )}

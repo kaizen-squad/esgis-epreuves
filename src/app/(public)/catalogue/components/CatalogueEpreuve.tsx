@@ -17,7 +17,7 @@ const CatalogueEpreuve = () => {
       <div>
         <button
           onClick={() => setOpen(true)}
-          className="text-text-secondary mt-auto mb-6 flex cursor-pointer items-center gap-2 text-xl font-semibold"
+          className={`text-text-secondary mt-auto mb-6 flex cursor-pointer items-center gap-2 text-xl font-semibold ${open ? "hidden" : "block"}`}
         >
           <FiFilter size={22} color="#c41c2d" />
           Filtres
