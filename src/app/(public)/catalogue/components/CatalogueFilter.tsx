@@ -1,5 +1,6 @@
 import { FiFilter } from "react-icons/fi";
 import { Drawer } from "vaul";
+import HideFilterComponent from "../../components/filter/HideFilterComponent";
 
 const CatalogueFilter = () => {
   return (
@@ -25,6 +26,11 @@ const CatalogueFilter = () => {
               <p>120 résultats disponibles</p>
             </div>
             <hr className="my-4 w-full text-gray-300" />
+            <div className="px-4">
+              <HideFilterComponent label="Filière">
+                <div>Bro</div>
+              </HideFilterComponent>
+            </div>
           </div>
         </Drawer.Content>
       </Drawer.Portal>

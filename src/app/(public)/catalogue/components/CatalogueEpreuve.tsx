@@ -9,7 +9,7 @@ const CatalogueEpreuve = () => {
   return (
     <div className="mb-20 px-4">
       <DomainSelectFilter />
-      <div className="">
+      <div>
         <CatalogueFilter />
         <div className="grid grid-cols-1 gap-10">
           {epreuvesMock.map((epreuve) => (
