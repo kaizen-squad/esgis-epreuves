@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@layer base {
+  * {
+    outline: red 1px solid;
+  }
+}
+
 @theme {
   /* Backgrounds */
   --color-background-default: #f4f4f4;
