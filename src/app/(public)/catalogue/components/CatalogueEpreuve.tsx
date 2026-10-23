@@ -17,7 +17,7 @@ const CatalogueEpreuve = () => {
       <div>
         <button
           onClick={() => setOpen(true)}
-          className={`text-text-secondary mt-auto mb-6 flex cursor-pointer items-center gap-2 text-xl font-semibold ${open ? "hidden" : "block"}`}
+          className={`text-text-secondary mt-auto mb-6 hidden cursor-pointer items-center gap-2 text-xl font-semibold lg:flex ${open ? "hidden" : "block"}`}
         >
           <FiFilter size={22} color="#c41c2d" />
           Filtres
@@ -25,10 +25,10 @@ const CatalogueEpreuve = () => {
         <div className="gap-3 lg:flex">
           <CatalogueFilter
             mode={isDesktop ? "desktop" : "mobile"}
-            isMobileOpen={isDesktop && open}
+            isDesktopOpen={isDesktop && open}
           />
           <div
-            className={`grid grid-cols-1 gap-10 ${open ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}
+            className={`grid min-w-0 flex-1 grid-cols-1 gap-10 md:grid-cols-2 ${open ? "lg:ml-72 xl:grid-cols-2" : "xl:grid-cols-3"}`}
           >
             {epreuvesMock.map((epreuve) => (
               <EpreuveCard {...epreuve} key={epreuve.name} />

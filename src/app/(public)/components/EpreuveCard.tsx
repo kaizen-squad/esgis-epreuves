@@ -13,7 +13,7 @@ interface EpreuveCard {
 
 const EpreuveCard = (data: EpreuveCard) => {
   return (
-    <div className="bg-background-primary w-full overflow-hidden rounded-lg border border-gray-300 pb-1">
+    <div className="bg-background-primary @container w-full overflow-hidden rounded-lg border border-gray-300 pb-1">
       <div className="relative aspect-2/1 w-full bg-red-300">
         <span className="bg-background-primary absolute top-3 right-2 z-1 flex items-center gap-1 rounded-full px-2 py-1 text-sm">
           <span className="flex items-center gap-1">
@@ -40,7 +40,7 @@ const EpreuveCard = (data: EpreuveCard) => {
             Rattrapages
           </span>
         </div>
-        <p className="mb-4 line-clamp-1 text-xl font-semibold lg:text-2xl">
+        <p className="mb-4 line-clamp-1 text-xl font-semibold @sm:text-2xl">
           {data.name}
         </p>
         <div className="mb-4 flex items-center gap-2 text-sm lg:text-base">

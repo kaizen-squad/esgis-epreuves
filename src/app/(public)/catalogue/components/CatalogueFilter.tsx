@@ -4,15 +4,15 @@ import FilterComponents from "../../components/filter/FilterComponents";
 
 const CatalogueFilter = ({
   mode,
-  isMobileOpen,
+  isDesktopOpen,
 }: {
   mode: "mobile" | "desktop";
-  isMobileOpen: boolean;
+  isDesktopOpen: boolean;
 }) => {
   return mode === "desktop" ? (
     <div>
-      {isMobileOpen && (
-        <div className="bg-background-primary w-full rounded-lg px-2 py-4">
+      {isDesktopOpen && (
+        <div className="bg-background-primary rounded-lg px-2 py-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:w-72 lg:shrink-0 lg:overflow-y-auto">
           <FilterComponents />
         </div>
       )}
