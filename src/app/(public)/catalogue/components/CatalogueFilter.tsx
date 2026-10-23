@@ -1,6 +1,8 @@
 import { FiFilter } from "react-icons/fi";
 import { Drawer } from "vaul";
 import HideFilterComponent from "../../components/filter/HideFilterComponent";
+import { niveauMocks } from "../../constants/filter.constants";
+import NiveauCard from "../../components/filter/niveau/NiveauCard";
 
 const CatalogueFilter = () => {
   return (
@@ -28,7 +30,11 @@ const CatalogueFilter = () => {
             <hr className="my-4 w-full text-gray-300" />
             <div className="px-4">
               <HideFilterComponent label="Filière">
-                <div>Bro</div>
+                <div className="flex gap-2">
+                  {niveauMocks.map((niveau) => (
+                    <NiveauCard key={niveau.niveau} />
+                  ))}
+                </div>
               </HideFilterComponent>
             </div>
           </div>

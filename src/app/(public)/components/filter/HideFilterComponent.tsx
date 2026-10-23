@@ -7,12 +7,12 @@ interface HideFilterComponentProps {
 }
 
 const HideFilterComponent = ({ children, label }: HideFilterComponentProps) => {
-  const [isVisible, setIsVisible] = useState<boolean>();
+  const [isVisible, setIsVisible] = useState<boolean>(false);
   const onHide = () => {
     setIsVisible(!isVisible);
   };
   return (
-    <div>
+    <div className="relative">
       <div
         onClick={onHide}
         className="text-text-secondary mb-4 flex items-center justify-between font-semibold"
@@ -20,13 +20,15 @@ const HideFilterComponent = ({ children, label }: HideFilterComponentProps) => {
         <h3 className="text-lg">{label}</h3>
         <IoIosArrowUp
           size={22}
-          className={`${isVisible ? "rotate-180" : "rotate-0"} transition-all`}
+          className={`${isVisible ? "rotate-180" : "rotate-0"} transition-all duration-300`}
         />
       </div>
 
-      <div className={`${isVisible ? "block" : "hidden"}`}>
+      <div
+        className={`${isVisible ? "grid-rows-[1fr] opacity-100" : "grid-row-[0fr] opacity-0"} grid transition-[grid-template-rows,opacity] duration-300 ease-in-out`}
+      >
         {children}
-        <hr className="w-full text-gray-300" />
+        <hr className="my-3 w-full text-gray-300" />
       </div>
     </div>
   );
