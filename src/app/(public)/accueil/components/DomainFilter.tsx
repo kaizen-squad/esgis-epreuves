@@ -1,6 +1,9 @@
 "use client";
 
-import { epreuvesMock } from "../../constants/epreuve.constants";
+import {
+  EPREUVE_GRID_CLASSES,
+  epreuvesMock,
+} from "../../constants/epreuve.constants";
 import EpreuveCard from "../../components/EpreuveCard";
 import { FiArrowRight } from "react-icons/fi";
 import DomainSelectFilter from "../../components/DomainSelectFilter";
@@ -14,11 +17,9 @@ const DomainFilter = () => {
 
       <DomainSelectFilter />
 
-      <div className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className={`${EPREUVE_GRID_CLASSES} mb-4 justify-center`}>
         {epreuvesMock.map((epreuve) => (
-          <div key={epreuve.name} className="">
-            <EpreuveCard {...epreuve} />
-          </div>
+          <EpreuveCard {...epreuve} key={epreuve.name} />
         ))}
       </div>
 

@@ -19,6 +19,46 @@ export const epreuvesMock: EpreuveCard[] = [
   },
   {
     img_src: "/images/study.png",
+    name: "Épreuve de Physique-Chimie",
+    year: 2024,
+    matter: "Physique-Chimie",
+    class: "Terminale",
+    type: "Baccalauréat",
+  },
+  {
+    img_src: "/images/study.png",
+    name: "Épreuve de Physique-Chimie",
+    year: 2024,
+    matter: "Physique-Chimie",
+    class: "Terminale",
+    type: "Baccalauréat",
+  },
+  {
+    img_src: "/images/study.png",
+    name: "Épreuve de Physique-Chimie",
+    year: 2024,
+    matter: "Physique-Chimie",
+    class: "Terminale",
+    type: "Baccalauréat",
+  },
+  {
+    img_src: "/images/study.png",
+    name: "Épreuve de Physique-Chimie",
+    year: 2024,
+    matter: "Physique-Chimie",
+    class: "Terminale",
+    type: "Baccalauréat",
+  },
+  {
+    img_src: "/images/study.png",
+    name: "Épreuve de Physique-Chimie",
+    year: 2024,
+    matter: "Physique-Chimie",
+    class: "Terminale",
+    type: "Baccalauréat",
+  },
+  {
+    img_src: "/images/study.png",
     name: "Brevet des Collèges - Histoire, Géo & EMC",
     year: 2025,
     matter: "Histoire-Géographie",
@@ -34,3 +74,8 @@ export const epreuvesMock: EpreuveCard[] = [
     type: "Contrôle Continu",
   },
 ];
+
+// Colonnes bornées entre 17rem et 20rem (= max-w-80 de EpreuveCard) :
+// sur grand écran on ajoute des colonnes au lieu d'élargir les cartes.
+export const EPREUVE_GRID_CLASSES =
+  "grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),20rem))] gap-6";

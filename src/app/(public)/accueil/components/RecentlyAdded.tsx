@@ -14,7 +14,7 @@ const RecentlyAdded = () => {
         {epreuvesMock.map((epreuve) => (
           <div
             key={epreuve.name}
-            className="relative w-full shrink-0 snap-start md:w-[calc((100%-2rem)/2)] lg:w-[calc((100%-2rem)/3)]"
+            className="relative w-full shrink-0 snap-start md:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-3rem)/4)]"
           >
             <EpreuveCard {...epreuve} />
           </div>

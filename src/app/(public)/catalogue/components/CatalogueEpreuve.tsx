@@ -1,7 +1,10 @@
 "use client";
 
 import DomainSelectFilter from "../../components/DomainSelectFilter";
-import { epreuvesMock } from "../../constants/epreuve.constants";
+import {
+  EPREUVE_GRID_CLASSES,
+  epreuvesMock,
+} from "../../constants/epreuve.constants";
 import EpreuveCard from "../../components/EpreuveCard";
 import CatalogueFilter from "./CatalogueFilter";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -28,7 +31,7 @@ const CatalogueEpreuve = () => {
             isDesktopOpen={isDesktop && open}
           />
           <div
-            className={`grid min-w-0 flex-1 grid-cols-1 gap-10 md:grid-cols-2 ${open ? "lg:ml-72 xl:grid-cols-2" : "xl:grid-cols-3"}`}
+            className={`${EPREUVE_GRID_CLASSES} min-w-0 flex-1 justify-center sm:justify-start ${open ? "lg:ml-72" : ""}`}
           >
             {epreuvesMock.map((epreuve) => (
               <EpreuveCard {...epreuve} key={epreuve.name} />
