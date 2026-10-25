@@ -1,23 +1,20 @@
 "use client";
 
-import {
-  EPREUVE_GRID_CLASSES,
-  epreuvesMock,
-} from "../../constants/epreuve.constants";
+import { epreuvesMock } from "../../constants/epreuve.constants";
 import EpreuveCard from "../../components/EpreuveCard";
 import { FiArrowRight } from "react-icons/fi";
 import DomainSelectFilter from "../../components/DomainSelectFilter";
 
 const DomainFilter = () => {
   return (
-    <div className="mb-30 w-full lg:px-30">
+    <div className="mx-auto mb-30 w-full max-w-7xl">
       <h3 className="text-text-secondary mb-8 text-center text-3xl font-semibold">
         Filtrez par domaine d&apos;activité
       </h3>
 
       <DomainSelectFilter />
 
-      <div className={`${EPREUVE_GRID_CLASSES} mb-4 justify-center`}>
+      <div className="mb-4 grid grid-cols-1 justify-center gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {epreuvesMock.map((epreuve) => (
           <EpreuveCard {...epreuve} key={epreuve.name} />
         ))}

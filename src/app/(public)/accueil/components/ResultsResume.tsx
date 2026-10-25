@@ -4,7 +4,7 @@ import Image from "next/image";
 
 const ResultsResume = () => {
   return (
-    <div className="mb-20 flex flex-col gap-10 lg:flex-row lg:gap-20 xl:px-30">
+    <div className="mx-auto mb-20 flex w-fit flex-col items-center gap-10 lg:flex-row lg:gap-20">
       <div className="lg:flex lg:flex-col lg:justify-between">
         <div>
           <h2 className="text-text-secondary mb-8 text-start text-4xl leading-7 font-semibold lg:text-5xl lg:leading-10">
@@ -30,7 +30,7 @@ const ResultsResume = () => {
           />
         </div>
       </div>
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
+      <div className="relative aspect-square w-full max-w-145 overflow-hidden rounded-2xl">
         <Image
           src="/images/resume_image.png"
           alt="Esgis Résumé Image"

@@ -74,8 +74,3 @@ export const epreuvesMock: EpreuveCard[] = [
     type: "Contrôle Continu",
   },
 ];
-
-// Colonnes bornées entre 17rem et 20rem (= max-w-80 de EpreuveCard) :
-// sur grand écran on ajoute des colonnes au lieu d'élargir les cartes.
-export const EPREUVE_GRID_CLASSES =
-  "grid grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),20rem))] gap-6";
