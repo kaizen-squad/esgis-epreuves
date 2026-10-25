@@ -26,11 +26,13 @@ const HideFilterComponent = ({ children, label }: HideFilterComponentProps) => {
       </button>
 
       <div
-        className={`${isVisible ? "h-fit grid-rows-[1fr] opacity-100" : "grid-row-[0fr] h-0 opacity-0"} grid transition-[grid-template-rows,opacity] duration-200 ease-out`}
+        className={`${isVisible ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"} grid transition-[grid-template-rows,opacity] duration-200 ease-out`}
         inert={!isVisible}
       >
-        {children}
-        <hr className="my-3 w-full text-gray-300" />
+        <div className="min-h-0 overflow-hidden">
+          {children}
+          <hr className="my-3 w-full text-gray-300" />
+        </div>
       </div>
     </div>
   );
