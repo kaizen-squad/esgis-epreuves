@@ -32,7 +32,7 @@ const FilterComponents = ({ onClose }: { onClose?: () => void }) => {
         <hr className="my-4 w-full text-gray-300" />
         <div className="px-4">
           <HideFilterComponent label="Niveau">
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto">
               {niveauMocks.map((niveau) => (
                 <NiveauCard key={niveau.niveau} />
               ))}
