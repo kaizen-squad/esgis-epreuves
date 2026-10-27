@@ -17,7 +17,7 @@ const FiliereCard = ({
   return (
     <div className={`${className} @container relative aspect-square w-full`}>
       <div className="text-text-primary absolute inset-x-[20%] top-[52%] z-10">
-        <p className="mb-2 text-[clamp(0.875rem,7cqw,1.5rem)] font-semibold uppercase">
+        <p className="mb-2 text-[clamp(0.875rem,7cqw,1rem)] font-semibold uppercase">
           {name}
         </p>
         <p className="text-lg font-medium text-gray-400">Épreuves</p>
@@ -29,7 +29,7 @@ const FiliereCard = ({
         fill
         loading="eager"
       />
-      <div className="text-text-primary absolute inset-x-[20%] bottom-[8%] flex items-center justify-between md:bottom-[12%]">
+      <div className="text-text-primary absolute inset-x-[20%] bottom-[8%] flex items-center justify-between md:bottom-[10%]">
         <div>
           <p className="whitespace-nowrap">
             <span className="text-[clamp(1.5rem,12cqw,2.5rem)] font-semibold">

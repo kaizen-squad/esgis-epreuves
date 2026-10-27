@@ -8,7 +8,7 @@ interface ResumeCardProps {
 
 const ResumeCard = ({ icon, title, text }: ResumeCardProps) => {
   return (
-    <div className="bg-background-primary rounded-lg px-6 py-5">
+    <div className="bg-background-primary rounded-lg px-6 py-5 lg:aspect-4/3">
       <div className="bg-background-default mb-6 w-fit rounded-full p-3">
         {icon}
       </div>

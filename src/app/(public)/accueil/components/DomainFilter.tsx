@@ -7,18 +7,16 @@ import DomainSelectFilter from "../../components/DomainSelectFilter";
 
 const DomainFilter = () => {
   return (
-    <div className="mb-30 w-full lg:px-30">
+    <div className="mx-auto mb-30 w-full max-w-7xl">
       <h3 className="text-text-secondary mb-8 text-center text-3xl font-semibold">
         Filtrez par domaine d&apos;activité
       </h3>
 
       <DomainSelectFilter />
 
-      <div className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 justify-center gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {epreuvesMock.map((epreuve) => (
-          <div key={epreuve.name} className="">
-            <EpreuveCard {...epreuve} />
-          </div>
+          <EpreuveCard {...epreuve} key={epreuve.name} />
         ))}
       </div>
 

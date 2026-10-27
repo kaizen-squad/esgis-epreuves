@@ -5,7 +5,7 @@ import HideFilterComponent from "./HideFilterComponent";
 import MatiereFilterWrapper from "./matiere/MatiereFilterWrapper";
 import NiveauCard from "./niveau/NiveauCard";
 
-const FilterComponents = () => {
+const FilterComponents = ({ onClose }: { onClose?: () => void }) => {
   return (
     <>
       <div className="py-2">
@@ -18,7 +18,12 @@ const FilterComponents = () => {
               <h3 className="text-xl">Filtres</h3>
               <span className="rounded-full bg-[#0f2155]/10 px-4 py-2">0</span>
             </div>
-            <button className="text-text-primary bg-background-accent cursor-pointer rounded-full p-1">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fermer les filtres"
+              className="text-text-primary bg-background-accent mb-4 cursor-pointer rounded-full p-1"
+            >
               <FiX size={22} />
             </button>
           </div>
@@ -27,7 +32,7 @@ const FilterComponents = () => {
         <hr className="my-4 w-full text-gray-300" />
         <div className="px-4">
           <HideFilterComponent label="Niveau">
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto">
               {niveauMocks.map((niveau) => (
                 <NiveauCard key={niveau.niveau} />
               ))}

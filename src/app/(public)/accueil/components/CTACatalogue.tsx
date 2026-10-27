@@ -2,7 +2,7 @@ import { FiArrowRight } from "react-icons/fi";
 
 const CTACatalogue = () => {
   return (
-    <div className="bg-background-primary flex flex-col rounded-lg px-6 pt-6 pb-10">
+    <div className="bg-background-primary mx-auto flex max-w-7xl flex-col rounded-lg px-6 pt-6 pb-10">
       <h3 className="text-text-secondary mb-3 text-center text-3xl font-semibold">
         Préparez vos examens dès aujourd&apos;hui !
       </h3>

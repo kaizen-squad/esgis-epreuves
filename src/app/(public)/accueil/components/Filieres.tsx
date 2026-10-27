@@ -4,7 +4,7 @@ import { filiereMocks } from "../../constants/filieres.constants";
 
 const Filieres = () => {
   return (
-    <div className="mb-30 w-full">
+    <div className="mx-auto mb-30 max-w-7xl">
       <h3 className="text-text-secondary mb-1 text-center text-2xl font-semibold">
         Selectionnez votre <br />
         filière

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { FiDownload, FiEye, FiFile } from "react-icons/fi";
+import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
 
 interface EpreuveCard {
@@ -13,53 +13,59 @@ interface EpreuveCard {
 
 const EpreuveCard = (data: EpreuveCard) => {
   return (
-    <div className="bg-background-primary @container w-full overflow-hidden rounded-lg border border-gray-300 pb-1">
-      <div className="relative aspect-2/1 w-full bg-red-300">
-        <span className="bg-background-primary absolute top-3 right-2 z-1 flex items-center gap-1 rounded-full px-2 py-1 text-sm">
-          <span className="flex items-center gap-1">
-            <FiFile /> PDF
-          </span>{" "}
-          - <span>3 pages</span>
-        </span>
+    <article className="group bg-background-primary flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
+      <div className="relative aspect-2/1 w-full shrink-0 overflow-hidden bg-gray-100">
         <Image
-          src="/images/study.png"
-          alt="Epreuve Image"
+          src={data.img_src}
+          alt={data.name}
           fill
           loading="eager"
-          className="z-0 object-cover"
+          sizes="20rem"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
+        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+        <span className="text-text-default absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/85 px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm">
+          <FiFileText size={12} /> PDF · 3 p.
+        </span>
       </div>
-      <div className="px-4 py-2">
-        <div className="-2 mb-4 flex items-center justify-between text-sm lg:text-base">
-          <div className="flex items-center gap-2">
-            <span>Licence 2</span>
-            <GoDotFill size={10} />
-            <span>AL</span>
+
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-text-paragraph flex min-w-0 items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
+            <span className="shrink-0">{data.class}</span>
+            <GoDotFill size={6} className="shrink-0" />
+            <span className="truncate">{data.matter}</span>
           </div>
-          <span className="rounded-full border border-red-500 px-2 font-medium">
-            Rattrapages
+          <span className="text-background-accent shrink-0 rounded-full border border-current px-2 py-0.5 text-xs font-medium">
+            {data.type}
           </span>
         </div>
-        <p className="mb-4 line-clamp-1 text-xl font-semibold @sm:text-2xl">
+
+        <h4 className="text-text-title line-clamp-2 min-h-[2lh] text-base leading-snug font-semibold">
           {data.name}
-        </p>
-        <div className="mb-4 flex items-center gap-2 text-sm lg:text-base">
-          <span>2024-2025</span>
-          <GoDotFill size={10} />
+        </h4>
+
+        <div className="text-text-paragraph mt-auto flex items-center gap-3 text-xs">
+          <span className="flex items-center gap-1">
+            <FiCalendar size={12} />
+            {data.year - 1}-{data.year}
+          </span>
+          <GoDotFill size={6} />
           <span>1,6 Mo</span>
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <button className="border-background-secondary text-text-default flex w-1/2 cursor-pointer items-center justify-center gap-1 rounded-lg border py-2">
-            <FiEye size={20} />
+
+        <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
+          <button className="text-text-default flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:bg-gray-50">
+            <FiEye size={16} />
             Visualiser
           </button>
-          <button className="border-background-secondary bg-background-secondary text-text-primary flex w-1/2 cursor-pointer items-center justify-center gap-1 rounded-lg border py-2">
-            <FiDownload />
+          <button className="bg-background-secondary text-text-primary flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90">
+            <FiDownload size={16} />
             Télécharger
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
