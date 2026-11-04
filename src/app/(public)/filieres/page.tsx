@@ -3,7 +3,7 @@ import Research from "../accueil/components/Research";
 import PublicLayout from "../components/PublicLayout";
 import FIliereCategories from "./components/FIliereCategories";
 
-const Filiere = () => {
+const Filieres = () => {
   return (
     <PublicLayout>
       <div className="text-center">
@@ -23,4 +23,4 @@ const Filiere = () => {
   );
 };
 
-export default Filiere;
+export default Filieres;
