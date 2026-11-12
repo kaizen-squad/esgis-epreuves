@@ -62,7 +62,7 @@ src/
     referentials/        filières, niveaux, matières
   components/ui/         composants génériques réutilisables
   lib/
-    supabase/            clients navigateur, serveur, middleware
+    supabase/            clients navigateur, serveur, proxy
     r2/                  stockage des PDF
 supabase/migrations/     SQL versionné
 scripts/                 seed en masse (créé avec le ticket dédié)
