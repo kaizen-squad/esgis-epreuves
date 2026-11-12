@@ -1,13 +1,32 @@
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { Field, Level, Subject } from "./types";
+
+const FIELD_SELECT = "id, name, description";
 
 /** Filieres, pour le menu "Filieres", l'accueil et les filtres du catalogue. */
 export async function getFields(): Promise<Field[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("fields")
-    .select("id, name")
+    .select(FIELD_SELECT)
     .order("name");
+
+  if (error) throw error;
+
+  return data;
+}
+
+/** Filiere par id, pour sa page dediee (#53). `null` si absente ou si l'id n'est pas un uuid, pour laisser la page faire notFound(). */
+export async function getFieldById(id: string): Promise<Field | null> {
+  if (!z.uuid().safeParse(id).success) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("fields")
+    .select(FIELD_SELECT)
+    .eq("id", id)
+    .maybeSingle();
 
   if (error) throw error;
 

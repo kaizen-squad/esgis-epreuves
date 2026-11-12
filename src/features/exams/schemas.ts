@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ExamType, ExamSession } from "./types";
+import type { ExamFilters, ExamType, ExamSession } from "./types";
 
 const EXAM_SESSIONS: readonly ExamSession[] = ["Session Normale", "Rattrapage"];
 const EXAM_TYPES: readonly ExamType[] = [
@@ -60,3 +60,11 @@ export const examFiltersSchema = z.object({
 });
 
 export type ExamFiltersParsed = z.output<typeof examFiltersSchema>;
+
+/** Filiere fixee par la page (#53) : prend toujours le pas sur un fieldId venu des filtres. */
+export function fixedFieldFilters(
+  fieldId: string,
+  rawFilters: ExamFilters = {},
+): ExamFilters {
+  return { ...rawFilters, fieldId };
+}
