@@ -26,15 +26,15 @@ insert into public.profiles (id, email, role) values
   ('11111111-1111-1111-1111-111111111111', 'bde@esgis.test', 'BDE'),
   ('22222222-2222-2222-2222-222222222222', 'admin@esgis.test', 'ADMIN');
 
-insert into public.fields (id, name) values ('33333333-3333-3333-3333-333333333333', 'Gestion');
-insert into public.levels (id, name) values ('44444444-4444-4444-4444-444444444444', 'L1');
+insert into public.fields (id, name) values ('33333333-3333-3333-3333-333333333333', 'Filiere RLS Test');
+insert into public.levels (id, name) values ('44444444-4444-4444-4444-444444444444', 'Niveau RLS Test');
 insert into public.subjects (id, field_id, level_id, name) values
-  ('55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', '44444444-4444-4444-4444-444444444444', 'Comptabilite');
+  ('55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', '44444444-4444-4444-4444-444444444444', 'Matiere RLS Test');
 
 -- Lecture publique (role anon, sans session)
 set local role anon;
 select is(
-  (select count(*) from public.fields)::int, 1,
+  (select count(*) from public.fields where name = 'Filiere RLS Test')::int, 1,
   'anon lit les referentiels publics'
 );
 select throws_ok(
@@ -112,7 +112,7 @@ select throws_ok(
 );
 
 select is(
-  (select count(*) from public.exams)::int, 1,
+  (select count(*) from public.exams where field_id = '33333333-3333-3333-3333-333333333333')::int, 1,
   'un seul exam cree, celui du BDE'
 );
 
