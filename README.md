@@ -66,6 +66,7 @@ src/
     r2/                  stockage des PDF
 supabase/migrations/     SQL versionné
 scripts/                 seed en masse (créé avec le ticket dédié)
+docs/                    gabarit CSV de collecte des métadonnées
 public/                  fichiers statiques
 ```
 
@@ -76,6 +77,12 @@ Règles :
 - Les entrées utilisateur sont validées avec zod dans `schemas.ts`.
 - Le `types.ts` d'une feature est le contrat entre les composants et les requêtes : à convenir avant de coder chaque côté.
 - Les dossiers contenant un `.gitkeep` sont vides en attendant leur premier fichier : supprimer le `.gitkeep` au premier ajout.
+
+### Contrat des Server Actions
+
+Il n'y a pas d'API REST dans cette architecture, donc pas de codes HTTP : toute Server Action renvoie la forme `ActionResult<T>` de `src/lib/action-result.ts` (`{ ok: true, data }`, `{ ok: false, error, fieldErrors? }`, ou la variante `duplicate` pour un avertissement de doublon détecté). Deux cas restent hors de cette forme et utilisent les fonctions Next.js dédiées : `notFound()` quand une épreuve demandée n'existe pas, `redirect()` quand une page nécessite une session absente.
+
+Le gabarit CSV des métadonnées pour la collecte des épreuves (ticket dédié à la collecte) est `docs/gabarit-metadonnees.csv` ; ses colonnes correspondent aux champs validés par les contraintes SQL de `exams` (année académique, session, type d'épreuve), les référentiels étant désignés par leur nom plutôt que leur id. Séparateur `;` et BOM UTF-8 pour s'ouvrir correctement dans un Excel en français. Le script de seed (#21) devra normaliser le texte en NFC avant l'insertion : un caractère accentué décomposé par Excel ferait échouer les contraintes `check` de `exams`.
 
 ## Conventions de travail
 
