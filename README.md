@@ -29,18 +29,23 @@ Copier `.env.example` vers `.env.local` et renseigner les valeurs. `.env.local` 
 - Les PDF sont stockés sur Cloudflare R2, avec un compartiment par environnement : `esgis-epreuves-dev` en local, `esgis-epreuves-prod` en production. Chaque compartiment a sa propre clé d'accès, limitée à lui seul. En local, n'utiliser que la clé `dev`. Les compartiments sont privés.
 - Les clés R2 sont serveur uniquement, comme `SUPABASE_SECRET_KEY`. Le Secret Access Key n'est affiché qu'une fois à la création : le conserver dans un gestionnaire de mots de passe.
 
+### CLI Supabase
+
+Lier une fois le projet `esgis-epreuves-dev` : `supabase link --project-ref <ref du projet dev>` (nécessite `supabase login` avec un compte ayant accès à l'organisation KAIZEN). Les migrations sous `supabase/migrations/` s'appliquent ensuite avec `supabase db push`, et `pnpm db:types` régénère `src/lib/supabase/database.types.ts` depuis le schéma lié.
+
 ## Scripts
 
-| Commande            | Rôle                                      |
-| ------------------- | ----------------------------------------- |
-| `pnpm dev`          | Serveur de développement                  |
-| `pnpm build`        | Build de production                       |
-| `pnpm start`        | Lance le build de production              |
-| `pnpm lint`         | ESLint, sans aucun warning toléré         |
-| `pnpm typecheck`    | Génération des types de routes puis `tsc` |
-| `pnpm test`         | Tests unitaires (Vitest)                  |
-| `pnpm format`       | Formate le code avec Prettier             |
-| `pnpm format:check` | Vérifie le formatage sans modifier        |
+| Commande            | Rôle                                                |
+| ------------------- | --------------------------------------------------- |
+| `pnpm dev`          | Serveur de développement                            |
+| `pnpm build`        | Build de production                                 |
+| `pnpm start`        | Lance le build de production                        |
+| `pnpm lint`         | ESLint, sans aucun warning toléré                   |
+| `pnpm typecheck`    | Génération des types de routes puis `tsc`           |
+| `pnpm test`         | Tests unitaires (Vitest)                            |
+| `pnpm format`       | Formate le code avec Prettier                       |
+| `pnpm format:check` | Vérifie le formatage sans modifier                  |
+| `pnpm db:types`     | Régénère les types TS depuis le projet Supabase lié |
 
 ## Architecture
 
