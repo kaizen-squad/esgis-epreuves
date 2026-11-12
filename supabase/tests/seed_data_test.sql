@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(10);
 
 -- Referentiels de base : 5 niveaux, 2 filieres
 select is((select count(*) from public.levels)::int, 5, '5 niveaux (L1 a M2)');
@@ -37,8 +37,19 @@ select ok(
   'les epreuves factices pointent vers 1 ou 2 PDF d''exemple au plus'
 );
 select ok(
-  (select bool_and(file_mime_type = 'application/pdf') from public.exams),
-  'toutes les epreuves factices sont des PDF'
+  not exists (
+    select 1 from public.exams e join public.levels l on l.id = e.level_id
+    where l.name in ('L1', 'L2') and e.option_id is not null
+  ),
+  'aucune epreuve factice de L1/L2 (tronc commun) n''a d''option'
+);
+select ok(
+  not exists (
+    select 1 from public.exams e
+    join public.options o on o.id = e.option_id
+    where o.field_id <> e.field_id
+  ),
+  'l''option d''une epreuve factice appartient toujours a sa filiere'
 );
 
 select * from finish();
