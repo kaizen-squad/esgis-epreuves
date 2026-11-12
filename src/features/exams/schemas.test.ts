@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { examFiltersSchema, searchTokens } from "./schemas";
+import { examFiltersSchema, fixedFieldFilters, searchTokens } from "./schemas";
 
 describe("searchTokens", () => {
   it("decoupe en mots, espaces superflus ignores", () => {
@@ -78,5 +78,18 @@ describe("examFiltersSchema", () => {
     const result = examFiltersSchema.parse({ page: "2", pageSize: "10" });
     expect(result.page).toBe(2);
     expect(result.pageSize).toBe(10);
+  });
+});
+
+describe("fixedFieldFilters", () => {
+  it("impose le fieldId de la page meme si les filtres en portent un autre", () => {
+    const result = fixedFieldFilters("field-a", { fieldId: "field-b" });
+    expect(result.fieldId).toBe("field-a");
+  });
+
+  it("conserve les autres filtres inchanges", () => {
+    const result = fixedFieldFilters("field-a", { search: "algo", page: 2 });
+    expect(result.search).toBe("algo");
+    expect(result.page).toBe(2);
   });
 });

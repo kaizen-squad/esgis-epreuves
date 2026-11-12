@@ -1,3 +1,5 @@
+import type { Field } from "@/features/referentials/types";
+
 export type ExamSession = "Session Normale" | "Rattrapage";
 export type ExamType = "Contrôle Terminal" | "Contrôle Continu";
 
@@ -39,4 +41,9 @@ export type ExamListResult = {
   total: number;
   page: number;
   pageSize: number;
+};
+
+export type FieldExamsResult = {
+  field: Field;
+  exams: ExamListResult;
 };

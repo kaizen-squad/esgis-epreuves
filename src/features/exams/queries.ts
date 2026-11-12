@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { examFiltersSchema } from "./schemas";
-import type { Exam, ExamFilters, ExamListResult } from "./types";
+import { getFieldById } from "@/features/referentials/queries";
+import { examFiltersSchema, fixedFieldFilters } from "./schemas";
+import type {
+  Exam,
+  ExamFilters,
+  ExamListResult,
+  FieldExamsResult,
+} from "./types";
 
 const EXAM_CATALOG_SELECT =
   "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, level_id, level_name, subject_id, subject_name, option_id, option_name";
@@ -96,6 +102,24 @@ export async function getRecentExams(
 ): Promise<Exam[]> {
   const { exams } = await getExams({ page: 1, pageSize: limit });
   return exams;
+}
+
+/**
+ * Page dediee a une filiere (#53) : metadonnees de la filiere et ses epreuves, meme pagination et
+ * memes filtres que le catalogue (#9), filiere fixee quel que soit le fieldId recu dans les filtres.
+ * `null` si la filiere n'existe pas (notFound() cote page).
+ */
+export async function getFieldExams(
+  fieldId: string,
+  rawFilters: ExamFilters = {},
+): Promise<FieldExamsResult | null> {
+  const field = await getFieldById(fieldId);
+  if (!field) return null;
+
+  return {
+    field,
+    exams: await getExams(fixedFieldFilters(fieldId, rawFilters)),
+  };
 }
 
 /** Lecture d'une epreuve par son slug, pour la page detail. `null` si absente (notFound() cote page). */

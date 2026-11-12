@@ -1,6 +1,7 @@
 export type Field = {
   id: string;
   name: string;
+  description: string | null;
 };
 
 export type Level = {
