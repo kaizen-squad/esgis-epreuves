@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Rafraîchit la session Supabase à partir du proxy racine (proxy.ts, voir #15).
- * Ne contient aucune règle de rôle ou de redirection : seulement la lecture/écriture
- * des cookies de session, requise à chaque requête pour que le jeton reste valide.
+ * Ne contient aucune règle de rôle : seulement la lecture/écriture des cookies de session
+ * (requise à chaque requête pour que le jeton reste valide) et la présence d'une session,
+ * que proxy.ts utilise pour décider d'une redirection.
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -33,7 +34,7 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
-  return response;
+  return { response, hasSession: data !== null };
 }

@@ -12,7 +12,29 @@ Documentation du contrat entre le backend (`src/features/*/queries.ts`, `actions
 
 ### `ActionResult<T>`, `actionOk`, `actionError`, `actionDuplicateWarning`
 
-Import `import { actionOk, actionError, actionDuplicateWarning } from "@/lib/action-result"` depuis une Server Action, jamais depuis une lecture. `data` est typé par le générique `T` propre à l'action. Côté écran : `ok === true` affiche `data` ; `ok === false` avec `fieldErrors` répartit les messages sous les champs du formulaire concernés ; `ok === false` avec `duplicate` affiche un avertissement de doublon (lien vers `duplicate.slug`) plutôt qu'une erreur bloquante. Aucune Server Action n'existe encore sur ce dépôt (mutations à partir de #15/#18) : ce contrat est posé en amont pour que le front s'aligne dès #54.
+Import `import { actionOk, actionError, actionDuplicateWarning } from "@/lib/action-result"` depuis une Server Action, jamais depuis une lecture. `data` est typé par le générique `T` propre à l'action. Côté écran : `ok === true` affiche `data` ; `ok === false` avec `fieldErrors` répartit les messages sous les champs du formulaire concernés ; `ok === false` avec `duplicate` affiche un avertissement de doublon (lien vers `duplicate.slug`) plutôt qu'une erreur bloquante.
+
+## `src/features/auth/schemas.ts`
+
+### `loginSchema`
+
+Schéma Zod de `{ email, password }` pour la connexion. `email` doit être un email bien formé ; `password` doit juste être non vide (la force du mot de passe est imposée par Supabase Auth à la création du compte, pas revalidée ici).
+
+## `src/features/auth/actions.ts`
+
+### `login(prevState: ActionResult<void> | null, formData: FormData): Promise<ActionResult<void>>`
+
+Server Action de connexion BDE/Admin. Signature `(prevState, formData)` : à brancher avec `useActionState` côté écran (#17), seul moyen d'afficher l'erreur sous le formulaire sans recharger la page ; `prevState` n'est pas lu par l'action elle-même. Lit `email`/`password` du `FormData`, valide via `loginSchema`, puis `supabase.auth.signInWithPassword`. En cas de succès, redirige elle-même vers `/admin` (jamais d'`ActionResult` de succès à gérer côté écran). En cas d'échec, message générique ("Email ou mot de passe incorrect.") que l'identifiant soit inconnu ou le mot de passe faux, pour ne jamais confirmer l'existence d'un compte ; un 429 (limitation de débit Supabase Auth) renvoie un message distinct sans ambiguïté sur un compte. Pas d'inscription publique (#15) : les seuls comptes existants sont BDE/Admin, créés à la main. **Dépendance de prod à ne pas oublier (#26)** : `enable_signup = false` n'est posé que dans `supabase/config.toml` (stack locale) ; sur le projet Supabase hébergé, l'inscription publique reste ouverte tant qu'elle n'est pas coupée dans le dashboard (ou `supabase config push`).
+
+### `logout(): Promise<never>`
+
+Déconnecte uniquement la session courante (`scope: "local"`, jamais `"global"`) puis redirige vers `/login`, même si `signOut` échoue côté Supabase. Scope local : un compte BDE est partagé par toute l'équipe, une déconnexion sur un poste ne doit pas affecter les autres postes connectés avec le même compte.
+
+## `src/proxy.ts`
+
+### `proxy(request: NextRequest)`
+
+Proxy racine (renommé ainsi depuis `middleware.ts` en Next.js 16, `config.matcher` limite son exécution à `/admin/:path*`). Redirige vers `/login` si la session Supabase est absente ou expirée. Confort uniquement : ne vérifie aucun rôle, puisque l'inscription publique est coupée, toute session valide appartient forcément à un compte BDE/Admin. La RLS (`private.has_role`, migration de #5) reste le seul vrai verrou pour chaque écriture.
 
 ## `src/features/referentials/queries.ts`
 
