@@ -122,3 +122,11 @@ export const examUploadSchema = z.object({
 });
 
 export type ExamUploadParsed = z.output<typeof examUploadSchema>;
+
+/** Validation de la modification des metadonnees d'une epreuve (#55) : memes champs que examUploadSchema, sans le fichier. */
+export const examMetadataSchema = examUploadSchema.omit({ file: true });
+
+export type ExamMetadataParsed = z.output<typeof examMetadataSchema>;
+
+/** Validation du remplacement du fichier d'une epreuve (#55) : seul le fichier, memes contraintes que examUploadSchema. */
+export const examFileReplaceSchema = examUploadSchema.pick({ file: true });

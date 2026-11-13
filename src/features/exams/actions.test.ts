@@ -6,11 +6,24 @@ const insert = vi.fn<
   (row: Record<string, unknown>) => { select: typeof insertSelect }
 >(() => ({ select: insertSelect }));
 
-const deleteEq = vi.fn();
+const deleteMaybeSingle = vi.fn();
+const deleteSelect = vi.fn(() => ({ maybeSingle: deleteMaybeSingle }));
+const deleteEq = vi.fn(() => ({ select: deleteSelect }));
 const del = vi.fn(() => ({ eq: deleteEq }));
 
-const from = vi.fn(() => ({ insert, delete: del }));
+const maybeSingle = vi.fn();
+const selectEq = vi.fn(() => ({ maybeSingle }));
+const select = vi.fn(() => ({ eq: selectEq }));
+
+const updateSelect = vi.fn();
+const updateEq = vi.fn(() => ({ select: updateSelect }));
+const update = vi.fn<(row: Record<string, unknown>) => { eq: typeof updateEq }>(
+  () => ({ eq: updateEq }),
+);
+
+const from = vi.fn(() => ({ insert, delete: del, select, update }));
 const putExamFile = vi.fn();
+const deleteExamFile = vi.fn();
 const checkExamDuplicate = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -18,12 +31,14 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 vi.mock("@/lib/r2/upload", () => ({
   putExamFile: (...args: unknown[]) => putExamFile(...args),
+  deleteExamFile: (...args: unknown[]) => deleteExamFile(...args),
 }));
 vi.mock("./duplicate", () => ({
   checkExamDuplicate: (...args: unknown[]) => checkExamDuplicate(...args),
 }));
 
-const { uploadExam } = await import("./actions");
+const { uploadExam, updateExamMetadata, replaceExamFile, deleteExam } =
+  await import("./actions");
 
 const UUID = "11111111-1111-4111-a111-111111111111";
 const OPTION_UUID = "22222222-2222-4222-a222-222222222222";
@@ -49,17 +64,34 @@ function uploadForm(overrides: Record<string, string | File> = {}) {
   return formData;
 }
 
+const EXAM_ID = "33333333-3333-4333-a333-333333333333";
+
 beforeEach(() => {
   checkExamDuplicate.mockReset().mockResolvedValue({ kind: "none" });
   single
     .mockReset()
     .mockResolvedValue({ data: { id: "exam-new" }, error: null });
-  deleteEq.mockReset().mockResolvedValue({ error: null });
+  deleteEq.mockReset().mockImplementation(() => ({ select: deleteSelect }));
+  deleteSelect
+    .mockReset()
+    .mockImplementation(() => ({ maybeSingle: deleteMaybeSingle }));
+  deleteMaybeSingle
+    .mockReset()
+    .mockResolvedValue({ data: { r2_key: "exams/abc.pdf" }, error: null });
+  maybeSingle.mockReset().mockResolvedValue({ data: null, error: null });
+  updateEq.mockReset().mockImplementation(() => ({ select: updateSelect }));
+  updateSelect
+    .mockReset()
+    .mockResolvedValue({ data: [{ id: "exam-id" }], error: null });
   insert.mockClear();
   insertSelect.mockClear();
   del.mockClear();
+  select.mockClear();
+  selectEq.mockClear();
+  update.mockClear();
   from.mockClear();
   putExamFile.mockReset().mockResolvedValue(undefined);
+  deleteExamFile.mockReset().mockResolvedValue(undefined);
 });
 
 describe("uploadExam", () => {
@@ -228,5 +260,462 @@ describe("uploadExam", () => {
     });
     expect(del).toHaveBeenCalledTimes(1);
     expect(deleteEq).toHaveBeenCalledWith("id", "exam-new");
+  });
+});
+
+function metadataForm(overrides: Record<string, string> = {}) {
+  const formData = new FormData();
+  const defaults: Record<string, string> = {
+    title: "Algorithmique S1",
+    academicYear: "2024-2025",
+    session: "Session Normale",
+    examType: "Contrôle Terminal",
+    fieldId: UUID,
+    levelId: UUID,
+    subjectId: UUID,
+  };
+  for (const [key, value] of Object.entries({ ...defaults, ...overrides })) {
+    formData.set(key, value);
+  }
+  return formData;
+}
+
+const CURRENT_EXAM = {
+  file_hash: "a".repeat(64),
+  slug: "algo-s1-abc12345",
+};
+
+describe("updateExamMetadata", () => {
+  it("rejette un identifiant d'epreuve invalide sans toucher a la base", async () => {
+    const result = await updateExamMetadata("not-a-uuid", metadataForm());
+
+    expect(result).toEqual({ ok: false, error: "Epreuve introuvable." });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("rejette des donnees invalides sans toucher a la base", async () => {
+    const result = await updateExamMetadata(
+      EXAM_ID,
+      metadataForm({ academicYear: "2024" }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("renvoie une erreur quand l'epreuve n'existe pas", async () => {
+    maybeSingle.mockResolvedValue({ data: null, error: null });
+
+    const result = await updateExamMetadata(EXAM_ID, metadataForm());
+
+    expect(result).toEqual({ ok: false, error: "Epreuve introuvable." });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("verifie le doublon avec le hash actuel de l'epreuve et exclut l'epreuve elle-meme", async () => {
+    maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
+
+    await updateExamMetadata(EXAM_ID, metadataForm());
+
+    expect(checkExamDuplicate).toHaveBeenCalledWith(
+      CURRENT_EXAM.file_hash,
+      {
+        subjectId: UUID,
+        academicYear: "2024-2025",
+        session: "Session Normale",
+        examType: "Contrôle Terminal",
+      },
+      EXAM_ID,
+    );
+  });
+
+  it("met a jour les colonnes attendues avec une option fournie", async () => {
+    maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
+
+    const result = await updateExamMetadata(
+      EXAM_ID,
+      metadataForm({ optionId: OPTION_UUID }),
+    );
+
+    expect(result).toEqual({ ok: true, data: { slug: CURRENT_EXAM.slug } });
+    expect(update).toHaveBeenCalledWith({
+      title: "Algorithmique S1",
+      academic_year: "2024-2025",
+      session: "Session Normale",
+      exam_type: "Contrôle Terminal",
+      field_id: UUID,
+      level_id: UUID,
+      subject_id: UUID,
+      option_id: OPTION_UUID,
+    });
+    expect(updateEq).toHaveBeenCalledWith("id", EXAM_ID);
+  });
+
+  it("transmet null comme option_id quand aucune option n'est fournie", async () => {
+    maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
+
+    await updateExamMetadata(EXAM_ID, metadataForm());
+
+    expect(update.mock.calls[0]![0].option_id).toBeNull();
+  });
+
+  it("renvoie un avertissement non bloquant quand le quadruplet correspond a une autre epreuve", async () => {
+    maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
+    checkExamDuplicate.mockResolvedValue({
+      kind: "quadruplet",
+      exam: { id: "exam-2", slug: "algo-s1-def67890", title: "Ancienne" },
+    });
+
+    const result = await updateExamMetadata(EXAM_ID, metadataForm());
+
+    expect(result).toEqual({
+      ok: true,
+      data: { slug: CURRENT_EXAM.slug },
+      warning: {
+        examId: "exam-2",
+        slug: "algo-s1-def67890",
+        title: "Ancienne",
+      },
+    });
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
+  it("bloque quand le hash actuel matche une autre epreuve", async () => {
+    maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
+    checkExamDuplicate.mockResolvedValue({
+      kind: "hash",
+      exam: { id: "exam-3", slug: "algo-s1-xyz", title: "Autre" },
+    });
+
+    const result = await updateExamMetadata(EXAM_ID, metadataForm());
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Ce fichier a deja ete depose.",
+      duplicate: { examId: "exam-3", slug: "algo-s1-xyz", title: "Autre" },
+    });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("renvoie une erreur generique quand la mise a jour echoue", async () => {
+    maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
+    updateSelect.mockResolvedValue({ data: null, error: { code: "XX000" } });
+
+    const result = await updateExamMetadata(EXAM_ID, metadataForm());
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de modifier l'epreuve.",
+    });
+  });
+
+  it("renvoie une erreur quand la RLS refuse la mise a jour sans erreur Supabase (role non BDE)", async () => {
+    maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
+    updateSelect.mockResolvedValue({ data: [], error: null });
+
+    const result = await updateExamMetadata(EXAM_ID, metadataForm());
+
+    expect(result).toEqual({ ok: false, error: "Epreuve introuvable." });
+  });
+});
+
+function fileForm(file?: File) {
+  const formData = new FormData();
+  formData.set(
+    "file",
+    file ?? new File(["%PDF-1.4"], "exam.pdf", { type: "application/pdf" }),
+  );
+  return formData;
+}
+
+const CURRENT_EXAM_FOR_REPLACE = {
+  slug: "algo-s1-abc12345",
+  subject_id: UUID,
+  academic_year: "2024-2025",
+  session: "Session Normale",
+  exam_type: "Contrôle Terminal",
+  r2_key: "exams/old-hash.pdf",
+  file_hash: "old-hash",
+  file_mime_type: "application/pdf",
+  file_size: 42,
+};
+
+describe("replaceExamFile", () => {
+  it("rejette un identifiant d'epreuve invalide sans toucher a la base", async () => {
+    const result = await replaceExamFile("not-a-uuid", fileForm());
+
+    expect(result).toEqual({ ok: false, error: "Epreuve introuvable." });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("rejette un fichier dont le contenu n'est pas un PDF malgre un type MIME declare correct", async () => {
+    const result = await replaceExamFile(
+      EXAM_ID,
+      fileForm(new File(["PNG-fake"], "exam.pdf", { type: "application/pdf" })),
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Le fichier n'est pas un PDF valide.",
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("renvoie une erreur quand l'epreuve n'existe pas", async () => {
+    maybeSingle.mockResolvedValue({ data: null, error: null });
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result).toEqual({ ok: false, error: "Epreuve introuvable." });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("verifie le doublon avec le hash du nouveau fichier et le quadruplet actuel de l'epreuve, en l'excluant elle-meme", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+
+    await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(checkExamDuplicate).toHaveBeenCalledWith(
+      FILE_HASH,
+      {
+        subjectId: UUID,
+        academicYear: "2024-2025",
+        session: "Session Normale",
+        examType: "Contrôle Terminal",
+      },
+      EXAM_ID,
+    );
+  });
+
+  it("bloque sans mettre a jour la base quand le hash matche une autre epreuve", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+    checkExamDuplicate.mockResolvedValue({
+      kind: "hash",
+      exam: { id: "exam-3", slug: "algo-s1-xyz", title: "Autre" },
+    });
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Ce fichier a deja ete depose.",
+      duplicate: { examId: "exam-3", slug: "algo-s1-xyz", title: "Autre" },
+    });
+    expect(update).not.toHaveBeenCalled();
+    expect(putExamFile).not.toHaveBeenCalled();
+  });
+
+  it("met a jour les colonnes de fichier, depose le nouveau puis supprime l'ancien sur R2", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result).toEqual({
+      ok: true,
+      data: { slug: CURRENT_EXAM_FOR_REPLACE.slug },
+    });
+    expect(update).toHaveBeenCalledWith({
+      file_hash: FILE_HASH,
+      file_mime_type: "application/pdf",
+      file_size: 8,
+      r2_key: `exams/${FILE_HASH}.pdf`,
+    });
+    expect(putExamFile).toHaveBeenCalledWith(
+      `exams/${FILE_HASH}.pdf`,
+      expect.anything(),
+    );
+    expect(deleteExamFile).toHaveBeenCalledWith(
+      CURRENT_EXAM_FOR_REPLACE.r2_key,
+    );
+  });
+
+  it("ne fait pas echouer le remplacement quand la suppression de l'ancien fichier R2 echoue", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+    deleteExamFile.mockRejectedValue(new Error("R2 indisponible"));
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("traite une violation d'unicite sur le hash a la mise a jour comme un doublon, sans toucher a R2", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+    updateSelect.mockResolvedValue({
+      data: null,
+      error: { code: "23505" },
+    });
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Ce fichier a deja ete depose.",
+    });
+    expect(putExamFile).not.toHaveBeenCalled();
+  });
+
+  it("renvoie une erreur generique pour toute autre erreur de mise a jour", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+    updateSelect.mockResolvedValue({ data: null, error: { code: "XX000" } });
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de remplacer le fichier.",
+    });
+    expect(putExamFile).not.toHaveBeenCalled();
+  });
+
+  it("renvoie une erreur quand la RLS refuse la mise a jour sans erreur Supabase (role non BDE), sans toucher a R2", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+    updateSelect.mockResolvedValue({ data: [], error: null });
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result).toEqual({ ok: false, error: "Epreuve introuvable." });
+    expect(putExamFile).not.toHaveBeenCalled();
+    expect(deleteExamFile).not.toHaveBeenCalled();
+  });
+
+  it("ne supprime pas le fichier qu'on vient de deposer quand le remplacement utilise un contenu identique", async () => {
+    maybeSingle.mockResolvedValue({
+      data: { ...CURRENT_EXAM_FOR_REPLACE, r2_key: `exams/${FILE_HASH}.pdf` },
+      error: null,
+    });
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result.ok).toBe(true);
+    expect(putExamFile).toHaveBeenCalledWith(
+      `exams/${FILE_HASH}.pdf`,
+      expect.anything(),
+    );
+    expect(deleteExamFile).not.toHaveBeenCalled();
+  });
+
+  it("renvoie un avertissement non bloquant quand le quadruplet correspond a une autre epreuve", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+    checkExamDuplicate.mockResolvedValue({
+      kind: "quadruplet",
+      exam: { id: "exam-2", slug: "algo-s1-def67890", title: "Ancienne" },
+    });
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result).toEqual({
+      ok: true,
+      data: { slug: CURRENT_EXAM_FOR_REPLACE.slug },
+      warning: {
+        examId: "exam-2",
+        slug: "algo-s1-def67890",
+        title: "Ancienne",
+      },
+    });
+  });
+
+  it("revient aux anciennes colonnes de fichier quand l'envoi a R2 echoue", async () => {
+    maybeSingle.mockResolvedValue({
+      data: CURRENT_EXAM_FOR_REPLACE,
+      error: null,
+    });
+    putExamFile.mockRejectedValue(new Error("R2 indisponible"));
+
+    const result = await replaceExamFile(EXAM_ID, fileForm());
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de deposer le fichier.",
+    });
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenNthCalledWith(2, {
+      file_hash: CURRENT_EXAM_FOR_REPLACE.file_hash,
+      file_mime_type: CURRENT_EXAM_FOR_REPLACE.file_mime_type,
+      file_size: CURRENT_EXAM_FOR_REPLACE.file_size,
+      r2_key: CURRENT_EXAM_FOR_REPLACE.r2_key,
+    });
+    expect(deleteExamFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteExam", () => {
+  it("rejette un identifiant d'epreuve invalide sans toucher a la base", async () => {
+    const result = await deleteExam("not-a-uuid");
+
+    expect(result).toEqual({ ok: false, error: "Epreuve introuvable." });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("renvoie une erreur sans toucher a R2 quand l'epreuve n'existe pas ou quand la RLS refuse la suppression (role non BDE, sans erreur Supabase dans ce cas)", async () => {
+    deleteMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+    const result = await deleteExam(EXAM_ID);
+
+    expect(result).toEqual({ ok: false, error: "Epreuve introuvable." });
+    expect(deleteExamFile).not.toHaveBeenCalled();
+  });
+
+  it("supprime la ligne puis le fichier R2 correspondant", async () => {
+    deleteMaybeSingle.mockResolvedValue({
+      data: { r2_key: "exams/abc.pdf" },
+      error: null,
+    });
+
+    const result = await deleteExam(EXAM_ID);
+
+    expect(result).toEqual({ ok: true, data: null });
+    expect(deleteEq).toHaveBeenCalledWith("id", EXAM_ID);
+    expect(deleteExamFile).toHaveBeenCalledWith("exams/abc.pdf");
+  });
+
+  it("ne fait pas echouer la suppression quand celle du fichier R2 echoue", async () => {
+    deleteMaybeSingle.mockResolvedValue({
+      data: { r2_key: "exams/abc.pdf" },
+      error: null,
+    });
+    deleteExamFile.mockRejectedValue(new Error("R2 indisponible"));
+
+    const result = await deleteExam(EXAM_ID);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("renvoie une erreur generique quand la suppression en base echoue", async () => {
+    deleteMaybeSingle.mockResolvedValue({
+      data: null,
+      error: { code: "XX000" },
+    });
+
+    const result = await deleteExam(EXAM_ID);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de supprimer l'epreuve.",
+    });
+    expect(deleteExamFile).not.toHaveBeenCalled();
   });
 });
