@@ -4,6 +4,9 @@ import FiliereCard from "./filiere/FiliereCard";
 import HideFilterComponent from "./HideFilterComponent";
 import MatiereFilterWrapper from "./matiere/MatiereFilterWrapper";
 import NiveauCard from "./niveau/NiveauCard";
+import TypeEvaluationFilterWrapper from "./type_evaluation/TypeEvaluationFilterWrapper";
+import SessionFilterWrapper from "./session/SessionFilterWrapper";
+import DateAjoutFilterWrapper from "./data_ajout/DateAjoutFilterWrapper";
 
 const FilterComponents = ({ onClose }: { onClose?: () => void }) => {
   return (
@@ -52,13 +55,13 @@ const FilterComponents = ({ onClose }: { onClose?: () => void }) => {
             <p>Année académique</p>
           </HideFilterComponent>
           <HideFilterComponent label="Type d'évaluation">
-            <p>Type d&apos;évaluation</p>
+            <TypeEvaluationFilterWrapper />
           </HideFilterComponent>
           <HideFilterComponent label="Session">
-            <p>Session</p>
+            <SessionFilterWrapper />
           </HideFilterComponent>
           <HideFilterComponent label="Date d'ajout">
-            <p>Date d&apos;ajout</p>
+            <DateAjoutFilterWrapper />
           </HideFilterComponent>
         </div>
       </div>

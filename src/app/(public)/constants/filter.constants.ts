@@ -11,3 +11,10 @@ export const matiereMock = [
   { niveau: "Réseaux Informatiques", number: 20 },
   { niveau: "Base de données", number: 20 },
 ];
+
+export const dateAjoutMocks = [
+  { date: "À tout moment", number: 30 },
+  { date: "7 derniers jours", number: 20 },
+  { date: "30 derniers jours", number: 20 },
+  { date: "Cette année", number: 20 },
+];
