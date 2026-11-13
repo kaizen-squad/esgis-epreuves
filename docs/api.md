@@ -67,3 +67,23 @@ Combine `getFieldById` et `getExams` pour la page filière. Retourne `null` si l
 ### `getExamBySlug(slug: string): Promise<Exam | null>`
 
 Lecture d'une épreuve par son slug, pour la page détail. Retourne `null` si absente : la page appelle `notFound()`. Toute autre erreur Supabase remonte en exception.
+
+### `getExamR2Key(slug: string): Promise<string | null>`
+
+Lit uniquement la clé R2 (`r2_key`) d'une épreuve par son slug, pour la route de prévisualisation/téléchargement (`/api/exams/[slug]`, #50). Retourne `null` si absente : la route répond alors `404`. Toute autre erreur Supabase remonte en exception.
+
+## `src/lib/r2/presign.ts`
+
+### `contentDisposition(download: boolean, filename: string): string`
+
+Construit l'en-tête `Content-Disposition` : `inline` pour une prévisualisation, `attachment` pour un téléchargement. `filename` est toujours bâti côté appelant à partir du slug de l'épreuve (jamais du titre), qui ne contient aucun caractère à risque pour cet en-tête.
+
+### `getPresignedExamUrl(r2Key: string, filename: string, download: boolean): Promise<string>`
+
+Génère une URL R2 présignée (valide 5 minutes, usage immédiat par la redirection qui suit) pour le PDF à `r2Key`, avec `Content-Type` fixé à `application/pdf` et `Content-Disposition` selon `contentDisposition`. Le bucket R2 reste privé : c'est la seule façon d'accéder au fichier.
+
+## `src/app/api/exams/[slug]/route.ts`
+
+### `GET /api/exams/[slug]`
+
+Route publique (épreuves lisibles sans authentification, comme le catalogue) qui redirige (307) vers une URL R2 présignée. `?dl=1` pour un téléchargement (pièce jointe) ; sans ce paramètre, prévisualisation en ligne. Répond `404` si le slug ne correspond à aucune épreuve.
