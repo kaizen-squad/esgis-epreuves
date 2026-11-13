@@ -72,6 +72,14 @@ Type de sortie de `examFiltersSchema` (`z.output<typeof examFiltersSchema>`), ap
 
 Force `fieldId` dans les filtres fournis, en priorité sur tout `fieldId` qu'ils contiendraient déjà. Appelé en interne par `getFieldExams` ; la page filière n'a pas à l'appeler elle-même.
 
+### `slugify(title: string): string`
+
+Convertit un titre en slug ascii (accents retirés, minuscule, espaces et ponctuation en tirets), suffixé d'un identifiant aléatoire de 8 caractères. Le suffixe garantit l'unicité sans requête préalable : deux dépôts du même titre produisent deux slugs distincts, jamais de collision à gérer côté appelant.
+
+### `examUploadSchema`
+
+Schéma Zod du dépôt d'une épreuve (`uploadExam`, #18) : `title`, `academicYear` (format `AAAA-AAAA`), `session`, `examType`, `fieldId`/`levelId`/`subjectId` (uuid requis), `optionId` (uuid optionnel), `file`. `file` doit être une instance de `File` non vide, de type MIME `application/pdf` et d'au plus 900 Ko (marge sous la limite par défaut de 1 Mo d'une Server Action Next.js). Contrairement à `examFiltersSchema`, ce schéma rejette (pas de `.catch()`) : un champ invalide doit bloquer l'envoi, jamais retomber sur une valeur par défaut silencieuse. Un fichier entre 900 Ko et ~1 Mo ne déclenche jamais le message de taille : Next refuse la requête avant d'exécuter l'action. L'écran doit donc aussi contrôler la taille côté client.
+
 ## `src/features/exams/queries.ts`
 
 ### `getExams(rawFilters: ExamFilters): Promise<ExamListResult>`
@@ -94,6 +102,12 @@ Lecture d'une épreuve par son slug, pour la page détail. Retourne `null` si ab
 
 Lit uniquement la clé R2 (`r2_key`) d'une épreuve par son slug, pour la route de prévisualisation/téléchargement (`/api/exams/[slug]`, #50). Retourne `null` si absente : la route répond alors `404`. Toute autre erreur Supabase remonte en exception.
 
+## `src/features/exams/actions.ts`
+
+### `uploadExam(formData: FormData): Promise<ActionResult<{ slug: string }>>`
+
+Import `import { uploadExam } from "@/features/exams/actions"`. Dépôt d'une épreuve par le BDE (#18) : valide `formData` avec `examUploadSchema`, vérifie les octets de signature du fichier (`%PDF-`, le type MIME déclaré par le navigateur n'étant qu'une indication côté client) puis le hache (SHA-256) et vérifie ce hash contre `exams.file_hash`. Si le hash existe déjà, renvoie `{ ok: false, error, duplicate: { examId, slug, title } }` (voir conventions) sans aucun effet de bord. Sinon, insère l'épreuve (`slug` généré par `slugify(title)`, clé R2 `exams/<hash>.pdf`) puis dépose seulement ensuite le PDF sur R2. Ordre volontaire : l'insertion est la seule étape protégée par la RLS (`exams_write_bde`), donc la seule vraie vérification d'autorisation de l'action (aucune vérification de rôle dupliquée en JS) ; la faire passer avant R2 évite qu'une requête non autorisée (anonyme, ou authentifiée mais non-BDE) ne déclenche un dépôt R2 qui serait de toute façon rejeté ensuite par la base. Si le dépôt R2 échoue après l'insertion, la ligne est supprimée (jamais d'épreuve en base sans son fichier) et l'action renvoie une erreur générique. Toute erreur Supabase inattendue (lecture du hash, insertion hors doublon) est journalisée côté serveur (`console.error`) et renvoyée au client sous un message générique, jamais telle quelle. Détection de doublon limitée au hash exact pour l'instant ; #19 la remplacera par une détection par quadruplet (titre/matière/niveau/session) via une fonction partagée, aussi réutilisée par #55/#21/#56. Une violation d'unicité à l'insertion (course entre deux dépôts simultanés du même fichier, non éliminée par le contrôle préalable) retombe sur le même message de doublon générique, sans les métadonnées de l'épreuve existante. Signature `(formData)` sans `prevState` (contrairement à `login`) : utilisable en impératif (`startTransition`), pas directement avec `useActionState` ; à revoir avec le front si l'écran d'upload (#55) en a besoin.
+
 ## `src/lib/r2/presign.ts`
 
 ### `contentDisposition(download: boolean, filename: string): string`
@@ -103,6 +117,12 @@ Construit l'en-tête `Content-Disposition` : `inline` pour une prévisualisation
 ### `getPresignedExamUrl(r2Key: string, filename: string, download: boolean): Promise<string>`
 
 Génère une URL R2 présignée (valide 5 minutes, usage immédiat par la redirection qui suit) pour le PDF à `r2Key`, avec `Content-Type` fixé à `application/pdf` et `Content-Disposition` selon `contentDisposition`. Le bucket R2 reste privé : c'est la seule façon d'accéder au fichier.
+
+## `src/lib/r2/upload.ts`
+
+### `putExamFile(r2Key: string, body: Buffer): Promise<void>`
+
+Dépose un PDF sur R2 sous la clé fournie par l'appelant (`uploadExam`, #18, qui la calcule à partir du hash du fichier), avec `Content-Type` fixé à `application/pdf`. Ne vérifie rien (taille, type) : ces contrôles sont déjà faits par `examUploadSchema` avant l'appel.
 
 ## `src/app/api/exams/[slug]/route.ts`
 

@@ -11,6 +11,15 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
 const MAX_SEARCH_LENGTH = 100;
 
+const PDF_MIME_TYPE = "application/pdf";
+/**
+ * Marge sous la limite par défaut (1 Mo) d'une Server Action Next.js : le reste du formulaire
+ * doit aussi tenir dans ce corps. Un fichier entre cette limite et ~1 Mo ne déclenche jamais
+ * ce message : Next refuse la requête avant d'exécuter `uploadExam`. Le front doit donc aussi
+ * contrôler la taille côté client pour afficher un message clair dans cette zone.
+ */
+const MAX_FILE_SIZE_BYTES = 900 * 1024;
+
 /**
  * Decoupe le terme de recherche en mots, casse/accents aplatis pour s'aligner sur `search_text`
  * (unaccent + lower, calcule en base par la vue `exams_catalog`). Plusieurs mots filtrent en ET
@@ -68,3 +77,48 @@ export function fixedFieldFilters(
 ): ExamFilters {
   return { ...rawFilters, fieldId };
 }
+
+/**
+ * Slug ascii derive du titre, suffixe d'un identifiant court (#18) pour garantir l'unicite
+ * sans requete prealable : deux depots du meme titre produisent deux slugs distincts.
+ */
+export function slugify(title: string): string {
+  const base = title
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/œ/g, "oe")
+    .replace(/æ/g, "ae")
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+/** Validation du depot d'une epreuve (#18) : type MIME et taille du fichier, referentiels requis. */
+export const examUploadSchema = z.object({
+  title: z.string().trim().min(3).max(200),
+  academicYear: z
+    .string()
+    .regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA."),
+  session: z.enum(EXAM_SESSIONS),
+  examType: z.enum(EXAM_TYPES),
+  fieldId: z.uuid(),
+  levelId: z.uuid(),
+  subjectId: z.uuid(),
+  optionId: z.uuid().optional(),
+  file: z
+    .instanceof(File, { message: "Fichier manquant." })
+    .refine((file) => file.size > 0, "Le fichier est vide.")
+    .refine(
+      (file) => file.type === PDF_MIME_TYPE,
+      "Le fichier doit etre un PDF.",
+    )
+    .refine(
+      (file) => file.size <= MAX_FILE_SIZE_BYTES,
+      `Le fichier depasse la limite de ${Math.floor(MAX_FILE_SIZE_BYTES / 1024)} Ko.`,
+    ),
+});
+
+export type ExamUploadParsed = z.output<typeof examUploadSchema>;
