@@ -7,10 +7,8 @@ import ImageHandler from "../../components/ImageHandler";
 const WelcomeSection = () => {
   return (
     <div className="mb-16 w-full text-center">
-      <h1 className="text-text-title mb-6 font-medium">
-        Bienvenue sur Alexandria
-      </h1>
-      <h2 className="text-text-secondary mb-6 text-3xl leading-10 font-semibold md:text-5xl md:leading-14 lg:text-7xl lg:leading-18">
+      <h1 className="sub-title">Bienvenue sur Alexandria</h1>
+      <h2 className="head-title">
         Tes révisions <br className="hidden md:block" />
         commencent ici...
       </h2>

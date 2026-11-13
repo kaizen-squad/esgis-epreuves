@@ -15,3 +15,23 @@
   --color-text-title: #0c0407;
   --color-text-paragraph: #4c4c4c;
 }
+
+@layer components {
+  .sub-title {
+    @apply text-text-title mb-6 font-medium;
+  }
+
+  .head-title {
+    @apply text-text-secondary mb-6 text-3xl leading-10 font-semibold md:text-5xl md:leading-14 lg:text-7xl lg:leading-18;
+  }
+
+  .section-title {
+    @apply text-text-secondary mb-1 text-3xl font-semibold;
+  }
+}
+
+@layer base {
+  p {
+    margin-bottom: 28px;
+  }
+}

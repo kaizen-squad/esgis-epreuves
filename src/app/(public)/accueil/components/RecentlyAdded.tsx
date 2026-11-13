@@ -7,9 +7,7 @@ import { epreuvesMock } from "../../constants/epreuve.constants";
 const RecentlyAdded = () => {
   return (
     <div className="mx-auto mb-16 max-w-7xl">
-      <h3 className="text-text-secondary mb-1 text-3xl font-semibold">
-        Récemment ajoutées...
-      </h3>
+      <h3 className="section-title">Récemment ajoutées...</h3>
       <Slider>
         {epreuvesMock.map((epreuve) => (
           <div

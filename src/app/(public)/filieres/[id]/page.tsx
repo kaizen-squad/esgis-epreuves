@@ -4,15 +4,21 @@ import { useParams } from "next/navigation";
 import Research from "../../accueil/components/Research";
 import ImageHandler from "../../components/ImageHandler";
 import FiliereCatalogueSection from "../components/FiliereCatalogueSection";
+import PublicLayout from "../../components/PublicLayout";
+import CTACatalogue from "../../accueil/components/CTACatalogue";
 
 const FilierePage = () => {
   const { id } = useParams<{ id: string }>();
 
   return (
-    <div>
+    <PublicLayout>
       <div>
-        <h1>Découvrez les épreuves de la {id}</h1>
-        <p>
+        <h1 className="head-title text-center">
+          Découvrez les
+          <br /> épreuves de la{" "}
+          <span className="text-red-600 uppercase underline">{id}</span>
+        </h1>
+        <p className="text-center">
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en
           un instant.
           <br />
@@ -26,7 +32,8 @@ const FilierePage = () => {
         image_alt="Filière image en-tête"
       />
       <FiliereCatalogueSection />
-    </div>
+      <CTACatalogue />
+    </PublicLayout>
   );
 };
 
