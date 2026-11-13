@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { buildContentSecurityPolicy } from "./src/lib/security-headers";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -7,6 +8,13 @@ const securityHeaders = [
   {
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
+  },
+  {
+    key: "Content-Security-Policy",
+    value: buildContentSecurityPolicy({
+      r2AccountId: process.env.R2_ACCOUNT_ID ?? "",
+      isDev: process.env.NODE_ENV === "development",
+    }),
   },
 ];
 
