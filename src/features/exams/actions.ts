@@ -16,6 +16,7 @@ import {
   examFileReplaceSchema,
   examMetadataSchema,
   examUploadSchema,
+  MAX_BATCH_FILES,
   slugify,
 } from "./schemas";
 
@@ -447,4 +448,312 @@ export async function deleteExam(examId: string): Promise<ActionResult<null>> {
   }
 
   return actionOk(null);
+}
+
+const BATCH_FIELD_NAMES = [
+  "title",
+  "academicYear",
+  "session",
+  "examType",
+  "fieldId",
+  "levelId",
+  "subjectId",
+  "optionId",
+] as const;
+
+export type ExamBatchEntryResult =
+  | {
+      file: string;
+      status: "imported";
+      slug: string;
+      warning?: { examId: string; slug: string; title: string };
+    }
+  | {
+      file: string;
+      status: "duplicate";
+      message: string;
+      existing?: { examId: string; slug: string; title: string };
+    }
+  | {
+      file: string;
+      status: "error";
+      message: string;
+      fieldErrors?: Record<string, string[]>;
+    };
+
+export type ExamBatchSummary = {
+  total: number;
+  imported: number;
+  warnings: number;
+  duplicates: number;
+  errors: number;
+};
+
+export type ExamBatchReport = {
+  entries: ExamBatchEntryResult[];
+  summary: ExamBatchSummary;
+};
+
+function summarizeBatch(entries: ExamBatchEntryResult[]): ExamBatchSummary {
+  return {
+    total: entries.length,
+    imported: entries.filter((e) => e.status === "imported").length,
+    warnings: entries.filter(
+      (e) => e.status === "imported" && e.warning !== undefined,
+    ).length,
+    duplicates: entries.filter((e) => e.status === "duplicate").length,
+    errors: entries.filter((e) => e.status === "error").length,
+  };
+}
+
+/**
+ * Ajout en lot depuis l'espace BDE (#56) : plusieurs fichiers d'un coup, chacun avec ses propres
+ * metadonnees completes (meme contrat que `uploadExam`, #18 ; jamais de metadonnees partagees pour
+ * tout le lot, decision prise en brainstorming). Boucle cote serveur, jamais de patron observateur
+ * ni de file d'attente (exclu explicitement par le ticket), un resultat par fichier.
+ *
+ * `FormData` attendu : un champ repete `files` (un par fichier, dans l'ordre de depot) et un champ
+ * repete par metadonnee (`title`, `academicYear`, `session`, `examType`, `fieldId`, `levelId`,
+ * `subjectId`, `optionId`), chacun avec exactement autant de valeurs que `files`, dans le meme
+ * ordre (le fichier et sa metadonnee partagent le meme index). `optionId` attend une chaine vide
+ * (jamais une valeur absente) pour un fichier sans option, afin que l'alignement par index reste
+ * valable pour tous les fichiers du lot. Limite a `MAX_BATCH_FILES` fichiers (voir sa definition
+ * dans `schemas.ts`, liee au corps maximal d'une requete sur la plateforme d'hebergement).
+ *
+ * Reutilise `checkExamDuplicate` (#19) telle quelle, fichier par fichier : meme logique
+ * bloquante (hash) / avertissement non bloquant (quadruplet) que `uploadExam`, avec la meme forme
+ * structuree (`existing`/`warning` : `{ examId, slug, title }`), jamais un simple message a
+ * analyser cote ecran. Deduplique aussi entre deux fichiers du MEME lot (une `Map` en memoire pour
+ * le hash, indexee par la position du fichier dans le lot plutot que son nom : deux fichiers du
+ * lot peuvent porter le meme nom) : sans ca, deux fichiers identiques soumis ensemble ne se
+ * detecteraient jamais l'un l'autre, `checkExamDuplicate` n'interrogeant que ce qui est deja en
+ * base. Un avertissement de quadruplet entre deux fichiers du meme lot n'est construit qu'une fois
+ * le premier reellement insere (`insertedByQuadruplet`) : un fichier du lot qui a echoue n'a pas
+ * d'epreuve existante vers laquelle pointer.
+ *
+ * Donnees invalides par fichier renvoient `fieldErrors` (meme convention que `uploadExam`). Une
+ * collision d'unicite a l'insertion (course entre deux depots du meme fichier) distingue la
+ * collision sur le hash (classee `"duplicate"`) de celle, bien plus rare, sur le slug (classee
+ * `"error"`), meme principe que `runSeed` (#21).
+ *
+ * Une ligne en erreur ou en doublon n'interrompt jamais les fichiers suivants : chacun est
+ * independant, le rapport final les distingue tous. L'action renvoie toujours
+ * `{ ok: true, data: { entries, summary } }` tant que la
+ * requete globale est valide (au moins un fichier, au plus `MAX_BATCH_FILES`, tableaux alignes) :
+ * un lot entierement en erreur n'est pas un echec de l'action, c'est un rapport dont chaque entree
+ * vaut `"error"`.
+ */
+export async function uploadExamsBatch(
+  formData: FormData,
+): Promise<ActionResult<ExamBatchReport>> {
+  const rawFiles = formData.getAll("files");
+  if (rawFiles.length === 0) {
+    return actionError("Aucun fichier fourni.");
+  }
+  if (rawFiles.length > MAX_BATCH_FILES) {
+    return actionError(`Un lot est limite a ${MAX_BATCH_FILES} fichiers.`);
+  }
+  if (!rawFiles.every((value): value is File => value instanceof File)) {
+    return actionError("Donnees invalides.");
+  }
+  const files = rawFiles;
+
+  const fields = {} as Record<(typeof BATCH_FIELD_NAMES)[number], string[]>;
+  for (const name of BATCH_FIELD_NAMES) {
+    const values = formData.getAll(name);
+    if (
+      values.length !== files.length ||
+      !values.every((value): value is string => typeof value === "string")
+    ) {
+      return actionError("Donnees invalides.", {
+        [name]: [
+          `Attendu ${files.length} valeur(s) pour "${name}" (autant que de fichiers), recu ${values.length}.`,
+        ],
+      });
+    }
+    fields[name] = values;
+  }
+
+  const supabase = await createClient();
+  const entries: ExamBatchEntryResult[] = [];
+  // Index (pas le nom du fichier, deux fichiers du lot peuvent porter le meme nom) du premier
+  // fichier du lot vu avec ce hash/quadruplet. Marque avant meme l'insertion (comme `runSeed`,
+  // #21) : deux fichiers identiques dans le meme lot doivent se detecter l'un l'autre meme si le
+  // premier echoue ensuite a l'insertion ou au depot R2.
+  const seenHashes = new Map<string, number>();
+  // Epreuve reellement inseree pour un quadruplet donne, pour batir l'avertissement structure
+  // d'un fichier suivant du meme lot qui partage ce quadruplet (jamais rempli avant l'insertion
+  // reussie : un fichier du lot qui a echoue n'a pas d'epreuve existante vers laquelle pointer).
+  const insertedByQuadruplet = new Map<
+    string,
+    { examId: string; slug: string; title: string }
+  >();
+
+  for (const [i, file] of files.entries()) {
+    const label = file.name || `fichier ${i + 1}`;
+
+    const parsed = examUploadSchema.safeParse({
+      title: fields.title[i],
+      academicYear: fields.academicYear[i],
+      session: fields.session[i],
+      examType: fields.examType[i],
+      fieldId: fields.fieldId[i],
+      levelId: fields.levelId[i],
+      subjectId: fields.subjectId[i],
+      optionId: fields.optionId[i] || undefined,
+      file,
+    });
+    if (!parsed.success) {
+      entries.push({
+        file: label,
+        status: "error",
+        message: "Donnees invalides.",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+      });
+      continue;
+    }
+    const exam = parsed.data;
+
+    const buffer = Buffer.from(await exam.file.arrayBuffer());
+    if (buffer.subarray(0, 5).toString("latin1") !== PDF_MAGIC_BYTES) {
+      entries.push({
+        file: label,
+        status: "error",
+        message: "Le fichier n'est pas un PDF valide.",
+      });
+      continue;
+    }
+    const fileHash = createHash("sha256").update(buffer).digest("hex");
+    const quadrupletKey = `${exam.subjectId}:${exam.academicYear}:${exam.session}:${exam.examType}`;
+
+    const seenHashIndex = seenHashes.get(fileHash);
+    if (seenHashIndex !== undefined) {
+      entries.push({
+        file: label,
+        status: "duplicate",
+        message: `Fichier identique au fichier n°${seenHashIndex + 1} de ce lot (a redeposer seul si celui-ci a echoue).`,
+      });
+      continue;
+    }
+
+    let duplicate;
+    try {
+      duplicate = await checkExamDuplicate(fileHash, {
+        subjectId: exam.subjectId,
+        academicYear: exam.academicYear,
+        session: exam.session,
+        examType: exam.examType,
+      });
+    } catch (error) {
+      console.error("uploadExamsBatch: verification de doublon", error);
+      entries.push({
+        file: label,
+        status: "error",
+        message: "Impossible de verifier les doublons.",
+      });
+      continue;
+    }
+    if (duplicate.kind === "hash") {
+      entries.push({
+        file: label,
+        status: "duplicate",
+        message: `Ce fichier a deja ete depose (epreuve "${duplicate.exam.slug}").`,
+        existing: {
+          examId: duplicate.exam.id,
+          slug: duplicate.exam.slug,
+          title: duplicate.exam.title,
+        },
+      });
+      continue;
+    }
+
+    const warning =
+      duplicate.kind === "quadruplet"
+        ? {
+            examId: duplicate.exam.id,
+            slug: duplicate.exam.slug,
+            title: duplicate.exam.title,
+          }
+        : insertedByQuadruplet.get(quadrupletKey);
+
+    seenHashes.set(fileHash, i);
+
+    const slug = slugify(exam.title);
+    const r2Key = `exams/${fileHash}.pdf`;
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("exams")
+      .insert({
+        title: exam.title,
+        slug,
+        academic_year: exam.academicYear,
+        session: exam.session,
+        exam_type: exam.examType,
+        field_id: exam.fieldId,
+        level_id: exam.levelId,
+        subject_id: exam.subjectId,
+        option_id: exam.optionId ?? null,
+        file_hash: fileHash,
+        file_mime_type: exam.file.type,
+        file_size: exam.file.size,
+        r2_key: r2Key,
+      })
+      .select("id")
+      .single();
+    if (insertError) {
+      console.error("uploadExamsBatch: insertion de l'epreuve", insertError);
+      // Course entre deux depots du meme fichier (rare, le controle prealable ne l'elimine pas) :
+      // distingue la collision sur `file_hash` (vraiment un doublon) de celle, bien plus rare,
+      // sur `slug` (meme principe que `runSeed`, #21), pour que `summary.duplicates` reste fiable.
+      if (insertError.code === "23505") {
+        const isHashCollision = insertError.message?.includes(
+          "exams_file_hash_key",
+        );
+        entries.push(
+          isHashCollision
+            ? {
+                file: label,
+                status: "duplicate",
+                message:
+                  "Ce fichier a deja ete depose (course avec un autre depot).",
+              }
+            : {
+                file: label,
+                status: "error",
+                message:
+                  "Collision de slug a l'insertion (tres rare), reessayer ce fichier.",
+              },
+        );
+        continue;
+      }
+      entries.push({
+        file: label,
+        status: "error",
+        message: "Impossible d'enregistrer l'epreuve.",
+      });
+      continue;
+    }
+
+    try {
+      await putExamFile(r2Key, buffer);
+    } catch (error) {
+      console.error("uploadExamsBatch: envoi du fichier vers R2", error);
+      await supabase.from("exams").delete().eq("id", inserted.id);
+      entries.push({
+        file: label,
+        status: "error",
+        message: "Impossible de deposer le fichier.",
+      });
+      continue;
+    }
+
+    insertedByQuadruplet.set(quadrupletKey, {
+      examId: inserted.id,
+      slug,
+      title: exam.title,
+    });
+    entries.push({ file: label, status: "imported", slug, warning });
+  }
+
+  return actionOk({ entries, summary: summarizeBatch(entries) });
 }
