@@ -37,8 +37,14 @@ vi.mock("./duplicate", () => ({
   checkExamDuplicate: (...args: unknown[]) => checkExamDuplicate(...args),
 }));
 
-const { uploadExam, updateExamMetadata, replaceExamFile, deleteExam } =
-  await import("./actions");
+const {
+  uploadExam,
+  updateExamMetadata,
+  replaceExamFile,
+  deleteExam,
+  uploadExamsBatch,
+} = await import("./actions");
+const { MAX_BATCH_FILES } = await import("./schemas");
 
 const UUID = "11111111-1111-4111-a111-111111111111";
 const OPTION_UUID = "22222222-2222-4222-a222-222222222222";
@@ -65,6 +71,57 @@ function uploadForm(overrides: Record<string, string | File> = {}) {
 }
 
 const EXAM_ID = "33333333-3333-4333-a333-333333333333";
+
+/** Un subjectId distinct par defaut pour chaque entree d'un lot (#56) : evite que les entrees
+ * par defaut d'un `batchForm` partagent le meme quadruplet matiere/annee/session/type. */
+const BATCH_SUBJECT_UUIDS = [
+  "44444444-4444-4444-a444-444444444441",
+  "44444444-4444-4444-a444-444444444442",
+  "44444444-4444-4444-a444-444444444443",
+  "44444444-4444-4444-a444-444444444444",
+  "44444444-4444-4444-a444-444444444445",
+];
+
+function batchForm(
+  entries: Array<{
+    title?: string;
+    academicYear?: string;
+    session?: string;
+    examType?: string;
+    fieldId?: string;
+    levelId?: string;
+    subjectId?: string;
+    optionId?: string;
+    file?: File;
+    /** Contenu du fichier par defaut : deux entrees avec le meme `content` produisent le meme hash. */
+    content?: string | number;
+  }>,
+) {
+  const formData = new FormData();
+  entries.forEach((entry, i) => {
+    const file =
+      entry.file ??
+      new File([`%PDF-1.4 lot-${entry.content ?? i}`], `exam-${i}.pdf`, {
+        type: "application/pdf",
+      });
+    formData.append("files", file);
+    formData.append("title", entry.title ?? `Epreuve ${i}`);
+    formData.append("academicYear", entry.academicYear ?? "2024-2025");
+    formData.append("session", entry.session ?? "Session Normale");
+    formData.append("examType", entry.examType ?? "Contrôle Terminal");
+    formData.append("fieldId", entry.fieldId ?? UUID);
+    formData.append("levelId", entry.levelId ?? UUID);
+    formData.append(
+      "subjectId",
+      entry.subjectId ??
+        BATCH_SUBJECT_UUIDS[i] ??
+        BATCH_SUBJECT_UUIDS[0] ??
+        UUID,
+    );
+    formData.append("optionId", entry.optionId ?? "");
+  });
+  return formData;
+}
 
 beforeEach(() => {
   checkExamDuplicate.mockReset().mockResolvedValue({ kind: "none" });
@@ -717,5 +774,311 @@ describe("deleteExam", () => {
       error: "Impossible de supprimer l'epreuve.",
     });
     expect(deleteExamFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("uploadExamsBatch", () => {
+  it("rejette un lot sans fichier", async () => {
+    const result = await uploadExamsBatch(batchForm([]));
+
+    expect(result).toEqual({ ok: false, error: "Aucun fichier fourni." });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it(`rejette un lot au-dela de ${MAX_BATCH_FILES} fichiers`, async () => {
+    const entries = Array.from({ length: MAX_BATCH_FILES + 1 }, () => ({}));
+
+    const result = await uploadExamsBatch(batchForm(entries));
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain(String(MAX_BATCH_FILES));
+    }
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("rejette un lot dont les tableaux de metadonnees ne sont pas alignes avec les fichiers", async () => {
+    const formData = batchForm([{}, {}]);
+    // Retire une des deux valeurs de "title" : deux fichiers, un seul titre.
+    const titles = formData.getAll("title");
+    formData.delete("title");
+    formData.append("title", titles[0] as string);
+
+    const result = await uploadExamsBatch(formData);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok && "fieldErrors" in result) {
+      expect(result.error).toBe("Donnees invalides.");
+      expect(result.fieldErrors).toHaveProperty("title");
+    } else {
+      expect.unreachable("fieldErrors attendu sur le resultat");
+    }
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("traite chaque fichier independamment et renvoie un resultat par fichier", async () => {
+    const result = await uploadExamsBatch(batchForm([{}, {}]));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries).toHaveLength(2);
+    expect(result.data.entries[0]).toMatchObject({ status: "imported" });
+    expect(result.data.entries[1]).toMatchObject({ status: "imported" });
+    expect(result.data.summary).toEqual({
+      total: 2,
+      imported: 2,
+      warnings: 0,
+      duplicates: 0,
+      errors: 0,
+    });
+    expect(insert).toHaveBeenCalledTimes(2);
+    expect(putExamFile).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejette une entree avec des donnees invalides sans interrompre les fichiers suivants du lot", async () => {
+    const result = await uploadExamsBatch(
+      batchForm([{ academicYear: "2024" }, {}]),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({
+      status: "error",
+      message: "Donnees invalides.",
+    });
+    expect(result.data.entries[1]).toMatchObject({ status: "imported" });
+    expect(insert).toHaveBeenCalledTimes(1);
+  });
+
+  it("detecte un doublon de hash entre deux fichiers du meme lot sans bloquer le premier", async () => {
+    const result = await uploadExamsBatch(
+      batchForm([{ content: "memefichier" }, { content: "memefichier" }]),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({ status: "imported" });
+    expect(result.data.entries[1]?.status).toBe("duplicate");
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(putExamFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("bloque un fichier dont le hash existe deja en base sans bloquer les autres fichiers du lot", async () => {
+    checkExamDuplicate.mockResolvedValueOnce({
+      kind: "hash",
+      exam: {
+        id: "exam-1",
+        slug: "algo-s1-abc12345",
+        title: "Algorithmique S1",
+      },
+    });
+
+    const result = await uploadExamsBatch(batchForm([{}, {}]));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const duplicateEntry = result.data.entries[0];
+    expect(duplicateEntry?.status).toBe("duplicate");
+    expect(
+      duplicateEntry?.status === "duplicate"
+        ? duplicateEntry.existing
+        : undefined,
+    ).toEqual({
+      examId: "exam-1",
+      slug: "algo-s1-abc12345",
+      title: "Algorithmique S1",
+    });
+    expect(result.data.entries[1]).toMatchObject({ status: "imported" });
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(putExamFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("reclasse une collision d'unicite sur le hash a l'insertion comme doublon, sans toucher a R2", async () => {
+    single.mockResolvedValueOnce({
+      data: null,
+      error: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "exams_file_hash_key"',
+      },
+    });
+
+    const result = await uploadExamsBatch(batchForm([{}]));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({ status: "duplicate" });
+    expect(result.data.summary.duplicates).toBe(1);
+    expect(putExamFile).not.toHaveBeenCalled();
+  });
+
+  it("n'interrompt pas le lot quand une insertion est refusee par la RLS (role non BDE), sans toucher a R2", async () => {
+    single
+      .mockReset()
+      .mockResolvedValueOnce({ data: null, error: { code: "42501" } })
+      .mockResolvedValueOnce({ data: { id: "exam-2" }, error: null });
+
+    const result = await uploadExamsBatch(batchForm([{}, {}]));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({
+      status: "error",
+      message: "Impossible d'enregistrer l'epreuve.",
+    });
+    expect(result.data.entries[1]).toMatchObject({ status: "imported" });
+    expect(putExamFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejette un fichier dont le contenu n'est pas un PDF malgre un type MIME declare correct, sans bloquer les autres fichiers du lot", async () => {
+    const result = await uploadExamsBatch(
+      batchForm([
+        {
+          file: new File(["PNG-fake"], "exam-0.pdf", {
+            type: "application/pdf",
+          }),
+        },
+        {},
+      ]),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({
+      status: "error",
+      message: "Le fichier n'est pas un PDF valide.",
+    });
+    expect(result.data.entries[1]).toMatchObject({ status: "imported" });
+    expect(insert).toHaveBeenCalledTimes(1);
+  });
+
+  it("poursuit le lot quand la verification de doublon echoue pour un fichier", async () => {
+    checkExamDuplicate.mockRejectedValueOnce(
+      new Error("Supabase indisponible"),
+    );
+
+    const result = await uploadExamsBatch(batchForm([{}, {}]));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({
+      status: "error",
+      message: "Impossible de verifier les doublons.",
+    });
+    expect(result.data.entries[1]).toMatchObject({ status: "imported" });
+  });
+
+  it("convertit une option vide en absence d'option a l'insertion, au bon index", async () => {
+    await uploadExamsBatch(
+      batchForm([{ optionId: "" }, { optionId: OPTION_UUID }]),
+    );
+
+    expect(insert).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ option_id: null }),
+    );
+    expect(insert).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ option_id: OPTION_UUID }),
+    );
+  });
+
+  it("insere malgre un quadruplet identique a une epreuve existante, avec un avertissement non bloquant", async () => {
+    checkExamDuplicate.mockResolvedValueOnce({
+      kind: "quadruplet",
+      exam: {
+        id: "exam-1",
+        slug: "algo-s1-abc12345",
+        title: "Algorithmique S1",
+      },
+    });
+
+    const result = await uploadExamsBatch(batchForm([{}]));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const entry = result.data.entries[0];
+    expect(entry?.status).toBe("imported");
+    expect(
+      entry?.status === "imported" ? entry.warning : undefined,
+    ).toBeDefined();
+    expect(result.data.summary.warnings).toBe(1);
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(putExamFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("avertit avec les donnees de l'epreuve du lot deja inseree quand un fichier suivant partage son quadruplet", async () => {
+    single
+      .mockReset()
+      .mockResolvedValueOnce({ data: { id: "exam-1" }, error: null })
+      .mockResolvedValueOnce({ data: { id: "exam-2" }, error: null });
+
+    const result = await uploadExamsBatch(
+      batchForm([
+        { subjectId: BATCH_SUBJECT_UUIDS[0], title: "Algo A" },
+        { subjectId: BATCH_SUBJECT_UUIDS[0], title: "Algo B" },
+      ]),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({ status: "imported" });
+    expect(
+      result.data.entries[0]?.status === "imported"
+        ? result.data.entries[0].warning
+        : undefined,
+    ).toBeUndefined();
+    const second = result.data.entries[1];
+    expect(second?.status).toBe("imported");
+    expect(second?.status === "imported" ? second.warning : undefined).toEqual({
+      examId: "exam-1",
+      slug: expect.stringContaining("algo-a"),
+      title: "Algo A",
+    });
+  });
+
+  it("ne construit aucun avertissement de quadruplet quand le fichier du lot qui le partage a echoue a l'insertion", async () => {
+    single
+      .mockReset()
+      .mockResolvedValueOnce({ data: null, error: { code: "42501" } })
+      .mockResolvedValueOnce({ data: { id: "exam-2" }, error: null });
+
+    const result = await uploadExamsBatch(
+      batchForm([
+        { subjectId: BATCH_SUBJECT_UUIDS[0] },
+        { subjectId: BATCH_SUBJECT_UUIDS[0] },
+      ]),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const second = result.data.entries[1];
+    expect(second?.status).toBe("imported");
+    expect(
+      second?.status === "imported" ? second.warning : undefined,
+    ).toBeUndefined();
+  });
+
+  it("retire la ligne inseree quand le depot R2 echoue pour un fichier, sans interrompre les fichiers suivants", async () => {
+    single
+      .mockReset()
+      .mockResolvedValueOnce({ data: { id: "exam-1" }, error: null })
+      .mockResolvedValueOnce({ data: { id: "exam-2" }, error: null });
+    putExamFile
+      .mockReset()
+      .mockRejectedValueOnce(new Error("R2 indisponible"))
+      .mockResolvedValueOnce(undefined);
+
+    const result = await uploadExamsBatch(batchForm([{}, {}]));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({
+      status: "error",
+      message: "Impossible de deposer le fichier.",
+    });
+    expect(result.data.entries[1]).toMatchObject({ status: "imported" });
+    expect(del).toHaveBeenCalledTimes(1);
+    expect(deleteEq).toHaveBeenCalledWith("id", "exam-1");
   });
 });

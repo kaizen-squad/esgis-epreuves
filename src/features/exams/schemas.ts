@@ -17,15 +17,31 @@ const MAX_SEARCH_LENGTH = 100;
 
 const PDF_MIME_TYPE = "application/pdf";
 /**
- * Marge sous la limite par défaut (1 Mo) d'une Server Action Next.js : le reste du formulaire
- * doit aussi tenir dans ce corps. Un fichier entre cette limite et ~1 Mo ne déclenche jamais
- * ce message : Next refuse la requête avant d'exécuter `uploadExam`. Le front doit donc aussi
- * contrôler la taille côté client pour afficher un message clair dans cette zone.
+ * Taille maximale d'un fichier (#18). Depuis #56, le corps maximal d'une Server Action de l'app
+ * est relevé à 4 Mo (`experimental.serverActions.bodySizeLimit`, `next.config.ts`) pour que
+ * `uploadExamsBatch` accepte plusieurs fichiers d'un coup : cette limite n'est donc plus une marge
+ * sous le défaut Next (1 Mo, dépassé), mais directement le budget par fichier, choisi pour que
+ * `MAX_BATCH_FILES` fichiers à cette taille restent sous les 4,5 Mo imposés par la plateforme
+ * d'hébergement (voir `MAX_BATCH_FILES`). Un fichier trop gros atteint désormais l'action (Next ne
+ * le rejette plus avant) et reçoit directement ce message Zod. Le front doit donc aussi contrôler
+ * la taille côté client pour afficher un message clair sans attendre la réponse du serveur.
  *
  * Exportée pour que le script de seed (#21) applique la même limite : contrairement à Next, rien
  * ne la fait respecter automatiquement pour un script Node autonome.
  */
 export const MAX_FILE_SIZE_BYTES = 900 * 1024;
+
+/**
+ * Nombre maximum de fichiers par lot (#56, `uploadExamsBatch`). Le corps d'une requete reste
+ * borne par la plateforme d'hebergement (Vercel : 4,5 Mo quelle que soit la configuration Next,
+ * voir `experimental.serverActions.bodySizeLimit` dans `next.config.ts`, souleve a l'identique).
+ * 4 fichiers a 900 Ko (`MAX_FILE_SIZE_BYTES`) totalisent au plus 3,6 Mo de contenu binaire,
+ * laissant de la marge pour les champs de metadonnee et les separateurs multipart.
+ *
+ * ponytail: plafond fixe choisi pour rester sous cette limite de plateforme ; a revoir si la
+ * limite change ou si des fichiers plus gros que 900 Ko doivent etre acceptes en lot.
+ */
+export const MAX_BATCH_FILES = 4;
 
 /**
  * Decoupe le terme de recherche en mots, casse/accents aplatis pour s'aligner sur `search_text`
