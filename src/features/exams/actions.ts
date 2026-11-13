@@ -8,8 +8,10 @@ import {
   actionDuplicateWarning,
   actionError,
   actionOk,
+  actionOkWithWarning,
   type ActionResult,
 } from "@/lib/action-result";
+import { checkExamDuplicate } from "./duplicate";
 import { examUploadSchema, slugify } from "./schemas";
 
 const PDF_MAGIC_BYTES = "%PDF-";
@@ -28,9 +30,12 @@ const PDF_MAGIC_BYTES = "%PDF-";
  * tout effet de bord couteux. Si l'envoi a R2 echoue, la ligne inseree est retiree (l'exam ne
  * doit jamais exister en base sans le fichier correspondant sur R2).
  *
- * Detection de doublon limitee au hash exact pour l'instant : #19 introduira la detection
- * par quadruplet (titre/matiere/niveau/session) via une fonction partagee qui remplacera
- * ce controle.
+ * Detection de doublon (#19) via la fonction partagee `checkExamDuplicate`, reutilisee par
+ * #55/#21/#56. Le hash exact (memes octets deja deposes) bloque : aucune insertion. Le quadruplet
+ * matiere/annee/session/type n'est qu'un avertissement non bloquant (le meme quadruplet peut
+ * legitimement se repeter, ex. plusieurs controles continus de la meme matiere dans la meme
+ * annee) : l'insertion et l'envoi a R2 se poursuivent normalement, et l'avertissement est
+ * simplement rapporte dans le resultat de succes.
  */
 export async function uploadExam(
   formData: FormData,
@@ -62,20 +67,23 @@ export async function uploadExam(
 
   const supabase = await createClient();
 
-  const { data: existing, error: lookupError } = await supabase
-    .from("exams")
-    .select("id, slug, title")
-    .eq("file_hash", fileHash)
-    .maybeSingle();
-  if (lookupError) {
-    console.error("uploadExam: lecture du hash existant", lookupError);
+  let duplicate;
+  try {
+    duplicate = await checkExamDuplicate(fileHash, {
+      subjectId: exam.subjectId,
+      academicYear: exam.academicYear,
+      session: exam.session,
+      examType: exam.examType,
+    });
+  } catch (error) {
+    console.error("uploadExam: verification de doublon", error);
     return actionError("Impossible d'enregistrer l'epreuve.");
   }
-  if (existing) {
+  if (duplicate.kind === "hash") {
     return actionDuplicateWarning("Ce fichier a deja ete depose.", {
-      examId: existing.id,
-      slug: existing.slug,
-      title: existing.title,
+      examId: duplicate.exam.id,
+      slug: duplicate.exam.slug,
+      title: duplicate.exam.title,
     });
   }
 
@@ -116,6 +124,17 @@ export async function uploadExam(
     console.error("uploadExam: envoi du fichier vers R2", error);
     await supabase.from("exams").delete().eq("id", inserted.id);
     return actionError("Impossible de deposer le fichier.");
+  }
+
+  if (duplicate.kind === "quadruplet") {
+    return actionOkWithWarning(
+      { slug },
+      {
+        examId: duplicate.exam.id,
+        slug: duplicate.exam.slug,
+        title: duplicate.exam.title,
+      },
+    );
   }
 
   return actionOk({ slug });
