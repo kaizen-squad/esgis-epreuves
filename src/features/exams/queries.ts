@@ -135,3 +135,17 @@ export async function getExamBySlug(slug: string): Promise<Exam | null> {
 
   return data ? toExam(data) : null;
 }
+
+/** Cle R2 du PDF d'une epreuve par son slug, pour la route de previsualisation/telechargement (#50). `null` si absente. */
+export async function getExamR2Key(slug: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("exams")
+    .select("r2_key")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.r2_key ?? null;
+}
