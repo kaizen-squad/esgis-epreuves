@@ -56,6 +56,10 @@ Aucun paramètre, retourne `Subject[]` (`id`, `name`, `fieldId`, `levelId`) tri�
 
 ## `src/features/exams/schemas.ts`
 
+### `EXAM_SESSIONS`, `EXAM_TYPES`
+
+Listes de reference des valeurs valides pour `session` et `exam_type` (les memes que les contraintes `check` en base). Exportees pour que le script de seed (#21, `src/features/exams/seed.ts`) reutilise exactement ces deux listes dans son propre schema Zod : jamais une seconde copie a tenir alignee avec celle-ci au risque de diverger si une valeur est ajoutee d'un cote et pas de l'autre.
+
 ### `searchTokens(term: string | undefined): string[]`
 
 Découpe un terme de recherche en mots normalisés (NFD, accents retirés, minuscule, ligatures œ/æ/ß repliées à la main) pour correspondre à `search_text` tel que calculé en base par la vue `exams_catalog`. Plusieurs mots filtrent en ET (un `ilike` par mot côté requête) : l'ordre des mots n'importe pas. Retourne `[]` si `term` est vide ou absent. Ne pas simplifier la normalisation sans vérifier qu'elle reste alignée avec l'extension `unaccent` côté Postgres.
@@ -130,9 +134,47 @@ Import `import { deleteExam } from "@/features/exams/actions"`. Suppression déf
 
 ## `src/features/exams/duplicate.ts`
 
-### `checkExamDuplicate(fileHash: string, quadruplet: ExamQuadruplet, excludeExamId?: string): Promise<ExamDuplicateCheck>`
+### `checkExamDuplicate(fileHash: string, quadruplet: ExamQuadruplet, excludeExamId?: string, client?): Promise<ExamDuplicateCheck>`
 
-Import `import { checkExamDuplicate } from "@/features/exams/duplicate"`. Détection de doublon partagée (#19), pensée pour être réutilisée par toute écriture sur `exams` (#18, et à terme #55/#21/#56). Vérifie d'abord le hash exact du fichier (`exams.file_hash`) : un match retourne `{ kind: "hash", exam: { id, slug, title } }` et l'emporte toujours, même si le quadruplet diffère. Si aucun hash ne matche, vérifie ensuite le quadruplet `{ subjectId, academicYear, session, examType }` (matière + année académique + session + type) : un match retourne `{ kind: "quadruplet", exam }`. Sans aucun match, retourne `{ kind: "none" }`. `excludeExamId` exclut une épreuve des deux recherches (édition d'une épreuve existante par #55 : son propre quadruplet ne doit pas se signaler lui-même). Toute erreur Supabase remonte en exception (pas d'`ActionResult` ici, l'appelant mutateur décide du message et journalise). Pas de table dédiée ni d'index composite sur le quadruplet pour l'instant : la table `exams` reste petite (même décision que #9 pour `search_text`), à revoir seulement si un problème de performance réel apparaît. Le `kind` ("hash" vs "quadruplet") n'a pas besoin d'être propagé jusqu'à l'écran : les deux cas se traduisent par des formes distinctes d'`ActionResult` (`ok: false` bloquant pour le hash, `ok: true` avec `warning` pour le quadruplet).
+Import `import { checkExamDuplicate } from "@/features/exams/duplicate"`. Détection de doublon partagée (#19), pensée pour être réutilisée par toute écriture sur `exams` (#18, #55, #21, et à terme #56). Vérifie d'abord le hash exact du fichier (`exams.file_hash`) : un match retourne `{ kind: "hash", exam: { id, slug, title } }` et l'emporte toujours, même si le quadruplet diffère. Si aucun hash ne matche, vérifie ensuite le quadruplet `{ subjectId, academicYear, session, examType }` (matière + année académique + session + type) : un match retourne `{ kind: "quadruplet", exam }`. Sans aucun match, retourne `{ kind: "none" }`. `excludeExamId` exclut une épreuve des deux recherches (édition d'une épreuve existante par #55 : son propre quadruplet ne doit pas se signaler lui-même). `client` (#21) est optionnel : par défaut la fonction crée son propre client lié aux cookies de la requête Next en cours, comportement inchangé pour `uploadExam`/`updateExamMetadata`/`replaceExamFile`. Un appelant hors de ce contexte (le script de seed, `src/features/exams/seed.ts`, qui tourne en Node autonome sans requête HTTP) fournit le sien. Toute erreur Supabase remonte en exception (pas d'`ActionResult` ici, l'appelant mutateur décide du message et journalise). Pas de table dédiée ni d'index composite sur le quadruplet pour l'instant : la table `exams` reste petite (même décision que #9 pour `search_text`), à revoir seulement si un problème de performance réel apparaît. Le `kind` ("hash" vs "quadruplet") n'a pas besoin d'être propagé jusqu'à l'écran : les deux cas se traduisent par des formes distinctes d'`ActionResult` (`ok: false` bloquant pour le hash, `ok: true` avec `warning` pour le quadruplet).
+
+## `src/features/exams/seed.ts`
+
+Logique du script de seed en masse (#21, exécuté par `scripts/seed-exams.ts` via `pnpm seed:exams`), isolée dans `src/features/exams/` pour rester testable par Vitest sans dépendre du système de fichiers ni d'un vrai client Supabase. C'est aussi la portée de test du reste du backend : `vitest.config.ts` ne couvre que `src/**`.
+
+### `runSeed(csvContent: string, options: { baseDir: string; dryRun: boolean }, deps: SeedDeps): Promise<SeedReport>`
+
+Point d'entrée du script : lit le CSV de métadonnées déjà chargé en mémoire (`csvContent`), résout chaque ligne contre les référentiels (`fields`/`levels`/`subjects`/`options`, chargés une seule fois via `deps.supabase`), détecte les doublons avec `checkExamDuplicate`, même décision produit que #18/#55 (un hash identique bloque la ligne, un quadruplet identique n'est qu'un avertissement non bloquant), puis insère et dépose chaque fichier sur R2. En `dryRun`, saute l'insertion et le dépôt R2 mais exécute tout le reste à l'identique (CSV, référentiels, hash, détection de doublon), pour que le rapport reflète fidèlement ce qu'un run réel ferait. Si le dépôt R2 échoue après l'insertion, la ligne insérée est retirée, même garantie que `uploadExam` : jamais d'épreuve en base sans son fichier. Une ligne en erreur (référentiel inconnu, fichier manquant, fichier non PDF, etc.) n'interrompt jamais les lignes suivantes : chaque ligne du CSV est indépendante, et `SeedReport.entries` les distingue toutes (`"imported"`, `"dry-run"`, `"duplicate"`, `"error"`). `deps` (`SeedDeps`) injecte le client Supabase, une fonction de lecture de fichier et `putExamFile`, pour que `runSeed` reste testable sans jamais toucher un vrai disque ou une vraie base.
+
+### `parseCsv(content: string): string[][]`, `csvToRows(content: string): Record<string, string>[]`
+
+Parseur CSV minimal (point-virgule, BOM UTF-8 ignoré, guillemets doubles pour échapper un `;` ou un retour à la ligne dans un champ) pour `docs/gabarit-metadonnees.csv`, rempli à la main sous Excel. `csvToRows` mappe chaque ligne de données sur son en-tête (ordre des colonnes libre) et normalise chaque valeur en NFC : un caractère accentué décomposé par Excel (NFD) ferait sinon échouer les contraintes `check` SQL, qui comparent des chaînes octet à octet. Les lignes entièrement vides sont ignorées.
+
+### `seedRowSchema`
+
+Schéma Zod d'une ligne du CSV déjà mappée par `csvToRows` : `fichier`/`titre`/`filiere`/`niveau`/`matiere` non vides, `option` vide transformé en `undefined`, `annee_academique` au format `AAAA-AAAA`, `type_epreuve`/`session` contraints aux mêmes énumérations que `examUploadSchema` (`EXAM_TYPES`/`EXAM_SESSIONS`, importées de `schemas.ts`, jamais une copie locale).
+
+### `buildReferentialMaps(data): ReferentialMaps`, `resolveSeedRow(row, maps): ResolveSeedRowResult`
+
+Résolvent les noms textuels du CSV (filière, niveau, matière, option) en ids, sans requête par ligne : `buildReferentialMaps` indexe les référentiels chargés une fois en mémoire, avec une clé composite pour matière et option, qui ne sont uniques qu'au sein d'une filière/niveau, comme les contraintes `unique` de la migration initiale. `resolveSeedRow` échoue avec un message explicite (`{ ok: false, error }`) sur le premier référentiel introuvable, sans jamais lancer d'exception : une ligne de métadonnées mal saisie par un humain reste une erreur de ligne ordinaire pour le rapport, jamais un crash du script.
+
+### `resolveFilePath(baseDir: string, relativePath: string): string | null`
+
+Résout la colonne `fichier` sous le dossier source, sans jamais en sortir : une valeur contenant `..` (erreur de saisie ou CSV corrompu) retourne `null` plutôt que de lire un fichier hors de l'échantillon fourni.
+
+### `isPdfBuffer(buffer: Buffer): boolean`, `hashBuffer(buffer: Buffer): string`
+
+Mêmes contrôles que `uploadExam`/`replaceExamFile` (octets de signature `%PDF-`, hash SHA-256), dupliqués ici plutôt qu'extraits dans un module partagé : décision déjà actée par ces deux actions, qui ne les ont jamais mises en commun entre elles non plus.
+
+### `summarizeReport(entries: SeedReportEntry[]): SeedReportSummary`
+
+Compte chaque statut (`imported`/`dry-run` ensemble comme imports, `duplicate`, `error`) et les avertissements séparément : un import avec `warning` compte dans les deux. Utilisé par `runSeed` pour construire `SeedReport.summary`, et par `scripts/seed-exams.ts` pour le résumé affiché en fin d'exécution et le code de sortie (`1` si `errors > 0`, jamais sur un simple `warning` ou `duplicate`).
+
+## `src/lib/supabase/script.ts`
+
+### `createClient()`
+
+Client Supabase pour un script Node autonome (#21, `scripts/seed-exams.ts`), hors contexte de requête Next. À la différence de `src/lib/supabase/server.ts`/`client.ts`, ne touche aucun cookie ; l'appelant gère lui-même la session via `auth.signInWithPassword` quand une écriture protégée par la RLS est nécessaire (les lectures, référentiels et détection de doublon, restent publiques, `anon` suffit).
 
 ## `src/lib/r2/presign.ts`
 

@@ -1,8 +1,12 @@
 import { z } from "zod";
 import type { ExamFilters, ExamType, ExamSession } from "./types";
 
-const EXAM_SESSIONS: readonly ExamSession[] = ["Session Normale", "Rattrapage"];
-const EXAM_TYPES: readonly ExamType[] = [
+/** Exportes pour etre reutilisees par le script de seed (#21) : jamais une seconde liste a tenir alignee avec celle-ci. */
+export const EXAM_SESSIONS: readonly ExamSession[] = [
+  "Session Normale",
+  "Rattrapage",
+];
+export const EXAM_TYPES: readonly ExamType[] = [
   "Contrôle Terminal",
   "Contrôle Continu",
 ];
@@ -17,8 +21,11 @@ const PDF_MIME_TYPE = "application/pdf";
  * doit aussi tenir dans ce corps. Un fichier entre cette limite et ~1 Mo ne déclenche jamais
  * ce message : Next refuse la requête avant d'exécuter `uploadExam`. Le front doit donc aussi
  * contrôler la taille côté client pour afficher un message clair dans cette zone.
+ *
+ * Exportée pour que le script de seed (#21) applique la même limite : contrairement à Next, rien
+ * ne la fait respecter automatiquement pour un script Node autonome.
  */
-const MAX_FILE_SIZE_BYTES = 900 * 1024;
+export const MAX_FILE_SIZE_BYTES = 900 * 1024;
 
 /**
  * Decoupe le terme de recherche en mots, casse/accents aplatis pour s'aligner sur `search_text`
