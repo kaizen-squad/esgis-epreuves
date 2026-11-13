@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ExamSession, ExamType } from "./types";
 
+type SupabaseLikeClient = {
+  from: Awaited<ReturnType<typeof createClient>>["from"];
+};
+
 export type ExamDuplicateMatch = {
   id: string;
   slug: string;
@@ -28,13 +32,18 @@ const DUPLICATE_SELECT = "id, slug, title";
  * n'est qu'un avertissement non bloquant : il peut legitimement se repeter (plusieurs controles
  * continus de la meme matiere dans la meme annee) ou correspondre a une edition legitime (#55,
  * `excludeExamId` exclut alors l'epreuve editee de la recherche).
+ *
+ * `client` est optionnel : par defaut la fonction cree son propre client lie aux cookies de la
+ * requete en cours (Server Action, comportement inchange pour #18/#55). Un appelant hors du
+ * contexte d'une requete Next (#21, script de seed Node autonome) fournit le sien.
  */
 export async function checkExamDuplicate(
   fileHash: string,
   quadruplet: ExamQuadruplet,
   excludeExamId?: string,
+  client?: SupabaseLikeClient,
 ): Promise<ExamDuplicateCheck> {
-  const supabase = await createClient();
+  const supabase = client ?? (await createClient());
 
   let hashQuery = supabase
     .from("exams")
