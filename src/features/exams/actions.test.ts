@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const maybeSingle = vi.fn();
-const lookupEq = vi.fn(() => ({ maybeSingle }));
-const lookupSelect = vi.fn(() => ({ eq: lookupEq }));
-
 const single = vi.fn();
 const insertSelect = vi.fn(() => ({ single }));
 const insert = vi.fn<
@@ -13,14 +9,18 @@ const insert = vi.fn<
 const deleteEq = vi.fn();
 const del = vi.fn(() => ({ eq: deleteEq }));
 
-const from = vi.fn(() => ({ select: lookupSelect, insert, delete: del }));
+const from = vi.fn(() => ({ insert, delete: del }));
 const putExamFile = vi.fn();
+const checkExamDuplicate = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ from }),
 }));
 vi.mock("@/lib/r2/upload", () => ({
   putExamFile: (...args: unknown[]) => putExamFile(...args),
+}));
+vi.mock("./duplicate", () => ({
+  checkExamDuplicate: (...args: unknown[]) => checkExamDuplicate(...args),
 }));
 
 const { uploadExam } = await import("./actions");
@@ -50,15 +50,13 @@ function uploadForm(overrides: Record<string, string | File> = {}) {
 }
 
 beforeEach(() => {
-  maybeSingle.mockReset().mockResolvedValue({ data: null, error: null });
+  checkExamDuplicate.mockReset().mockResolvedValue({ kind: "none" });
   single
     .mockReset()
     .mockResolvedValue({ data: { id: "exam-new" }, error: null });
   deleteEq.mockReset().mockResolvedValue({ error: null });
   insert.mockClear();
   insertSelect.mockClear();
-  lookupEq.mockClear();
-  lookupSelect.mockClear();
   del.mockClear();
   from.mockClear();
   putExamFile.mockReset().mockResolvedValue(undefined);
@@ -88,20 +86,25 @@ describe("uploadExam", () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
-  it("recherche le doublon par le hash exact du contenu", async () => {
+  it("verifie le doublon avec le hash du contenu et le quadruplet du formulaire", async () => {
     await uploadExam(uploadForm());
 
-    expect(lookupEq).toHaveBeenCalledWith("file_hash", FILE_HASH);
+    expect(checkExamDuplicate).toHaveBeenCalledWith(FILE_HASH, {
+      subjectId: UUID,
+      academicYear: "2024-2025",
+      session: "Session Normale",
+      examType: "Contrôle Terminal",
+    });
   });
 
   it("renvoie un avertissement de doublon sans envoyer le fichier a R2 ni inserer quand le hash existe deja", async () => {
-    maybeSingle.mockResolvedValue({
-      data: {
+    checkExamDuplicate.mockResolvedValue({
+      kind: "hash",
+      exam: {
         id: "exam-1",
         slug: "algo-s1-abc12345",
         title: "Algorithmique S1",
       },
-      error: null,
     });
 
     const result = await uploadExam(uploadForm());
@@ -116,6 +119,43 @@ describe("uploadExam", () => {
     } else {
       throw new Error("resultat sans duplicate");
     }
+    expect(putExamFile).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it("insere l'epreuve et envoie le fichier a R2 malgre un quadruplet identique, avec un avertissement non bloquant", async () => {
+    checkExamDuplicate.mockResolvedValue({
+      kind: "quadruplet",
+      exam: {
+        id: "exam-2",
+        slug: "algo-s1-def67890",
+        title: "Algorithmique S1 (ancienne version)",
+      },
+    });
+
+    const result = await uploadExam(uploadForm());
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.warning).toEqual({
+        examId: "exam-2",
+        slug: "algo-s1-def67890",
+        title: "Algorithmique S1 (ancienne version)",
+      });
+    }
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(putExamFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("renvoie une erreur generique quand la verification de doublon echoue", async () => {
+    checkExamDuplicate.mockRejectedValue(new Error("connexion perdue"));
+
+    const result = await uploadExam(uploadForm());
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible d'enregistrer l'epreuve.",
+    });
     expect(putExamFile).not.toHaveBeenCalled();
     expect(insert).not.toHaveBeenCalled();
   });
