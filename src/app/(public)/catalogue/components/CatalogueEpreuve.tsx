@@ -1,18 +1,14 @@
 "use client";
 
-import DomainSelectFilter from "../../components/DomainSelectFilter";
-import { epreuvesMock } from "../../constants/epreuve.constants";
 import EpreuveCard from "../../components/EpreuveCard";
 import CatalogueFilter from "./CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
 import { useState } from "react";
 
-const CatalogueEpreuve = () => {
+const CatalogueEpreuves = ({ data }: { data: EpreuveCard[] }) => {
   const [open, setOpen] = useState<boolean>(true);
   return (
-    <section className="mx-auto mb-20 w-full max-w-7xl px-4 lg:px-6">
-      <DomainSelectFilter />
-
+    <>
       <div className="mb-6 flex items-center justify-between gap-4 border-b border-gray-200 pb-4">
         <button
           type="button"
@@ -25,9 +21,7 @@ const CatalogueEpreuve = () => {
         </button>
         <CatalogueFilter mode="mobile" />
         <p className="text-text-paragraph text-sm">
-          <span className="text-text-title font-semibold">
-            {epreuvesMock.length}
-          </span>{" "}
+          <span className="text-text-title font-semibold">{data?.length}</span>{" "}
           épreuves trouvées
         </p>
       </div>
@@ -39,13 +33,13 @@ const CatalogueEpreuve = () => {
           <CatalogueFilter mode="desktop" onClose={() => setOpen(false)} />
         )}
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(17rem,100%),1fr))] gap-6">
-          {epreuvesMock.map((epreuve) => (
+          {data.map((epreuve) => (
             <EpreuveCard {...epreuve} key={epreuve.name} />
           ))}
         </div>
       </div>
-    </section>
+    </>
   );
 };
 
-export default CatalogueEpreuve;
+export default CatalogueEpreuves;

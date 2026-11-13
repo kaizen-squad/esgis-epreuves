@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import Research from "../../accueil/components/Research";
 import ImageHandler from "../../components/ImageHandler";
+import FiliereCatalogueSection from "../components/FiliereCatalogueSection";
 
 const FilierePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,7 @@ const FilierePage = () => {
         image_url="/images/accueil_span_page.jpeg"
         image_alt="Filière image en-tête"
       />
+      <FiliereCatalogueSection />
     </div>
   );
 };
