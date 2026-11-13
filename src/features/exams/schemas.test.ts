@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { examFiltersSchema, fixedFieldFilters, searchTokens } from "./schemas";
+import {
+  examFiltersSchema,
+  examUploadSchema,
+  fixedFieldFilters,
+  searchTokens,
+  slugify,
+} from "./schemas";
 
 describe("searchTokens", () => {
   it("decoupe en mots, espaces superflus ignores", () => {
@@ -91,5 +97,83 @@ describe("fixedFieldFilters", () => {
     const result = fixedFieldFilters("field-a", { search: "algo", page: 2 });
     expect(result.search).toBe("algo");
     expect(result.page).toBe(2);
+  });
+});
+
+describe("slugify", () => {
+  it("aplatit la casse et les accents, espaces en tirets", () => {
+    const slug = slugify("Système d'information - Session 1");
+    expect(slug).toMatch(/^systeme-d-information-session-1-[0-9a-f]{8}$/);
+  });
+
+  it("produit un slug distinct pour chaque appel, meme titre", () => {
+    const first = slugify("Algorithmique");
+    const second = slugify("Algorithmique");
+    expect(first).not.toBe(second);
+  });
+});
+
+describe("examUploadSchema", () => {
+  const UUID = "11111111-1111-4111-a111-111111111111";
+
+  function validInput(overrides: Record<string, unknown> = {}) {
+    return {
+      title: "Algorithmique S1",
+      academicYear: "2024-2025",
+      session: "Session Normale",
+      examType: "Contrôle Terminal",
+      fieldId: UUID,
+      levelId: UUID,
+      subjectId: UUID,
+      file: new File(["%PDF-1.4"], "exam.pdf", { type: "application/pdf" }),
+      ...overrides,
+    };
+  }
+
+  it("accepte un depot valide", () => {
+    const result = examUploadSchema.safeParse(validInput());
+    expect(result.success).toBe(true);
+  });
+
+  it("accepte l'absence d'option (filiere sans specialisation)", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({ optionId: undefined }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("rejette un fichier dont le type MIME n'est pas application/pdf", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({
+        file: new File(["image"], "exam.png", { type: "image/png" }),
+      }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  it("rejette un fichier vide", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({
+        file: new File([], "exam.pdf", { type: "application/pdf" }),
+      }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  it("rejette un fichier au-dela de la limite de taille", () => {
+    const tooBig = new Uint8Array(901 * 1024);
+    const result = examUploadSchema.safeParse(
+      validInput({
+        file: new File([tooBig], "exam.pdf", { type: "application/pdf" }),
+      }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  it("rejette une annee academique mal formee", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({ academicYear: "2024" }),
+    );
+    expect(result.success).toBe(false);
   });
 });
