@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { FiArrowRight } from "react-icons/fi";
+import ImageHandler from "../../components/ImageHandler";
 
 const WelcomeSection = () => {
   return (
@@ -23,16 +24,10 @@ const WelcomeSection = () => {
         Voir le Catalogue <FiArrowRight />
       </button>
 
-      <div className="relative mx-auto mb-16 h-90 w-full overflow-x-hidden md:h-180 lg:h-200">
-        <Image
-          src="/images/accueil_image2.png"
-          alt="Esgis Image Accueil"
-          fill
-          className="object-cover object-top"
-          sizes="(max-width: 1200px) 100%"
-          loading="eager"
-        />
-      </div>
+      <ImageHandler
+        image_url="/images/accueil_image2.png"
+        image_alt="Esgis Image Accueil"
+      />
 
       <div className="mb-8 w-full px-6 text-center text-lg md:text-2xl lg:text-3xl">
         Des sujets{" "}
