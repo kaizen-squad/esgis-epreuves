@@ -38,21 +38,59 @@ Proxy racine (renommé ainsi depuis `middleware.ts` en Next.js 16, `config.match
 
 ## `src/features/referentials/queries.ts`
 
-### `getFields(): Promise<Field[]>`
+### `getFields(options?: { includeInactive?: boolean }): Promise<Field[]>`
 
-Import `import { getFields } from "@/features/referentials/queries"`. Aucun paramètre, retourne `Field[]` (`id`, `name`, `description`), trié par nom. Pas de pagination (référentiel court). Erreur Supabase : exception, à laisser remonter vers `error.tsx`.
+Import `import { getFields } from "@/features/referentials/queries"`. Retourne `Field[]` (`id`, `name`, `description`, `isActive`), trié par nom. Par défaut (sans argument, ou `includeInactive` omis/`false`) ne retourne que les filières actives : c'est le bon appel pour le menu, l'accueil et les filtres du catalogue public. `includeInactive: true` (écran Admin, #64) retourne aussi les filières désactivées, pour permettre de les réactiver. Pas de pagination (référentiel court). Erreur Supabase : exception, à laisser remonter vers `error.tsx`.
 
 ### `getFieldById(id: string): Promise<Field | null>`
 
-Prend un `id` (uuid attendu). Retourne `null` si `id` n'est pas un uuid valide (évite un 500 Postgres `22P02`) ou si la filière n'existe pas : dans les deux cas, la page appelle `notFound()`, jamais une erreur affichée. `description` peut être `null` (pas encore collectée) : l'écran doit gérer son absence sans supposer qu'elle est toujours renseignée.
+Prend un `id` (uuid attendu). Retourne `null` si `id` n'est pas un uuid valide (évite un 500 Postgres `22P02`) ou si la filière n'existe pas : dans les deux cas, la page appelle `notFound()`, jamais une erreur affichée. `description` peut être `null` (pas encore collectée) : l'écran doit gérer son absence sans supposer qu'elle est toujours renseignée. Ne filtre pas sur `isActive` (un lien déjà partagé vers une filière depuis désactivée doit continuer à afficher sa page).
 
-### `getLevels(): Promise<Level[]>`
+### `getLevels(options?: { includeInactive?: boolean }): Promise<Level[]>`
 
-Aucun paramètre, retourne `Level[]` (`id`, `name`) trié par nom, pour les filtres du catalogue.
+Retourne `Level[]` (`id`, `name`, `isActive`) trié par nom, pour les filtres du catalogue. Même convention `includeInactive` que `getFields`.
 
-### `getSubjects(): Promise<Subject[]>`
+### `getSubjects(options?: { includeInactive?: boolean }): Promise<Subject[]>`
 
-Aucun paramètre, retourne `Subject[]` (`id`, `name`, `fieldId`, `levelId`) trié par nom. Pas de filtrage côté requête : à combiner côté écran avec `fieldId`/`levelId` choisis par l'utilisateur.
+Retourne `Subject[]` (`id`, `name`, `fieldId`, `levelId`, `isActive`) trié par nom. Pas de filtrage côté requête sur `fieldId`/`levelId` : à combiner côté écran avec les valeurs choisies par l'utilisateur. Même convention `includeInactive` que `getFields`.
+
+### `getOptions(options?: { includeInactive?: boolean }): Promise<Option[]>`
+
+Retourne `Option[]` (`id`, `name`, `fieldId`, `isActive`) trié par nom, pour le formulaire de dépôt/édition d'épreuve (champ optionnel). Même convention `includeInactive` que `getFields`.
+
+## `src/features/referentials/schemas.ts`
+
+### `fieldSchema`, `levelSchema`
+
+`{ name }` : `name` requis, non vide une fois les espaces superflus retirés (`.trim()`).
+
+### `subjectSchema`
+
+`{ fieldId, levelId, name }` : `fieldId`/`levelId` uuid requis, `name` requis non vide.
+
+### `optionSchema`
+
+`{ fieldId, name }` : `fieldId` uuid requis, `name` requis non vide.
+
+## `src/features/referentials/actions.ts`
+
+CRUD Admin des référentiels (#64) : filières, niveaux, matières, options. Écriture protégée par la RLS admin-only déjà posée par #5 (`*_write_admin` sur chaque table), aucune vérification de rôle dupliquée côté JS. **Types d'épreuve et sessions restent hors de ce CRUD** : ce sont des énumérations fixes (`EXAM_TYPES`/`EXAM_SESSIONS`, `exams/schemas.ts`, contraintes `check` en base), pas de vraies tables ; les transformer en référentiels modifiables dépasserait largement la complexité prévue pour ce ticket (décision prise en session, voir le commentaire en tête d'`actions.ts`). Pas de suppression définitive : `on delete restrict` sur les quatre tables l'empêche déjà pour tout référentiel référencé par une épreuve, et le ticket ne demande que d'ajouter/modifier/désactiver.
+
+### `createField(formData): Promise<ActionResult<{ id: string }>>`, `createLevel`, `createSubject`, `createOption`
+
+Valident `formData` avec le schéma correspondant (`fieldSchema`/`levelSchema`/`subjectSchema`/`optionSchema`) puis insèrent la ligne. Un nom déjà pris pour la même contrainte `unique` (violation Postgres `23505`) renvoie un message dédié (« Cette filière existe déjà. », etc.), jamais le code Postgres brut. Toute autre erreur Supabase est journalisée (`console.error`) et renvoyée au client sous un message générique (« Impossible d'enregistrer. »).
+
+### `updateField(id, formData): Promise<ActionResult<null>>`, `updateLevel`
+
+Même validation que la création correspondante (`fieldSchema`/`levelSchema`), puis `UPDATE` de la ligne. Un `id` qui n'est pas un uuid, une ligne introuvable, ou une mise à jour refusée par la RLS (0 ligne affectée ; la RLS `*_write_admin` refuse un `UPDATE` non autorisé sans jamais lever d'erreur Postgres, qu'elle porte ou non un `WITH CHECK` en plus du `USING`) renvoient le même message générique (« Introuvable. »), sans distinction côté client. Même mapping de doublon (`23505`) que la création.
+
+### `updateSubject(id, formData): Promise<ActionResult<null>>`, `updateOption`
+
+Valident `formData` avec `referentialRenameSchema` (`{ name }` seulement) : **ne modifient jamais le rattachement** (`fieldId`/`levelId` pour une matière, `fieldId` pour une option), contrairement à `updateField`/`updateLevel`. `exams` stocke `field_id`/`level_id`/`subject_id` indépendamment, sans contrainte garantissant leur cohérence mutuelle : déplacer une matière ou une option déjà utilisée casserait silencieusement les filtres du catalogue pour les épreuves qui la référencent déjà. Un mauvais rattachement se corrige en désactivant la ligne (`setSubjectActive`/`setOptionActive`) puis en recréant avec le bon rattachement. Mêmes règles de doublon/« Introuvable. » que `updateField`.
+
+### `setFieldActive(id, isActive): Promise<ActionResult<null>>`, `setLevelActive`, `setSubjectActive`, `setOptionActive`
+
+Change uniquement la colonne `is_active` (`true` réactive, `false` désactive). `id` (uuid) et `isActive` (booléen) sont tous deux validés par Zod avant toute requête ; un `id` qui n'est pas un uuid, un `isActive` qui n'est pas un booléen, ou une ligne introuvable (0 ligne affectée) renvoient « Introuvable. » ou « Données invalides. ». Désactiver un référentiel le retire des listes publiques (`getFields`/`getLevels`/`getSubjects`/`getOptions` sans `includeInactive`) sans toucher aux épreuves qui le référencent déjà : « désactivé » veut dire masqué des listes de choix, jamais interdit en écriture (`uploadExam`/`updateExamMetadata` n'excluent pas un `subjectId`/`optionId` désactivé, cas déjà couvert côté front par la liste affichée). Désactiver une filière ne désactive pas en cascade ses matières ni ses options : elles continuent de sortir de `getSubjects`/`getOptions` tant qu'elles ne sont pas désactivées elles-mêmes (limitation connue, à revoir si le front en a besoin).
 
 ## `src/features/exams/schemas.ts`
 
