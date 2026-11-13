@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildContentSecurityPolicy } from "./security-headers";
 
 describe("buildContentSecurityPolicy", () => {
@@ -39,11 +39,26 @@ describe("buildContentSecurityPolicy", () => {
     expect(prod).not.toContain("unsafe-eval");
   });
 
-  it("tolere R2_ACCOUNT_ID vide sans planter (next typegen/tsc n'injectent pas toujours les variables)", () => {
+  it("tolere R2_ACCOUNT_ID vide sans planter, avec juste un avertissement hors developpement", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
     const csp = buildContentSecurityPolicy({ r2AccountId: "", isDev: false });
 
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("frame-src 'self';");
     expect(csp).not.toContain("undefined");
+    expect(warn).toHaveBeenCalledOnce();
+
+    warn.mockRestore();
+  });
+
+  it("ne previent pas en developpement quand R2_ACCOUNT_ID est vide (build locale sans .env complet)", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    buildContentSecurityPolicy({ r2AccountId: "", isDev: true });
+
+    expect(warn).not.toHaveBeenCalled();
+
+    warn.mockRestore();
   });
 });
