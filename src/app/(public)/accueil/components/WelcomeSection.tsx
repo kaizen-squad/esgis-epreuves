@@ -2,14 +2,13 @@
 
 import Image from "next/image";
 import { FiArrowRight } from "react-icons/fi";
+import ImageHandler from "../../components/ImageHandler";
 
 const WelcomeSection = () => {
   return (
     <div className="mb-16 w-full text-center">
-      <h1 className="text-text-title mb-6 font-medium">
-        Bienvenue sur Alexandria
-      </h1>
-      <h2 className="text-text-secondary mb-6 text-3xl leading-10 font-semibold md:text-5xl md:leading-14 lg:text-7xl lg:leading-18">
+      <h1 className="sub-title">Bienvenue sur Alexandria</h1>
+      <h2 className="head-title">
         Tes révisions <br className="hidden md:block" />
         commencent ici...
       </h2>
@@ -23,16 +22,10 @@ const WelcomeSection = () => {
         Voir le Catalogue <FiArrowRight />
       </button>
 
-      <div className="relative mx-auto mb-16 h-90 w-full overflow-x-hidden md:h-180 lg:h-200">
-        <Image
-          src="/images/accueil_image2.png"
-          alt="Esgis Image Accueil"
-          fill
-          className="object-cover object-top"
-          sizes="(max-width: 1200px) 100%"
-          loading="eager"
-        />
-      </div>
+      <ImageHandler
+        image_url="/images/accueil_image2.png"
+        image_alt="Esgis Image Accueil"
+      />
 
       <div className="mb-8 w-full px-6 text-center text-lg md:text-2xl lg:text-3xl">
         Des sujets{" "}

@@ -1,5 +1,4 @@
 import { matiereMock } from "@/app/(public)/constants/filter.constants";
-import React from "react";
 import { FiSearch } from "react-icons/fi";
 import MatiereCard from "./MatiereCard";
 

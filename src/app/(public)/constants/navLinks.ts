@@ -9,6 +9,6 @@ export const navLinks = [
   },
   {
     name: "Filières",
-    link: "/filiere",
+    link: "/filieres",
   },
 ];

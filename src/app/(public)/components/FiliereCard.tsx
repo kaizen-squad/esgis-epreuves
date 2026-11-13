@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
 import { FiArrowRightCircle } from "react-icons/fi";
 
 interface FiliereProps {
@@ -11,7 +14,7 @@ interface FiliereProps {
 }
 
 const FiliereCard = ({
-  data: { name, num_epreuve },
+  data: { id, name, num_epreuve },
   className,
 }: FiliereProps) => {
   return (
@@ -38,12 +41,15 @@ const FiliereCard = ({
             <span>fichiers</span>
           </p>
         </div>
-        <button className="cursor-pointer transition-all ease-in-out hover:scale-105">
+        <Link
+          href={`/filieres/${id}`}
+          className="cursor-pointer transition-all ease-in-out hover:scale-105"
+        >
           <FiArrowRightCircle
             className="bg-background-accent text-text-default rounded-full"
             size={40}
           />
-        </button>
+        </Link>
       </div>
     </div>
   );

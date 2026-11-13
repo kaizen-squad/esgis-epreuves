@@ -2,9 +2,9 @@ import React from "react";
 import PublicLayout from "../components/PublicLayout";
 import CatalogueWelcomeSection from "./components/CatalogueWelcomeSection";
 import Research from "../accueil/components/Research";
-import CatalogueEpreuve from "./components/CatalogueEpreuve";
 import ResultsResume from "../accueil/components/ResultsResume";
 import CTACatalogue from "../accueil/components/CTACatalogue";
+import CatalogueEpreuveSection from "./components/CatalogueEpreuveSection";
 
 const Catalogue = () => {
   return (
@@ -17,7 +17,8 @@ const Catalogue = () => {
         <br />
         Accédez directement aux examens qui comptent pour votre année.
       </p>
-      <CatalogueEpreuve />
+
+      <CatalogueEpreuveSection />
       <div className="px-6">
         <ResultsResume />
         <CTACatalogue />

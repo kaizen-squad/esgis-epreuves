@@ -8,7 +8,7 @@ import DomainSelectFilter from "../../components/DomainSelectFilter";
 const DomainFilter = () => {
   return (
     <div className="mx-auto mb-30 w-full max-w-7xl">
-      <h3 className="text-text-secondary mb-8 text-center text-3xl font-semibold">
+      <h3 className="section-title text-center">
         Filtrez par domaine d&apos;activité
       </h3>
 
