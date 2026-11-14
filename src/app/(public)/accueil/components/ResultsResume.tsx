@@ -32,7 +32,7 @@ const ResultsResume = () => {
       </div>
       <div className="relative aspect-square w-full max-w-145 overflow-hidden rounded-2xl">
         <Image
-          src="/images/resume_image.png"
+          src="/images/resume_image2.png"
           alt="Esgis Résumé Image"
           fill
           sizes="(max-width: 768px) 100%"
