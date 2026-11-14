@@ -23,7 +23,7 @@ const WelcomeSection = () => {
       </button>
 
       <ImageHandler
-        image_url="/images/accueil_image2.png"
+        image_url="/images/accueil_image3.png"
         image_alt="Esgis Image Accueil"
       />
 
