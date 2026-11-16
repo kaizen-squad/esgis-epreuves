@@ -34,6 +34,9 @@ describe("login", () => {
 
     expect(result.ok).toBe(false);
     expect(signInWithPassword).not.toHaveBeenCalled();
+    if (!result.ok && "fieldErrors" in result) {
+      expect(result.fieldErrors?.email).toBeDefined();
+    }
   });
 
   it("message generique sur identifiants incorrects, sans reveler si le compte existe", async () => {
