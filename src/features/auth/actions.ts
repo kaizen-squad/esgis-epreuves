@@ -38,7 +38,7 @@ export async function login(
     return actionError("Email ou mot de passe incorrect.");
   }
 
-  redirect("/");
+  redirect("/src/app/(bde)/accueil");
 }
 
 /**

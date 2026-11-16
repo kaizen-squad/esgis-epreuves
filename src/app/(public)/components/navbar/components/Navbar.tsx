@@ -4,9 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
-import { navLinks } from "@/app/(public)/constants/navLinks";
+import { navLinks as defaultNavLinks } from "@/app/(public)/constants/navLinks";
 
-const Navbar = () => {
+type NavLink = {
+  name: string;
+  link: string;
+};
+
+type NavbarProps = {
+  links?: NavLink[];
+};
+
+const Navbar = ({ links = defaultNavLinks }: NavbarProps) => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -34,7 +43,7 @@ const Navbar = () => {
 
         {/** Desktop Navbar */}
         <div className="hidden gap-6 lg:flex">
-          {navLinks.map((link) => {
+          {links.map((link) => {
             const isActive = pathname === link.link;
             return (
               <Link
@@ -51,13 +60,14 @@ const Navbar = () => {
         {/** Mobile Navbar */}
         {isOpen && (
           <div className="flex flex-col py-4">
-            {navLinks.map((link) => {
+            {links.map((link) => {
               const isActive = pathname === link.link;
               return (
                 <Link
                   key={link.name}
                   className={`${isActive ? "underline" : ""} hover hover:bg-background-default py-2 text-center`}
                   href={link.link}
+                  onClick={() => setIsOpen(false)}
                 >
                   {link.name}
                 </Link>

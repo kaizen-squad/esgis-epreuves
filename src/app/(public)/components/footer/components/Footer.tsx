@@ -1,8 +1,17 @@
 import Link from "next/link";
-import { navLinks } from "@/app/(public)/constants/navLinks";
+import { navLinks as defaultNavLinks } from "@/app/(public)/constants/navLinks";
 import { FiLinkedin } from "react-icons/fi";
 
-const Footer = () => {
+type FooterLink = {
+  name: string;
+  link: string;
+};
+
+type FooterProps = {
+  links?: FooterLink[];
+};
+
+const Footer = ({ links = defaultNavLinks }: FooterProps) => {
   return (
     <footer className="bg-background-secondary rounded-t-4xl px-4 py-8 lg:px-10">
       <div className="flex flex-col justify-between lg:flex-row">
@@ -30,7 +39,7 @@ const Footer = () => {
             Navigation
           </h3>
           <div className="flex flex-col gap-5">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <Link
                 key={link.name}
                 className="text-text-primary text-lg"

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { login } from "@/features/auth/actions";
 import type { ActionResult } from "@/lib/action-result";
+import { CgSpinner } from "react-icons/cg";
 
 export default function LoginForm() {
   const [state, formAction, pending] = useActionState<
@@ -77,9 +78,15 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="bg-background-accent rounded-lg px-4 py-2 text-white disabled:opacity-50"
+        className="bg-background-accent cursor-pointer rounded-lg px-4 py-3 text-white disabled:opacity-50"
       >
-        {pending ? "Connexion..." : "Se connecter"}
+        {pending ? (
+          <span className="flex items-center justify-center gap-4">
+            Connexion <CgSpinner size={20} />
+          </span>
+        ) : (
+          "Se connecter"
+        )}
       </button>
     </form>
   );
