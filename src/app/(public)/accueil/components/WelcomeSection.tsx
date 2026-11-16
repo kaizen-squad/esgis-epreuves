@@ -25,6 +25,7 @@ const WelcomeSection = () => {
       <ImageHandler
         image_url="/images/accueil_image3.png"
         image_alt="Esgis Image Accueil"
+        image_className="object-cover object-top"
       />
 
       <div className="mb-8 w-full px-6 text-center text-lg md:text-2xl lg:text-3xl">

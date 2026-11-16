@@ -17,9 +17,11 @@ export default function LoginForm() {
   const formError = state && !state.ok ? state.error : null;
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate>
+    <form action={formAction} className="flex w-full flex-col gap-8" noValidate>
       <div className="flex flex-col gap-1">
-        <label htmlFor="email">Email</label>
+        <label htmlFor="email" className="text-text-default font-medium">
+          Adresse email
+        </label>
         <input
           id="email"
           name="email"
@@ -28,7 +30,8 @@ export default function LoginForm() {
           required
           aria-invalid={fieldErrors?.email ? true : undefined}
           aria-describedby={fieldErrors?.email ? "email-error" : undefined}
-          className="rounded border px-3 py-2"
+          className="rounded-lg border px-3 py-2 outline-none"
+          placeholder="Entrez votre email"
         />
         {fieldErrors?.email?.length ? (
           <p id="email-error" className="text-sm text-red-600">
@@ -38,7 +41,9 @@ export default function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="password">Mot de passe</label>
+        <label htmlFor="password" className="text-text-default font-medium">
+          Mot de passe
+        </label>
         <input
           id="password"
           name="password"
@@ -49,7 +54,8 @@ export default function LoginForm() {
           aria-describedby={
             fieldErrors?.password ? "password-error" : undefined
           }
-          className="rounded border px-3 py-2"
+          className="rounded-lg border px-3 py-2"
+          placeholder="Entrez votre mot de passe"
         />
         {fieldErrors?.password?.length ? (
           <p id="password-error" className="text-sm text-red-600">
@@ -67,7 +73,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+        className="bg-background-accent rounded-lg px-4 py-2 text-white disabled:opacity-50"
       >
         {pending ? "Connexion..." : "Se connecter"}
       </button>

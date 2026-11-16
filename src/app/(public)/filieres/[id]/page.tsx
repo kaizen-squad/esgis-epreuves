@@ -30,6 +30,7 @@ const FilierePage = () => {
         className="md:hidden"
         image_url="/images/accueil_span_page.jpeg"
         image_alt="Filière image en-tête"
+        image_className="object-cover object-top"
       />
       <FiliereCatalogueSection />
       <CTACatalogue />
