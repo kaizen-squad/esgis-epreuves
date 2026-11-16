@@ -17,7 +17,11 @@ export default function LoginForm() {
   const formError = state && !state.ok ? state.error : null;
 
   return (
-    <form action={formAction} className="flex w-full flex-col gap-8" noValidate>
+    <form
+      action={formAction}
+      className="mb-4 flex w-full flex-col gap-6 px-4 md:mb-10 md:gap-8"
+      noValidate
+    >
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-text-default font-medium">
           Adresse email
