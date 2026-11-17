@@ -2,7 +2,7 @@ import Image from "next/image";
 import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
 
-interface EpreuveCard {
+export interface EpreuveCard {
   img_src: string;
   name: string;
   year: number;
