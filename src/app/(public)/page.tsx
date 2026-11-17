@@ -12,11 +12,7 @@ import ResultsResume from "./accueil/components/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
 import PublicLayout from "./components/PublicLayout";
 
-export default async function Accueil({
-  searchParams,
-}: {
-  searchParams: Promise<{ domain?: string | string[] }>;
-}) {
+export default function Accueil() {
   return (
     <PublicLayout>
       <WelcomeSection />
@@ -26,7 +22,7 @@ export default async function Accueil({
           <RecentlyAdded title="Recemment ajoutées" />
         </Suspense>
         <Suspense fallback={<DomainFilterSkeleton />}>
-          <DomainFilter searchParams={searchParams} />
+          <DomainFilter />
         </Suspense>
         <Filieres />
         <ResultsResume />

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FiArrowRight } from "react-icons/fi";
 import ImageHandler from "../../components/ImageHandler";
+import Link from "next/link";
 
 const WelcomeSection = () => {
   return (
@@ -18,9 +19,12 @@ const WelcomeSection = () => {
         réussissant tous vos examens.
       </p>
 
-      <button className="bg-background-accent text-text-primary mx-auto mb-10 flex items-center gap-2 rounded-lg border border-black px-4 py-2">
+      <Link
+        href="/catalogue"
+        className="bg-background-accent text-text-primary mx-auto mb-10 flex w-fit items-center gap-2 rounded-lg border border-black px-4 py-2"
+      >
         Voir le Catalogue <FiArrowRight />
-      </button>
+      </Link>
 
       <ImageHandler
         image_url="/images/accueil_image3.png"
