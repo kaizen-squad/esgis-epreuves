@@ -13,7 +13,7 @@ export default function Accueil() {
       <WelcomeSection />
       <Research />
       <div className="px-6">
-        <RecentlyAdded />
+        <RecentlyAdded title="Recemment ajoutées" />
         <DomainFilter />
         <Filieres />
         <ResultsResume />
