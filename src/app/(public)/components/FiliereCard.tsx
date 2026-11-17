@@ -32,7 +32,7 @@ const FiliereCard = ({
         fill
         loading="eager"
       />
-      <div className="text-text-primary absolute inset-x-[20%] bottom-[8%] flex items-center justify-between md:bottom-[10%]">
+      <div className="text-text-primary absolute inset-x-[20%] bottom-[3%] flex items-center justify-between md:bottom-[5%]">
         <div>
           <p className="whitespace-nowrap">
             <span className="text-[clamp(1.5rem,12cqw,2.5rem)] font-semibold">

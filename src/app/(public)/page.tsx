@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import CTACatalogue from "./accueil/components/CTACatalogue";
-import DomainFilter from "./accueil/components/DomainFilter";
+import DomainFilter, {
+  DomainFilterSkeleton,
+} from "./accueil/components/DomainFilter";
 import Filieres from "./accueil/components/Filieres";
 import RecentlyAdded, {
   RecentlyAddedSkeleton,
@@ -10,7 +12,11 @@ import ResultsResume from "./accueil/components/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
 import PublicLayout from "./components/PublicLayout";
 
-export default function Accueil() {
+export default async function Accueil({
+  searchParams,
+}: {
+  searchParams: Promise<{ domain?: string | string[] }>;
+}) {
   return (
     <PublicLayout>
       <WelcomeSection />
@@ -19,7 +25,9 @@ export default function Accueil() {
         <Suspense fallback={<RecentlyAddedSkeleton />}>
           <RecentlyAdded title="Recemment ajoutées" />
         </Suspense>
-        <DomainFilter />
+        <Suspense fallback={<DomainFilterSkeleton />}>
+          <DomainFilter searchParams={searchParams} />
+        </Suspense>
         <Filieres />
         <ResultsResume />
         <CTACatalogue />
