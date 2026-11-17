@@ -1,11 +1,11 @@
 "use client";
 
-import EpreuveCard from "../../components/EpreuveCard";
+import EpreuveCard, { EpreuveCardProps } from "../../components/EpreuveCard";
 import CatalogueFilter from "./CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
 import { useState } from "react";
 
-const CatalogueEpreuves = ({ data }: { data: EpreuveCard[] }) => {
+const CatalogueEpreuves = ({ data }: { data: EpreuveCardProps[] }) => {
   const [open, setOpen] = useState<boolean>(true);
   return (
     <>

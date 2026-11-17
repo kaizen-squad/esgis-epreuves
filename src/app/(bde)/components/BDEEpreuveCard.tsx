@@ -1,4 +1,4 @@
-import { EpreuveCard } from "@/app/(public)/components/EpreuveCard";
+import { type EpreuveCardProps } from "@/app/(public)/components/EpreuveCard";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import Image from "next/image";
 import {
@@ -11,7 +11,7 @@ import {
 } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
 
-const BDEEpreuveCard = (data: EpreuveCard) => {
+const BDEEpreuveCard = (data: EpreuveCardProps) => {
   return (
     <article className="group bg-background-primary flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
       <div className="relative aspect-2/1 w-full shrink-0 overflow-hidden bg-gray-100">

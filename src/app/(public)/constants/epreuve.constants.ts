@@ -1,6 +1,6 @@
-import EpreuveCard from "../components/EpreuveCard";
+import { EpreuveCardProps } from "../components/EpreuveCard";
 
-export const epreuvesMock: EpreuveCard[] = [
+export const epreuvesMock: EpreuveCardProps[] = [
   {
     img_src: "/images/study.png",
     name: "Baccalauréat Mathématiques - Session Normale",

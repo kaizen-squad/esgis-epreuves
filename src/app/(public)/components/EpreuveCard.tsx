@@ -2,7 +2,7 @@ import Image from "next/image";
 import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
 
-export interface EpreuveCard {
+export interface EpreuveCardProps {
   img_src: string;
   name: string;
   year: number;
@@ -11,7 +11,7 @@ export interface EpreuveCard {
   type: string;
 }
 
-const EpreuveCard = (data: EpreuveCard) => {
+const EpreuveCard = (data: EpreuveCardProps) => {
   return (
     <article className="group bg-background-primary flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
       <div className="relative aspect-2/1 w-full shrink-0 overflow-hidden bg-gray-100">
