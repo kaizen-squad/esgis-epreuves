@@ -1,29 +1,21 @@
-import { useState } from "react";
+import SegmentedFilter from "../SegmentedFilter";
 
-const type_evaluation = [
-  { name: "Tous", count: 10 },
-  { name: "Examen", count: 4 },
-  { name: "Devoir", count: 6 },
+const EXAM_TYPES = [
+  { label: "Tous", value: null },
+  { label: "Terminal", value: "Contrôle Terminal" },
+  { label: "Continu", value: "Contrôle Continu" },
 ];
 
-const TypeEvaluationFilterWrapper = () => {
-  const [currentTypeEvaluation, setCurrentTypeEvaluation] = useState("Tous");
-  return (
-    <div className="bg-background-default flex rounded p-1">
-      {type_evaluation.map((type_evaluation) => (
-        <div
-          onClick={() => setCurrentTypeEvaluation(type_evaluation.name)}
-          key={type_evaluation.name}
-          className={`flex min-w-0 flex-1 cursor-pointer flex-col rounded p-1 text-center ${currentTypeEvaluation == type_evaluation.name ? "bg-background-accent text-text-primary" : ""}`}
-        >
-          <span className="w-full truncate text-sm">
-            {type_evaluation.name}
-          </span>
-          <span>{type_evaluation.count}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
+interface TypeEvaluationFilterWrapperProps {
+  current: string | null;
+  onChange: (value: string | null) => void;
+}
+
+const TypeEvaluationFilterWrapper = ({
+  current,
+  onChange,
+}: TypeEvaluationFilterWrapperProps) => (
+  <SegmentedFilter choices={EXAM_TYPES} current={current} onChange={onChange} />
+);
 
 export default TypeEvaluationFilterWrapper;

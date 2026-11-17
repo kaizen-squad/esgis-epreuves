@@ -1,5 +1,6 @@
 import { FiX } from "react-icons/fi";
-import { niveauMocks } from "../../constants/filter.constants";
+import type { CatalogueFilterOptions } from "../../utils/catalogueFilters";
+import type { CatalogueFilters } from "./useCatalogueFilters";
 import FiliereCard from "./filiere/FiliereCard";
 import HideFilterComponent from "./HideFilterComponent";
 import MatiereFilterWrapper from "./matiere/MatiereFilterWrapper";
@@ -8,7 +9,28 @@ import TypeEvaluationFilterWrapper from "./type_evaluation/TypeEvaluationFilterW
 import SessionFilterWrapper from "./session/SessionFilterWrapper";
 import DateAjoutFilterWrapper from "./data_ajout/DateAjoutFilterWrapper";
 
-const FilterComponents = ({ onClose }: { onClose?: () => void }) => {
+interface FilterComponentsProps {
+  onClose?: () => void;
+  options: CatalogueFilterOptions;
+  filters: CatalogueFilters;
+  total: number;
+}
+
+const FilterComponents = ({
+  onClose,
+  options,
+  filters,
+  total,
+}: FilterComponentsProps) => {
+  const fieldId = filters.get("fieldId");
+  const levelId = filters.get("levelId");
+  // Matieres restreintes a la filiere et au niveau choisis, s'il y en a.
+  const subjects = options.subjects.filter(
+    (subject) =>
+      (!fieldId || subject.fieldId === fieldId) &&
+      (!levelId || subject.levelId === levelId),
+  );
+
   return (
     <>
       <div className="py-2">
@@ -19,7 +41,9 @@ const FilterComponents = ({ onClose }: { onClose?: () => void }) => {
           <div className="flex items-center justify-between">
             <div className="text-text-secondary mb-4 flex items-center gap-2 font-semibold">
               <h3 className="text-xl">Filtres</h3>
-              <span className="rounded-full bg-[#0f2155]/10 px-4 py-2">0</span>
+              <span className="rounded-full bg-[#0f2155]/10 px-4 py-2">
+                {filters.activeCount}
+              </span>
             </div>
             <button
               type="button"
@@ -30,35 +54,60 @@ const FilterComponents = ({ onClose }: { onClose?: () => void }) => {
               <FiX size={22} />
             </button>
           </div>
-          <p>120 résultats disponibles</p>
+          <p>
+            {total} résultat{total > 1 ? "s" : ""} disponible
+            {total > 1 ? "s" : ""}
+          </p>
         </div>
         <hr className="my-4 w-full text-gray-300" />
         <div className="px-4">
           <HideFilterComponent label="Niveau">
             <div className="flex gap-2 overflow-x-auto">
-              {niveauMocks.map((niveau) => (
-                <NiveauCard key={niveau.niveau} />
+              {options.levels.map((level) => (
+                <NiveauCard
+                  key={level.id}
+                  label={level.name}
+                  active={levelId === level.id}
+                  onClick={() => filters.toggle("levelId", level.id)}
+                />
               ))}
             </div>
           </HideFilterComponent>
-          <HideFilterComponent label="Filière">
-            <div>
-              {niveauMocks.map((niveau) => (
-                <FiliereCard key={niveau.niveau} />
-              ))}
-            </div>
-          </HideFilterComponent>
+          {options.fields && (
+            <HideFilterComponent label="Filière">
+              <div>
+                {options.fields.map((field) => (
+                  <FiliereCard
+                    key={field.id}
+                    label={field.name}
+                    checked={fieldId === field.id}
+                    onChange={() => filters.toggle("fieldId", field.id)}
+                  />
+                ))}
+              </div>
+            </HideFilterComponent>
+          )}
           <HideFilterComponent label="Matière">
-            <MatiereFilterWrapper />
+            <MatiereFilterWrapper
+              subjects={subjects}
+              selectedId={filters.get("subjectId")}
+              onToggle={(subjectId) => filters.toggle("subjectId", subjectId)}
+            />
           </HideFilterComponent>
           <HideFilterComponent label="Année académique">
             <p>Année académique</p>
           </HideFilterComponent>
           <HideFilterComponent label="Type d'évaluation">
-            <TypeEvaluationFilterWrapper />
+            <TypeEvaluationFilterWrapper
+              current={filters.get("examType")}
+              onChange={(value) => filters.set("examType", value)}
+            />
           </HideFilterComponent>
           <HideFilterComponent label="Session">
-            <SessionFilterWrapper />
+            <SessionFilterWrapper
+              current={filters.get("session")}
+              onChange={(value) => filters.set("session", value)}
+            />
           </HideFilterComponent>
           <HideFilterComponent label="Date d'ajout">
             <DateAjoutFilterWrapper />

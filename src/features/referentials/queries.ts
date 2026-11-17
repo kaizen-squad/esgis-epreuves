@@ -53,6 +53,23 @@ export async function getFieldById(id: string): Promise<Field | null> {
   };
 }
 
+/** Niveau par id, pour le titre de la page d'une filiere filtree sur un niveau. `null` si absent ou si l'id n'est pas un uuid. */
+export async function getLevelById(id: string): Promise<Level | null> {
+  if (!z.uuid().safeParse(id).success) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("levels")
+    .select(LEVEL_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return { id: data.id, name: data.name, isActive: data.is_active };
+}
+
 /** Niveaux (L1 a M2), pour les filtres du catalogue (actifs uniquement, sauf `includeInactive`). */
 export async function getLevels(options: ListOptions = {}): Promise<Level[]> {
   const supabase = await createClient();
