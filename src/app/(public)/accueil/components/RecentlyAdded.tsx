@@ -1,5 +1,6 @@
 import { getRecentExams } from "@/features/exams/queries";
 import Slider from "@/components/ui/Slider";
+import { connection } from "next/server";
 import EpreuveCard from "../../components/EpreuveCard";
 import { toEpreuveCardProps } from "./toEpreuveCardProps";
 
@@ -17,6 +18,7 @@ export function RecentlyAddedSkeleton() {
 }
 
 export default async function RecentlyAdded({ title }: { title: string }) {
+  await connection();
   const exams = await getRecentExams();
 
   if (exams.length === 0) {
