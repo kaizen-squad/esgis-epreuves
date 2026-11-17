@@ -138,11 +138,11 @@ Nombre maximal de fichiers par lot (`uploadExamsBatch`, #56) : 4. Choisi pour qu
 
 ### `getExams(rawFilters: ExamFilters): Promise<ExamListResult>`
 
-Point d'entrée unique du catalogue (recherche, filtres combinables, pagination). `rawFilters` est validé par `examFiltersSchema` (voir conventions : jamais de 500 sur un filtre mal formé). Retourne `ExamListResult` (`exams`, `total`, `page`, `pageSize`). Si la page demandée dépasse le total après filtrage (erreur PostgREST `PGRST103`), se rappelle elle-même sur la page 1 plutôt que de propager l'erreur : l'écran ne doit jamais recevoir cette erreur-là pour une page hors bornes, et doit afficher le `page` du résultat (1 dans ce cas), pas celui de l'URL.
+Point d'entrée unique du catalogue (recherche, filtres combinables, pagination). `rawFilters` est validé par `examFiltersSchema` (voir conventions : jamais de 500 sur un filtre mal formé). Retourne `ExamListResult` (`exams`, `total`, `page`, `pageSize`). Si la page demandée dépasse le total après filtrage (erreur PostgREST `PGRST103`), relance la même requête sur la page 1 plutôt que de propager l'erreur : l'écran ne doit jamais recevoir cette erreur-là pour une page hors bornes, et doit afficher le `page` du résultat (1 dans ce cas), pas celui de l'URL.
 
 ### `getRecentExams(limit?: number): Promise<Exam[]>`
 
-Appelle `getExams` avec juste une limite (8 par défaut), pour l'accueil. `limit` est borné comme `pageSize` (1 à 50) : hors bornes ou non entier, il retombe sur 20. Même comportement et mêmes garanties que `getExams`, pas de logique propre.
+Épreuves récentes pour l'accueil (8 par défaut) : même requête que `getExams` (via l'helper privé `queryExams`), avec une limite. `limit` est borné comme `pageSize` (1 à 50) : hors bornes ou non entier, il retombe sur 20. Mise en cache par `unstable_cache` (`revalidate: 60`, tag `exams`) avec le client public sans cookies (`src/lib/supabase/public.ts`), pour que l'accueil ne dépende pas des cookies et reste cacheable ; le tag `exams` est posé pour une invalidation explicite ultérieure (`revalidateTag("exams")` depuis les mutations). En cas d'erreur Supabase, l'exception remonte (aucun `ActionResult`), pour retomber sur `src/app/(public)/error.tsx`.
 
 ### `getFieldExams(fieldId: string, rawFilters?: ExamFilters): Promise<FieldExamsResult | null>`
 
@@ -221,6 +221,12 @@ Mêmes contrôles que `uploadExam`/`replaceExamFile` (octets de signature `%PDF-
 ### `summarizeReport(entries: SeedReportEntry[]): SeedReportSummary`
 
 Compte chaque statut (`imported`/`dry-run` ensemble comme imports, `duplicate`, `error`) et les avertissements séparément : un import avec `warning` compte dans les deux. Utilisé par `runSeed` pour construire `SeedReport.summary`, et par `scripts/seed-exams.ts` pour le résumé affiché en fin d'exécution et le code de sortie (`1` si `errors > 0`, jamais sur un simple `warning` ou `duplicate`).
+
+## `src/lib/supabase/public.ts`
+
+### `createPublicClient()`
+
+Client Supabase pour les lectures publiques sans cookies (`anon`/publishable key), utilisable dans une fonction mise en cache (`unstable_cache`) contrairement à `src/lib/supabase/server.ts` qui appelle `cookies()` et force le rendu dynamique. Aucune session persistée (`persistSession: false`, `autoRefreshToken: false`) : il ne doit servir qu'à des lectures publiques protégées par la RLS, jamais à une écriture authentifiée.
 
 ## `src/lib/supabase/script.ts`
 
