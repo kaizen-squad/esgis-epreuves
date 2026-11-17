@@ -62,12 +62,12 @@ describe("login", () => {
     if (!result.ok) expect(result.error).toContain("Trop de tentatives");
   });
 
-  it("redirige vers /admin en cas de succes", async () => {
+  it("redirige vers /bde/accueil en cas de succes", async () => {
     signInWithPassword.mockResolvedValue({ error: null });
 
     await expect(
       login(null, loginForm("bde.dev@esgis.local", "x")),
-    ).rejects.toThrow("REDIRECT:/admin");
+    ).rejects.toThrow("REDIRECT:/bde/accueil");
   });
 });
 
