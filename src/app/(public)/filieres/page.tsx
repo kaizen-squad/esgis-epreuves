@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import CTACatalogue from "../accueil/components/CTACatalogue";
 import Research from "../accueil/components/Research";
 import PublicLayout from "../components/PublicLayout";
 import FIliereCategories from "./components/FIliereCategories";
+import FiliereCategoriesSkeleton from "./components/FiliereCategoriesSkeleton";
 
 const Filieres = () => {
   return (
@@ -15,7 +17,9 @@ const Filieres = () => {
         </p>
       </div>
       <Research />
-      <FIliereCategories />
+      <Suspense fallback={<FiliereCategoriesSkeleton />}>
+        <FIliereCategories />
+      </Suspense>
       <CTACatalogue />
     </PublicLayout>
   );

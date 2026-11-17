@@ -56,3 +56,10 @@ export type FieldLevelSummary = {
   levelName: string;
   examCount: number;
 };
+
+/** Categorie de la page /filieres : une filiere et ses couples niveau x filiere. */
+export type FieldCategory = {
+  fieldId: string;
+  fieldName: string;
+  levels: FieldLevelSummary[];
+};

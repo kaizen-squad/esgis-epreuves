@@ -1,17 +1,23 @@
 import FiliereCard from "../../components/FiliereCard";
-import { filiereMocks } from "../../constants/filieres.constants";
+
+type FiliereCardData = {
+  label: string;
+  examCount: number;
+  href: string;
+};
 
 interface FiliereCategoryProps {
   title: string;
+  cards: (FiliereCardData & { key: string })[];
 }
 
-const FiliereCategory = ({ title }: FiliereCategoryProps) => {
+const FiliereCategory = ({ title, cards }: FiliereCategoryProps) => {
   return (
     <div className="mb-6">
       <h3 className="text-text-secondary text-3xl font-semibold">{title}</h3>
       <div className="grid w-full grid-cols-1 gap-4 py-0 md:grid-cols-2 lg:grid-cols-3">
-        {filiereMocks.map((filiere) => (
-          <FiliereCard data={filiere} key={filiere.id} />
+        {cards.map(({ key, ...card }) => (
+          <FiliereCard data={card} key={key} />
         ))}
       </div>
     </div>

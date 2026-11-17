@@ -3,7 +3,7 @@ import FiliereCard from "../../components/FiliereCard";
 import Link from "next/link";
 import { connection } from "next/server";
 import { getFieldLevelSummaries } from "@/features/exams/queries";
-import { fieldDisplayName } from "../../utils/fieldLabel";
+import { toFiliereCardData } from "../../utils/fieldLabel";
 
 const HOME_CARDS_LIMIT = 6;
 const MOBILE_VISIBLE_CARDS = 3;
@@ -37,11 +37,7 @@ export default async function Filieres() {
         {summaries.map((summary, index) => (
           <FiliereCard
             key={`${summary.fieldId}-${summary.levelId}`}
-            data={{
-              label: `${summary.levelName} ${fieldDisplayName(summary.fieldName)}`,
-              examCount: summary.examCount,
-              href: `/filieres/${summary.fieldId}?levelId=${summary.levelId}`,
-            }}
+            data={toFiliereCardData(summary)}
             className={
               index >= MOBILE_VISIBLE_CARDS ? "hidden md:block" : "block"
             }

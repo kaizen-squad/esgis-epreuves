@@ -9,6 +9,7 @@ import type {
   ExamFilters,
   ExamListResult,
   FieldExamsResult,
+  FieldCategory,
   FieldLevelSummary,
 } from "./types";
 
@@ -200,6 +201,21 @@ export async function getFieldLevelSummaries(): Promise<FieldLevelSummary[]> {
   return getFieldLevelSummariesCached();
 }
 
+/** Page /filieres : une categorie par filiere, dans l'ordre du tri des couples (meme cache). */
+export async function getFieldCategories(): Promise<FieldCategory[]> {
+  const categories = new Map<string, FieldCategory>();
+  for (const summary of await getFieldLevelSummaries()) {
+    const category = categories.get(summary.fieldId) ?? {
+      fieldId: summary.fieldId,
+      fieldName: summary.fieldName,
+      levels: [],
+    };
+    category.levels.push(summary);
+    categories.set(summary.fieldId, category);
+  }
+  return [...categories.values()];
+}
+
 /**
  * Page dediee a une filiere (#53) : metadonnees de la filiere et ses epreuves, meme pagination et
  * memes filtres que le catalogue (#9), filiere fixee quel que soit le fieldId recu dans les filtres.
@@ -216,6 +232,42 @@ export async function getFieldExams(
     field,
     exams: await getExams(fixedFieldFilters(fieldId, rawFilters)),
   };
+}
+
+/**
+ * Options ayant au moins une epreuve pour ce couple filiere x niveau (titre de la page d'une
+ * filiere a partir de la L3). Un comptage par option active de la filiere : peu de requetes, exact.
+ */
+export async function getFieldLevelOptionNames(
+  fieldId: string,
+  levelId: string,
+): Promise<string[]> {
+  const supabase = await createClient();
+  const { data: options, error } = await supabase
+    .from("options")
+    .select("id, name")
+    .eq("field_id", fieldId)
+    .eq("is_active", true)
+    .order("name");
+
+  if (error) throw error;
+
+  const names = await Promise.all(
+    options.map(async (option) => {
+      const { count, error: countError } = await supabase
+        .from("exams")
+        .select("id", { count: "exact", head: true })
+        .eq("field_id", fieldId)
+        .eq("level_id", levelId)
+        .eq("option_id", option.id);
+
+      if (countError) throw countError;
+
+      return (count ?? 0) > 0 ? (option.name as string) : null;
+    }),
+  );
+
+  return names.filter((name) => name !== null);
 }
 
 /** Lecture d'une epreuve par son slug, pour la page detail. `null` si absente (notFound() cote page). */

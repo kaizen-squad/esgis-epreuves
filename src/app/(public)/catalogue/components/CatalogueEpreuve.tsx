@@ -5,7 +5,13 @@ import CatalogueFilter from "./CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
 import { useState } from "react";
 
-const CatalogueEpreuves = ({ data }: { data: EpreuveCardProps[] }) => {
+type CatalogueEpreuvesProps = {
+  data: EpreuveCardProps[];
+  /** Total cote serveur quand `data` n'est qu'une page ; par defaut, la taille de `data`. */
+  total?: number;
+};
+
+const CatalogueEpreuves = ({ data, total }: CatalogueEpreuvesProps) => {
   const [open, setOpen] = useState<boolean>(true);
   return (
     <>
@@ -21,7 +27,9 @@ const CatalogueEpreuves = ({ data }: { data: EpreuveCardProps[] }) => {
         </button>
         <CatalogueFilter mode="mobile" />
         <p className="text-text-paragraph text-sm">
-          <span className="text-text-title font-semibold">{data?.length}</span>{" "}
+          <span className="text-text-title font-semibold">
+            {total ?? data.length}
+          </span>{" "}
           épreuves trouvées
         </p>
       </div>
