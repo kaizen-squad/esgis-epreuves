@@ -4,10 +4,10 @@ import Slider from "@/components/ui/Slider";
 import EpreuveCard from "../../components/EpreuveCard";
 import { epreuvesMock } from "../../constants/epreuve.constants";
 
-const RecentlyAdded = () => {
+const RecentlyAdded = ({ title }: { title: string }) => {
   return (
     <div className="mx-auto mb-16 max-w-7xl">
-      <h3 className="section-title">Récemment ajoutées...</h3>
+      <h3 className="section-title">{title}</h3>
       <Slider>
         {epreuvesMock.map((epreuve) => (
           <div

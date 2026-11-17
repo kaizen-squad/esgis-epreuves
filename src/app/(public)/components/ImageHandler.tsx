@@ -4,10 +4,12 @@ const ImageHandler = ({
   image_url,
   image_alt,
   className,
+  image_className,
 }: {
   image_url: string;
   image_alt: string;
   className?: string;
+  image_className?: string;
 }) => {
   return (
     <div
@@ -17,7 +19,7 @@ const ImageHandler = ({
         src={image_url}
         alt={image_alt}
         fill
-        className="object-cover object-top"
+        className={image_className}
         sizes="(max-width: 1200px) 100%"
         loading="eager"
       />

@@ -34,6 +34,9 @@ describe("login", () => {
 
     expect(result.ok).toBe(false);
     expect(signInWithPassword).not.toHaveBeenCalled();
+    if (!result.ok && "fieldErrors" in result) {
+      expect(result.fieldErrors?.email).toBeDefined();
+    }
   });
 
   it("message generique sur identifiants incorrects, sans reveler si le compte existe", async () => {
@@ -59,12 +62,12 @@ describe("login", () => {
     if (!result.ok) expect(result.error).toContain("Trop de tentatives");
   });
 
-  it("redirige vers /admin en cas de succes", async () => {
+  it("redirige vers /bde/accueil en cas de succes", async () => {
     signInWithPassword.mockResolvedValue({ error: null });
 
     await expect(
       login(null, loginForm("bde.dev@esgis.local", "x")),
-    ).rejects.toThrow("REDIRECT:/admin");
+    ).rejects.toThrow("REDIRECT:/bde/accueil");
   });
 });
 
