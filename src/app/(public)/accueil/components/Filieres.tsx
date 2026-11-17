@@ -1,6 +1,7 @@
 import { FiArrowRight } from "react-icons/fi";
 import FiliereCard from "../../components/FiliereCard";
 import Link from "next/link";
+import { connection } from "next/server";
 import { getFieldLevelSummaries } from "@/features/exams/queries";
 import { fieldDisplayName } from "../../utils/fieldLabel";
 
@@ -8,6 +9,8 @@ const HOME_CARDS_LIMIT = 6;
 const MOBILE_VISIBLE_CARDS = 3;
 
 export default async function Filieres() {
+  // Rendu a la requete, pas au build : la CI build sans variables Supabase (meme raison que RecentlyAdded).
+  await connection();
   const summaries = (await getFieldLevelSummaries()).slice(0, HOME_CARDS_LIMIT);
 
   if (summaries.length === 0) {
