@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FiMoreVertical } from "react-icons/fi";
 
 type MenuItemProps = {
@@ -43,41 +44,84 @@ type MenuProps = {
   align?: "left" | "right";
 };
 
+type MenuPosition = {
+  top: number;
+  left?: number;
+  right?: number;
+};
+
 export default function Menu({
   children,
   label = "Options",
   align = "right",
 }: MenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<MenuPosition | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const close = () => {
+    setIsOpen(false);
+    setPosition(null);
+  };
+
+  const toggle = () => {
+    if (isOpen) {
+      close();
+      return;
+    }
+
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    setPosition({
+      top: rect.bottom + 8,
+      ...(align === "right"
+        ? { right: window.innerWidth - rect.right }
+        : { left: rect.left }),
+    });
+    setIsOpen(true);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
+      const target = event.target as Node;
+      if (
+        !buttonRef.current?.contains(target) &&
+        !dropdownRef.current?.contains(target)
+      ) {
+        close();
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key === "Escape") {
+        close();
+        buttonRef.current?.focus();
+      }
     };
 
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
 
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
     };
   }, [isOpen]);
 
   return (
-    <div ref={containerRef} className="relative inline-block text-left">
+    <div className="relative inline-block text-left">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={toggle}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={label}
@@ -86,16 +130,20 @@ export default function Menu({
         <FiMoreVertical size={20} />
       </button>
 
-      {isOpen && (
-        <div
-          role="menu"
-          className={`bg-background-primary absolute z-20 mt-2 min-w-48 overflow-hidden rounded-lg border border-gray-200 shadow-lg ${
-            align === "right" ? "right-0" : "left-0"
-          }`}
-        >
-          {children}
-        </div>
-      )}
+      {isOpen &&
+        position &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            role="menu"
+            onClick={close}
+            style={position}
+            className="bg-background-primary fixed z-50 min-w-48 overflow-hidden rounded-lg border border-gray-200 shadow-lg"
+          >
+            {children}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   FiDownload,
   FiEye,
   FiFileText,
+  FiRotateCcw,
   FiTrash,
 } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
@@ -57,15 +58,21 @@ const BDEEpreuveCard = (data: EpreuveCard) => {
             <Menu>
               <MenuItem
                 name={
-                  <span>
-                    Modifier les données <FiFileText />
+                  <span className="flex items-center gap-2 text-sm">
+                    <span>Modifier les données</span> <FiFileText />
                   </span>
                 }
               />
-              <MenuItem name="Remplacer l'épreuve" />
               <MenuItem
                 name={
-                  <span className="text-background-accent flex items-center gap-2">
+                  <span className="flex items-center gap-2 text-sm">
+                    Remplacer l&apos;épreuve <FiRotateCcw />
+                  </span>
+                }
+              />
+              <MenuItem
+                name={
+                  <span className="text-background-accent flex items-center gap-2 text-sm">
                     Supprimer l&apos;épreuve <FiTrash />
                   </span>
                 }
