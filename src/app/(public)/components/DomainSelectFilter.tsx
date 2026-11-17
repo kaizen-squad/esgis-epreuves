@@ -1,4 +1,3 @@
-import React from "react";
 import { activityDomain } from "../constants/domain.constants";
 import { useDomainStore } from "../store/domain.store";
 
