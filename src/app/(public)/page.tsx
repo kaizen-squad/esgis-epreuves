@@ -3,7 +3,7 @@ import CTACatalogue from "./accueil/components/CTACatalogue";
 import DomainFilter, {
   DomainFilterSkeleton,
 } from "./accueil/components/DomainFilter";
-import Filieres from "./accueil/components/Filieres";
+import Filieres, { FilieresSkeleton } from "./accueil/components/Filieres";
 import RecentlyAdded, {
   RecentlyAddedSkeleton,
 } from "./accueil/components/RecentlyAdded";
@@ -24,7 +24,9 @@ export default function Accueil() {
         <Suspense fallback={<DomainFilterSkeleton />}>
           <DomainFilter />
         </Suspense>
-        <Filieres />
+        <Suspense fallback={<FilieresSkeleton />}>
+          <Filieres />
+        </Suspense>
         <ResultsResume />
         <CTACatalogue />
       </div>

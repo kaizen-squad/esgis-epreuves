@@ -47,3 +47,12 @@ export type FieldExamsResult = {
   field: Field;
   exams: ExamListResult;
 };
+
+/** Carte "niveau x filiere" de l'accueil (ex. "L1 IRT") et son nombre d'epreuves. */
+export type FieldLevelSummary = {
+  fieldId: string;
+  fieldName: string;
+  levelId: string;
+  levelName: string;
+  examCount: number;
+};
