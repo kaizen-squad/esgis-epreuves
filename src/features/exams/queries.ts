@@ -9,6 +9,7 @@ import type {
   ExamFilters,
   ExamListResult,
   FieldExamsResult,
+  FieldLevelSummary,
 } from "./types";
 
 const EXAM_CATALOG_SELECT =
@@ -124,6 +125,79 @@ export async function getRecentExams(
   limit = RECENT_EXAMS_LIMIT,
 ): Promise<Exam[]> {
   return getRecentExamsCached(limit);
+}
+
+const FIELD_LEVEL_SUMMARIES_REVALIDATE_SECONDS = 60;
+
+type FieldLevelCouple = Omit<FieldLevelSummary, "examCount">;
+
+/** Jointures many-to-one : PostgREST renvoie un objet, le client non type les infere a tort en tableau. */
+type SubjectCoupleRow = {
+  field_id: string;
+  level_id: string;
+  fields: { name: string };
+  levels: { name: string };
+};
+
+/** Couples niveau x filiere proposes, deduits des matieres actives (filiere et niveau actifs aussi). */
+async function getFieldLevelCouples(
+  supabase: SupabaseClient,
+): Promise<FieldLevelCouple[]> {
+  const { data, error } = await supabase
+    .from("subjects")
+    .select("field_id, level_id, fields!inner(name), levels!inner(name)")
+    .eq("is_active", true)
+    .eq("fields.is_active", true)
+    .eq("levels.is_active", true);
+
+  if (error) throw error;
+
+  const couples = new Map<string, FieldLevelCouple>();
+  for (const row of data as unknown as SubjectCoupleRow[]) {
+    const key = `${row.field_id}:${row.level_id}`;
+    if (couples.has(key)) continue;
+    couples.set(key, {
+      fieldId: row.field_id,
+      fieldName: row.fields.name,
+      levelId: row.level_id,
+      levelName: row.levels.name,
+    });
+  }
+
+  return [...couples.values()].sort(
+    (a, b) =>
+      a.fieldName.localeCompare(b.fieldName) ||
+      a.levelName.localeCompare(b.levelName),
+  );
+}
+
+const getFieldLevelSummariesCached = unstable_cache(
+  async (): Promise<FieldLevelSummary[]> => {
+    const supabase = createPublicClient();
+    const couples = await getFieldLevelCouples(supabase);
+
+    // Un comptage par couple (head: true, aucune ligne transferee) : exact quel que soit max_rows.
+    return Promise.all(
+      couples.map(async (couple) => {
+        const { count, error } = await supabase
+          .from("exams")
+          .select("id", { count: "exact", head: true })
+          .eq("field_id", couple.fieldId)
+          .eq("level_id", couple.levelId);
+
+        if (error) throw error;
+
+        return { ...couple, examCount: count ?? 0 };
+      }),
+    );
+  },
+  ["field-level-summaries"],
+  { revalidate: FIELD_LEVEL_SUMMARIES_REVALIDATE_SECONDS, tags: ["exams"] },
+);
+
+/** Cartes "niveau x filiere" de l'accueil (ex. "L1 IRT") avec leur nombre d'epreuves, toutes options confondues. */
+export async function getFieldLevelSummaries(): Promise<FieldLevelSummary[]> {
+  return getFieldLevelSummariesCached();
 }
 
 /**

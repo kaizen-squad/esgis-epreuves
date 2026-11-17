@@ -11,6 +11,7 @@ import Research from "./accueil/components/Research";
 import ResultsResume from "./accueil/components/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
 import PublicLayout from "./components/PublicLayout";
+import FilieresSkeleton from "./accueil/components/FilieresSkeleton";
 
 export default function Accueil() {
   return (
@@ -24,7 +25,9 @@ export default function Accueil() {
         <Suspense fallback={<DomainFilterSkeleton />}>
           <DomainFilter />
         </Suspense>
-        <Filieres />
+        <Suspense fallback={<FilieresSkeleton />}>
+          <Filieres />
+        </Suspense>
         <ResultsResume />
         <CTACatalogue />
       </div>
