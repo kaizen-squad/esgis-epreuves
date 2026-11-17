@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
 
@@ -9,9 +10,22 @@ export interface EpreuveCardProps {
   matter: string;
   class: string;
   type: string;
+  slug?: string;
+  fileSize?: number;
+}
+
+function formatFileSize(bytes: number): string {
+  const megabytes = bytes / (1024 * 1024);
+  if (megabytes >= 1) return `${megabytes.toFixed(1)} Mo`;
+  return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
 }
 
 const EpreuveCard = (data: EpreuveCardProps) => {
+  const previewHref = data.slug ? `/api/exams/${data.slug}` : null;
+  const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
+  const sizeLabel =
+    data.fileSize !== undefined ? formatFileSize(data.fileSize) : "1,6 Mo";
+
   return (
     <article className="group bg-background-primary flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
       <div className="relative aspect-2/1 w-full shrink-0 overflow-hidden bg-gray-100">
@@ -25,7 +39,7 @@ const EpreuveCard = (data: EpreuveCardProps) => {
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
         <span className="text-text-default absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/85 px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm">
-          <FiFileText size={12} /> PDF · 3 p.
+          <FiFileText size={12} /> PDF
         </span>
       </div>
 
@@ -51,18 +65,40 @@ const EpreuveCard = (data: EpreuveCardProps) => {
             {data.year - 1}-{data.year}
           </span>
           <GoDotFill size={6} />
-          <span>1,6 Mo</span>
+          <span>{sizeLabel}</span>
         </div>
 
         <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
-          <button className="text-text-default flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:bg-gray-50">
-            <FiEye size={16} />
-            Visualiser
-          </button>
-          <button className="bg-background-secondary text-text-primary flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90">
-            <FiDownload size={16} />
-            Télécharger
-          </button>
+          {previewHref ? (
+            <Link
+              href={previewHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-default flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
+            >
+              <FiEye size={16} />
+              Visualiser
+            </Link>
+          ) : (
+            <button className="text-text-default flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:bg-gray-50">
+              <FiEye size={16} />
+              Visualiser
+            </button>
+          )}
+          {downloadHref ? (
+            <Link
+              href={downloadHref}
+              className="bg-background-secondary text-text-primary flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90"
+            >
+              <FiDownload size={16} />
+              Télécharger
+            </Link>
+          ) : (
+            <button className="bg-background-secondary text-text-primary flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90">
+              <FiDownload size={16} />
+              Télécharger
+            </button>
+          )}
         </div>
       </div>
     </article>

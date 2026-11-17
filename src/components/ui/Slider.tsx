@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 

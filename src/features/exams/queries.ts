@@ -1,4 +1,7 @@
+import { unstable_cache } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { getFieldById } from "@/features/referentials/queries";
 import { examFiltersSchema, fixedFieldFilters } from "./schemas";
 import type {
@@ -54,12 +57,11 @@ function toExam(row: {
   };
 }
 
-/** Recherche texte + filtres combinables sur le catalogue (#9), pagination par decalage. */
-export async function getExams(
+async function queryExams(
+  supabase: SupabaseClient,
   rawFilters: ExamFilters,
 ): Promise<ExamListResult> {
   const filters = examFiltersSchema.parse(rawFilters);
-  const supabase = await createClient();
 
   let query = supabase
     .from("exams_catalog")
@@ -84,7 +86,7 @@ export async function getExams(
 
   if (error?.code === RANGE_NOT_SATISFIABLE) {
     // Page demandee au-dela du total (filtre qui reduit les resultats, page restee dans l'URL) : page 1 plutot qu'une erreur.
-    return getExams({ ...rawFilters, page: 1 });
+    return queryExams(supabase, { ...rawFilters, page: 1 });
   }
   if (error) throw error;
 
@@ -96,12 +98,32 @@ export async function getExams(
   };
 }
 
+/** Recherche texte + filtres combinables sur le catalogue (#9), pagination par decalage. */
+export async function getExams(
+  rawFilters: ExamFilters,
+): Promise<ExamListResult> {
+  return queryExams(await createClient(), rawFilters);
+}
+
+const RECENT_EXAMS_REVALIDATE_SECONDS = 60;
+
+const getRecentExamsCached = unstable_cache(
+  async (limit: number): Promise<Exam[]> => {
+    const { exams } = await queryExams(createPublicClient(), {
+      page: 1,
+      pageSize: limit,
+    });
+    return exams;
+  },
+  ["recent-exams"],
+  { revalidate: RECENT_EXAMS_REVALIDATE_SECONDS, tags: ["exams"] },
+);
+
 /** Epreuves recentes pour l'accueil : meme requete que le catalogue, juste une limite en plus. */
 export async function getRecentExams(
   limit = RECENT_EXAMS_LIMIT,
 ): Promise<Exam[]> {
-  const { exams } = await getExams({ page: 1, pageSize: limit });
-  return exams;
+  return getRecentExamsCached(limit);
 }
 
 /**
