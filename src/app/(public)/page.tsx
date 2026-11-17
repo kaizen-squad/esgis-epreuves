@@ -3,7 +3,7 @@ import CTACatalogue from "./accueil/components/CTACatalogue";
 import DomainFilter, {
   DomainFilterSkeleton,
 } from "./accueil/components/DomainFilter";
-import Filieres, { FilieresSkeleton } from "./accueil/components/Filieres";
+import Filieres from "./accueil/components/Filieres";
 import RecentlyAdded, {
   RecentlyAddedSkeleton,
 } from "./accueil/components/RecentlyAdded";
@@ -11,6 +11,7 @@ import Research from "./accueil/components/Research";
 import ResultsResume from "./accueil/components/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
 import PublicLayout from "./components/PublicLayout";
+import FilieresSkeleton from "./accueil/components/FilieresSkeleton";
 
 export default function Accueil() {
   return (
