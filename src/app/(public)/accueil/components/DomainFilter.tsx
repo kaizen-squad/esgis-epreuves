@@ -2,6 +2,7 @@ import { getDomainExams } from "@/features/exams/actions";
 import { getFields } from "@/features/referentials/queries";
 import { FiArrowRight } from "react-icons/fi";
 import DomainFilterContent from "./DomainFilterContent";
+import Link from "next/link";
 
 export function DomainFilterSkeleton() {
   return (
@@ -41,9 +42,12 @@ export default async function DomainFilter() {
 
       <DomainFilterContent fields={fields} initialExams={exams} />
 
-      <button className="bg-background-accent text-text-primary my-2 ml-auto flex items-center gap-2 rounded-lg px-3 py-2 font-semibold">
+      <Link
+        href="/catalogue"
+        className="bg-background-accent text-text-primary my-2 ml-auto flex w-fit items-center gap-2 rounded-lg px-3 py-2 font-semibold"
+      >
         Voir le catalogue <FiArrowRight />
-      </button>
+      </Link>
     </div>
   );
 }

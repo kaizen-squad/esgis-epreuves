@@ -1,6 +1,7 @@
 import { FiArrowRight } from "react-icons/fi";
 import FiliereCard from "../../components/FiliereCard";
 import { filiereMocks } from "../../constants/filieres.constants";
+import Link from "next/link";
 
 const Filieres = () => {
   return (
@@ -19,9 +20,12 @@ const Filieres = () => {
         ))}
       </div>
 
-      <button className="border-background-secondary text-text-primary bg-background-accent ml-auto flex items-center gap-2 rounded-lg border px-3 py-2 font-semibold">
+      <Link
+        href="/filieres"
+        className="border-background-secondary text-text-primary bg-background-accent ml-auto flex w-fit items-center gap-2 rounded-lg border px-3 py-2 font-semibold"
+      >
         Voir toutes les filières <FiArrowRight />
-      </button>
+      </Link>
     </div>
   );
 };
