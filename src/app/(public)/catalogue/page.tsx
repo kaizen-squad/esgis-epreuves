@@ -5,8 +5,13 @@ import Research from "../accueil/components/Research";
 import ResultsResume from "../accueil/components/ResultsResume";
 import CTACatalogue from "../accueil/components/CTACatalogue";
 import CatalogueEpreuveSection from "./components/CatalogueEpreuveSection";
+import type { CatalogueSearchParams } from "../utils/catalogueFilters";
 
-const Catalogue = () => {
+const Catalogue = async ({
+  searchParams,
+}: {
+  searchParams: Promise<CatalogueSearchParams>;
+}) => {
   return (
     <PublicLayout>
       <CatalogueWelcomeSection />
@@ -18,7 +23,7 @@ const Catalogue = () => {
         Accédez directement aux examens qui comptent pour votre année.
       </p>
 
-      <CatalogueEpreuveSection />
+      <CatalogueEpreuveSection searchParams={await searchParams} />
       <div className="px-6">
         <ResultsResume />
         <CTACatalogue />

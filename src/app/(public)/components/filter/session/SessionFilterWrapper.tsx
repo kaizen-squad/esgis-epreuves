@@ -1,27 +1,21 @@
-import { useState } from "react";
+import SegmentedFilter from "../SegmentedFilter";
 
-const sessions = [
-  { name: "Toutes", count: 10 },
-  { name: "Normale", count: 4 },
-  { name: "Rattrapage", count: 6 },
+const SESSIONS = [
+  { label: "Toutes", value: null },
+  { label: "Normale", value: "Session Normale" },
+  { label: "Rattrapage", value: "Rattrapage" },
 ];
 
-const SessionFilterWrapper = () => {
-  const [currentSession, setCurrentSession] = useState("Toutes");
-  return (
-    <div className="bg-background-default flex rounded p-1">
-      {sessions.map((session) => (
-        <button
-          onClick={() => setCurrentSession(session.name)}
-          key={session.name}
-          className={`flex min-w-0 flex-1 cursor-pointer flex-col rounded p-1 text-center ${currentSession == session.name ? "bg-background-accent text-text-primary" : ""}`}
-        >
-          <span className="w-full truncate text-sm">{session.name}</span>
-          <span>{session.count}</span>
-        </button>
-      ))}
-    </div>
-  );
-};
+interface SessionFilterWrapperProps {
+  current: string | null;
+  onChange: (value: string | null) => void;
+}
+
+const SessionFilterWrapper = ({
+  current,
+  onChange,
+}: SessionFilterWrapperProps) => (
+  <SegmentedFilter choices={SESSIONS} current={current} onChange={onChange} />
+);
 
 export default SessionFilterWrapper;

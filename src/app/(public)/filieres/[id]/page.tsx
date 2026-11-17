@@ -3,7 +3,15 @@ import {
   getFieldExams,
   getFieldLevelOptionNames,
 } from "@/features/exams/queries";
-import { getLevelById } from "@/features/referentials/queries";
+import {
+  getLevelById,
+  getLevels,
+  getSubjects,
+} from "@/features/referentials/queries";
+import {
+  toExamFilters,
+  type CatalogueSearchParams,
+} from "../../utils/catalogueFilters";
 import Research from "../../accueil/components/Research";
 import ImageHandler from "../../components/ImageHandler";
 import FiliereCatalogueSection from "../components/FiliereCatalogueSection";
@@ -14,7 +22,7 @@ import { fieldPageTitle } from "../../utils/fieldLabel";
 
 type FilierePageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ levelId?: string | string[] }>;
+  searchParams: Promise<CatalogueSearchParams>;
 };
 
 export default async function FilierePage({
@@ -22,12 +30,14 @@ export default async function FilierePage({
   searchParams,
 }: FilierePageProps) {
   const { id } = await params;
-  const { levelId: rawLevelId } = await searchParams;
-  const levelId = typeof rawLevelId === "string" ? rawLevelId : undefined;
+  const filters = toExamFilters(await searchParams);
+  const levelId = filters.levelId;
 
-  const [result, level] = await Promise.all([
-    getFieldExams(id, { levelId }),
+  const [result, level, levels, subjects] = await Promise.all([
+    getFieldExams(id, filters),
     levelId ? getLevelById(levelId) : null,
+    getLevels(),
+    getSubjects(),
   ]);
   if (!result) notFound();
 
@@ -65,6 +75,14 @@ export default async function FilierePage({
       <FiliereCatalogueSection
         exams={result.exams.exams.map(toEpreuveCardProps)}
         total={result.exams.total}
+        filterOptions={{
+          // Filiere fixee par la page : pas de filtre filiere, matieres de cette filiere seulement.
+          fields: null,
+          levels,
+          subjects: subjects.filter(
+            (subject) => subject.fieldId === result.field.id,
+          ),
+        }}
       />
       <CTACatalogue />
     </PublicLayout>

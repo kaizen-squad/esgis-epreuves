@@ -4,7 +4,6 @@ import { toFiliereCardData } from "../../utils/fieldLabel";
 import FiliereCategory from "./FiliereCategory";
 
 const FIliereCategories = async () => {
-  // Rendu a la requete, pas au build : la CI build sans variables Supabase.
   await connection();
   const categories = await getFieldCategories();
 

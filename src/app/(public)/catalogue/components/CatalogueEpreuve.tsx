@@ -4,15 +4,24 @@ import EpreuveCard, { EpreuveCardProps } from "../../components/EpreuveCard";
 import CatalogueFilter from "./CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
 import { useState } from "react";
+import { useCatalogueFilters } from "../../components/filter/useCatalogueFilters";
+import type { CatalogueFilterOptions } from "../../utils/catalogueFilters";
 
 type CatalogueEpreuvesProps = {
   data: EpreuveCardProps[];
-  /** Total cote serveur quand `data` n'est qu'une page ; par defaut, la taille de `data`. */
-  total?: number;
+  /** Total cote serveur (toutes pages confondues) pour les filtres en cours. */
+  total: number;
+  filterOptions: CatalogueFilterOptions;
 };
 
-const CatalogueEpreuves = ({ data, total }: CatalogueEpreuvesProps) => {
+const CatalogueEpreuves = ({
+  data,
+  total,
+  filterOptions,
+}: CatalogueEpreuvesProps) => {
   const [open, setOpen] = useState<boolean>(true);
+  const filters = useCatalogueFilters();
+
   return (
     <>
       <div className="mb-6 flex items-center justify-between gap-4 border-b border-gray-200 pb-4">
@@ -25,11 +34,14 @@ const CatalogueEpreuves = ({ data, total }: CatalogueEpreuvesProps) => {
           <FiFilter size={20} color="#c41c2d" />
           {open ? "Masquer les filtres" : "Afficher les filtres"}
         </button>
-        <CatalogueFilter mode="mobile" />
+        <CatalogueFilter
+          mode="mobile"
+          options={filterOptions}
+          filters={filters}
+          total={total}
+        />
         <p className="text-text-paragraph text-sm">
-          <span className="text-text-title font-semibold">
-            {total ?? data.length}
-          </span>{" "}
+          <span className="text-text-title font-semibold">{total}</span>{" "}
           épreuves trouvées
         </p>
       </div>
@@ -38,12 +50,29 @@ const CatalogueEpreuves = ({ data, total }: CatalogueEpreuvesProps) => {
         className={`lg:grid lg:items-start lg:gap-8 ${open ? "lg:grid-cols-[18rem_minmax(0,1fr)]" : ""}`}
       >
         {open && (
-          <CatalogueFilter mode="desktop" onClose={() => setOpen(false)} />
+          <CatalogueFilter
+            mode="desktop"
+            onClose={() => setOpen(false)}
+            options={filterOptions}
+            filters={filters}
+            total={total}
+          />
         )}
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(17rem,100%),1fr))] gap-6">
-          {data.map((epreuve) => (
-            <EpreuveCard {...epreuve} key={epreuve.name} />
-          ))}
+        <div
+          aria-busy={filters.isPending}
+          className={`transition-opacity ${filters.isPending ? "opacity-50" : ""}`}
+        >
+          {data.length === 0 ? (
+            <p className="text-text-paragraph text-center">
+              Aucune épreuve ne correspond à ces filtres.
+            </p>
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(min(17rem,100%),1fr))] gap-6">
+              {data.map((epreuve) => (
+                <EpreuveCard {...epreuve} key={epreuve.slug ?? epreuve.name} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>

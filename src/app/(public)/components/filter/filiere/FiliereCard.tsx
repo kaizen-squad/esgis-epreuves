@@ -1,17 +1,20 @@
-const FiliereCard = () => {
+interface FiliereCardProps {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}
+
+const FiliereCard = ({ label, checked, onChange }: FiliereCardProps) => {
   return (
     <div className="mb-4">
-      <label htmlFor="filiere" className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <input
-            type="checkbox"
-            id="filiere"
-            name="filiere"
-            className="checked:accent-background-accent aspect-square w-5"
-          />
-          <p className="w-9/10">Informatique Réseaux et Télécommunications</p>
-        </div>
-        <span>36</span>
+      <label className="flex cursor-pointer items-center gap-4">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          className="checked:accent-background-accent aspect-square w-5 shrink-0"
+        />
+        <span className="min-w-0 flex-1">{label}</span>
       </label>
     </div>
   );
