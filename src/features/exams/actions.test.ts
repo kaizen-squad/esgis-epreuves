@@ -48,7 +48,7 @@ const {
   replaceExamFile,
   deleteExam,
   uploadExamsBatch,
-  searchExamSuggestions,
+  countSearchResults,
 } = await import("./actions");
 const { MAX_BATCH_FILES } = await import("./schemas");
 
@@ -1089,22 +1089,21 @@ describe("uploadExamsBatch", () => {
   });
 });
 
-describe("searchExamSuggestions", () => {
+describe("countSearchResults", () => {
   beforeEach(() => {
     getExams.mockReset();
   });
 
-  it("ne lance aucune requete pour un terme sans mot exploitable", async () => {
-    expect(await searchExamSuggestions("   ")).toEqual([]);
-    expect(await searchExamSuggestions("-- !")).toEqual([]);
+  it("renvoie 0 sans requete pour un terme sans mot exploitable", async () => {
+    expect(await countSearchResults("   ")).toBe(0);
+    expect(await countSearchResults("-- !")).toBe(0);
     expect(getExams).not.toHaveBeenCalled();
   });
 
-  it("renvoie les premieres epreuves de la recherche du catalogue", async () => {
-    const exams = [{ id: UUID, title: "Algorithmique S1" }];
-    getExams.mockResolvedValue({ exams, total: 12, page: 1, pageSize: 5 });
+  it("renvoie le total de la recherche du catalogue", async () => {
+    getExams.mockResolvedValue({ exams: [], total: 12, page: 1, pageSize: 1 });
 
-    expect(await searchExamSuggestions("algo")).toBe(exams);
-    expect(getExams).toHaveBeenCalledWith({ search: "algo", pageSize: 5 });
+    expect(await countSearchResults("algo")).toBe(12);
+    expect(getExams).toHaveBeenCalledWith({ search: "algo", pageSize: 1 });
   });
 });

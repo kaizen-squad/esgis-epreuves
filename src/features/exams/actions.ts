@@ -775,18 +775,14 @@ export async function getDomainExams(fieldId: string | null): Promise<Exam[]> {
   return result.exams;
 }
 
-const SEARCH_SUGGESTIONS_LIMIT = 5;
-
 /**
- * Suggestions sous la barre de recherche : meme recherche libre que le catalogue (titre, matiere,
- * filiere), limitee aux premiers resultats. Un terme vide ou sans mot exploitable ne renvoie rien.
+ * Nombre d'epreuves correspondant au terme, affiche sous la barre de recherche avant de renvoyer
+ * vers le catalogue : meme recherche libre que le catalogue (titre, matiere, filiere). Une seule
+ * ligne demandee, le total vient du count exact. Un terme sans mot exploitable renvoie 0 sans requete.
  */
-export async function searchExamSuggestions(term: string): Promise<Exam[]> {
-  if (searchTokens(term).length === 0) return [];
+export async function countSearchResults(term: string): Promise<number> {
+  if (searchTokens(term).length === 0) return 0;
 
-  const { exams } = await getExams({
-    search: term,
-    pageSize: SEARCH_SUGGESTIONS_LIMIT,
-  });
-  return exams;
+  const { total } = await getExams({ search: term, pageSize: 1 });
+  return total;
 }

@@ -20,7 +20,7 @@ const Catalogue = async ({
   return (
     <PublicLayout>
       <CatalogueWelcomeSection />
-      <Research initialQuery={initialQuery} />
+      <Research live initialQuery={initialQuery} />
       <p className="text-text-default text-center">
         Choisissez votre domaine d&apos;activité pour retrouver les annales de
         votre spécialité.

@@ -2,23 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FiArrowRight } from "react-icons/fi";
-import { searchExamSuggestions } from "@/features/exams/actions";
+import { countSearchResults } from "@/features/exams/actions";
 import { searchTokens } from "@/features/exams/schemas";
-import type { Exam } from "@/features/exams/types";
+import { useCatalogueFilters } from "../../components/filter/useCatalogueFilters";
 
 const DEBOUNCE_MS = 300;
 /** Aligne sur MAX_SEARCH_LENGTH d'examFiltersSchema : au-dela, le serveur ignorerait le terme. */
 const MAX_QUERY_LENGTH = 100;
 
-type SuggestionsState =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "done"; exams: Exam[] }
-  | { status: "error" };
-
 type ResearchProps = {
+  /**
+   * Page catalogue : la saisie met directement a jour `?search=` et donc les epreuves affichees.
+   * Ailleurs : un lien "Voir les N resultats" renvoie vers le catalogue.
+   */
+  live?: boolean;
   /** Terme deja present dans l'URL (page catalogue), pour pre-remplir le champ. */
   initialQuery?: string;
 };
@@ -28,17 +27,9 @@ function catalogueHref(query: string): string {
   return term ? `/catalogue?search=${encodeURIComponent(term)}` : "/catalogue";
 }
 
-const Research = ({ initialQuery = "" }: ResearchProps) => {
-  const router = useRouter();
-  const listId = useId();
-  const [query, setQuery] = useState(initialQuery);
-  const [suggestions, setSuggestions] = useState<SuggestionsState>({
-    status: "idle",
-  });
-  const [isOpen, setIsOpen] = useState(false);
+/** Appelle `callback` apres DEBOUNCE_MS sans nouvel appel ; `cancel` annule l'appel en attente. */
+function useDebounced<T>(callback: (value: T) => void) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Numero de la derniere requete : une reponse plus ancienne arrivee en retard est ignoree. */
-  const requestRef = useRef(0);
 
   useEffect(
     () => () => {
@@ -47,40 +38,134 @@ const Research = ({ initialQuery = "" }: ResearchProps) => {
     [],
   );
 
+  const cancel = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+  const schedule = (value: T) => {
+    cancel();
+    timerRef.current = setTimeout(() => callback(value), DEBOUNCE_MS);
+  };
+
+  return { schedule, cancel };
+}
+
+type SearchFormProps = {
+  query: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  onFocus?: () => void;
+};
+
+function SearchForm({ query, onChange, onSubmit, onFocus }: SearchFormProps) {
+  return (
+    <form
+      role="search"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit();
+      }}
+      className="bg-background-primary flex border border-gray-300 py-1 pr-2 pl-4"
+    >
+      <input
+        className="min-w-0 flex-1 outline-none"
+        type="search"
+        name="search"
+        value={query}
+        maxLength={MAX_QUERY_LENGTH}
+        onChange={(event) => onChange(event.target.value)}
+        onFocus={onFocus}
+        placeholder="Rechercher une matière, un titre..."
+        aria-label="Rechercher une épreuve"
+        autoComplete="off"
+      />
+      <button
+        type="submit"
+        className="bg-background-accent text-text-primary flex h-full min-w-0 cursor-pointer items-center gap-3 p-2"
+      >
+        Rechercher
+        <FiArrowRight />
+      </button>
+    </form>
+  );
+}
+
+function ResearchShell({ children }: { children: ReactNode }) {
+  return <div className="mb-8 px-6 text-center">{children}</div>;
+}
+
+/** Catalogue : la saisie filtre directement les epreuves de la page via l'URL. */
+function LiveResearch({ initialQuery = "" }: { initialQuery?: string }) {
+  const filters = useCatalogueFilters();
+  const [query, setQuery] = useState(initialQuery);
+  const apply = (value: string) => {
+    const term = value.trim();
+    if (term !== (filters.get("search") ?? "")) filters.set("search", term);
+  };
+  const debounced = useDebounced(apply);
+
+  return (
+    <ResearchShell>
+      <div className="mx-auto md:w-2/3 lg:w-1/3">
+        <SearchForm
+          query={query}
+          onChange={(value) => {
+            setQuery(value);
+            debounced.schedule(value);
+          }}
+          onSubmit={() => {
+            debounced.cancel();
+            apply(query);
+          }}
+        />
+      </div>
+    </ResearchShell>
+  );
+}
+
+type CountState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "done"; total: number }
+  | { status: "error" };
+
+/** Hors catalogue : nombre de resultats sous le champ, avec un lien vers le catalogue filtre. */
+function LinkResearch() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [count, setCount] = useState<CountState>({ status: "idle" });
+  const [isOpen, setIsOpen] = useState(false);
+  /** Numero de la derniere requete : une reponse plus ancienne arrivee en retard est ignoree. */
+  const requestRef = useRef(0);
+
+  const debounced = useDebounced(async (value: string) => {
+    const requestId = requestRef.current;
+    try {
+      const total = await countSearchResults(value);
+      if (requestId === requestRef.current) setCount({ status: "done", total });
+    } catch {
+      if (requestId === requestRef.current) setCount({ status: "error" });
+    }
+  });
+
   const handleChange = (value: string) => {
     setQuery(value);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    const requestId = ++requestRef.current;
+    requestRef.current += 1;
 
     if (searchTokens(value).length === 0) {
-      setSuggestions({ status: "idle" });
-      setIsOpen(false);
+      debounced.cancel();
+      setCount({ status: "idle" });
       return;
     }
 
-    setSuggestions({ status: "loading" });
+    setCount({ status: "loading" });
     setIsOpen(true);
-    timerRef.current = setTimeout(async () => {
-      try {
-        const exams = await searchExamSuggestions(value);
-        if (requestId === requestRef.current)
-          setSuggestions({ status: "done", exams });
-      } catch {
-        if (requestId === requestRef.current)
-          setSuggestions({ status: "error" });
-      }
-    }, DEBOUNCE_MS);
+    debounced.schedule(value);
   };
 
-  const handleSubmit = () => {
-    setIsOpen(false);
-    router.push(catalogueHref(query));
-  };
-
-  const showPanel = isOpen && suggestions.status !== "idle";
+  const showPanel = isOpen && count.status !== "idle";
 
   return (
-    <div className="mb-8 px-6 text-center">
+    <ResearchShell>
       <div
         className="relative mx-auto md:w-2/3 lg:w-1/3"
         onBlur={(event) => {
@@ -91,96 +176,60 @@ const Research = ({ initialQuery = "" }: ResearchProps) => {
           if (event.key === "Escape") setIsOpen(false);
         }}
       >
-        <form
-          role="search"
-          onSubmit={(event) => {
-            event.preventDefault();
-            handleSubmit();
+        <SearchForm
+          query={query}
+          onChange={handleChange}
+          onFocus={() => setIsOpen(true)}
+          onSubmit={() => {
+            setIsOpen(false);
+            router.push(catalogueHref(query));
           }}
-          className="bg-background-primary flex border border-gray-300 py-1 pr-2 pl-4"
-        >
-          <input
-            className="min-w-0 flex-1 outline-none"
-            type="search"
-            name="search"
-            value={query}
-            maxLength={MAX_QUERY_LENGTH}
-            onChange={(event) => handleChange(event.target.value)}
-            onFocus={() => setIsOpen(true)}
-            placeholder="Rechercher une matière, un titre..."
-            aria-label="Rechercher une épreuve"
-            aria-controls={listId}
-            autoComplete="off"
-          />
-          <button
-            type="submit"
-            className="bg-background-accent text-text-primary flex h-full min-w-0 cursor-pointer items-center gap-3 p-2"
-          >
-            Rechercher
-            <FiArrowRight />
-          </button>
-        </form>
+        />
 
         {showPanel && (
           <div
-            id={listId}
-            className="bg-background-primary absolute inset-x-0 top-full z-20 mt-1 border border-gray-300 text-left shadow-lg"
+            className="bg-background-primary absolute inset-x-0 top-full z-20 mt-1 border border-gray-300 text-left text-sm shadow-lg"
+            aria-live="polite"
           >
-            {suggestions.status === "loading" && (
-              <p className="text-text-paragraph px-4 py-3 text-sm">
+            {count.status === "loading" && (
+              <p className="text-text-paragraph px-4 py-3">
                 Recherche en cours...
               </p>
             )}
 
-            {suggestions.status === "error" && (
-              <p className="text-text-paragraph px-4 py-3 text-sm" role="alert">
-                Impossible de charger les suggestions.
+            {count.status === "error" && (
+              <p className="text-text-paragraph px-4 py-3" role="alert">
+                Impossible de lancer la recherche.
               </p>
             )}
 
-            {suggestions.status === "done" &&
-              (suggestions.exams.length === 0 ? (
-                <p className="text-text-paragraph px-4 py-3 text-sm">
+            {count.status === "done" &&
+              (count.total === 0 ? (
+                <p className="text-text-paragraph px-4 py-3">
                   Aucune épreuve ne correspond à votre recherche.
                 </p>
               ) : (
-                <ul>
-                  {suggestions.exams.map((exam) => (
-                    <li key={exam.id}>
-                      <a
-                        href={`/api/exams/${exam.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                      >
-                        <span className="text-text-default block truncate font-medium">
-                          {exam.title}
-                        </span>
-                        <span className="text-text-paragraph block truncate text-xs">
-                          {exam.subject} · {exam.field} · {exam.level} ·{" "}
-                          {exam.academicYear}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                <Link
+                  href={catalogueHref(query)}
+                  onClick={() => setIsOpen(false)}
+                  className="text-text-default flex items-center justify-between gap-3 px-4 py-3 font-medium hover:bg-gray-100"
+                >
+                  <span className="truncate">
+                    Voir {count.total === 1 ? "le" : `les ${count.total}`}{" "}
+                    résultat{count.total > 1 ? "s" : ""} pour «&nbsp;
+                    {query.trim()}&nbsp;»
+                  </span>
+                  <FiArrowRight className="shrink-0" />
+                </Link>
               ))}
-
-            {suggestions.status === "done" && suggestions.exams.length > 0 && (
-              <Link
-                href={catalogueHref(query)}
-                onClick={() => setIsOpen(false)}
-                className="text-text-default flex items-center justify-between border-t border-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-100"
-              >
-                Voir tous les résultats
-                <FiArrowRight />
-              </Link>
-            )}
           </div>
         )}
       </div>
-    </div>
+    </ResearchShell>
   );
-};
+}
+
+const Research = ({ live = false, initialQuery }: ResearchProps) =>
+  live ? <LiveResearch initialQuery={initialQuery} /> : <LinkResearch />;
 
 export default Research;
