@@ -19,6 +19,7 @@ import {
   examMetadataSchema,
   examUploadSchema,
   MAX_BATCH_FILES,
+  searchTokens,
   slugify,
 } from "./schemas";
 
@@ -772,4 +773,16 @@ export async function getDomainExams(fieldId: string | null): Promise<Exam[]> {
 
   const result = await getExams({ pageSize: DOMAIN_EXAMS_PAGE_SIZE });
   return result.exams;
+}
+
+/**
+ * Nombre d'epreuves correspondant au terme, affiche sous la barre de recherche avant de renvoyer
+ * vers le catalogue : meme recherche libre que le catalogue (titre, matiere, filiere). Une seule
+ * ligne demandee, le total vient du count exact. Un terme sans mot exploitable renvoie 0 sans requete.
+ */
+export async function countSearchResults(term: string): Promise<number> {
+  if (searchTokens(term).length === 0) return 0;
+
+  const { total } = await getExams({ search: term, pageSize: 1 });
+  return total;
 }
