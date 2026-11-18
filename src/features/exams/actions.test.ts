@@ -25,6 +25,7 @@ const from = vi.fn(() => ({ insert, delete: del, select, update }));
 const putExamFile = vi.fn();
 const deleteExamFile = vi.fn();
 const checkExamDuplicate = vi.fn();
+const getExams = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ from }),
@@ -32,6 +33,10 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/r2/upload", () => ({
   putExamFile: (...args: unknown[]) => putExamFile(...args),
   deleteExamFile: (...args: unknown[]) => deleteExamFile(...args),
+}));
+vi.mock("./queries", () => ({
+  getExams: (...args: unknown[]) => getExams(...args),
+  getFieldExams: vi.fn(),
 }));
 vi.mock("./duplicate", () => ({
   checkExamDuplicate: (...args: unknown[]) => checkExamDuplicate(...args),
@@ -43,6 +48,7 @@ const {
   replaceExamFile,
   deleteExam,
   uploadExamsBatch,
+  searchExamSuggestions,
 } = await import("./actions");
 const { MAX_BATCH_FILES } = await import("./schemas");
 
@@ -1080,5 +1086,25 @@ describe("uploadExamsBatch", () => {
     expect(result.data.entries[1]).toMatchObject({ status: "imported" });
     expect(del).toHaveBeenCalledTimes(1);
     expect(deleteEq).toHaveBeenCalledWith("id", "exam-1");
+  });
+});
+
+describe("searchExamSuggestions", () => {
+  beforeEach(() => {
+    getExams.mockReset();
+  });
+
+  it("ne lance aucune requete pour un terme sans mot exploitable", async () => {
+    expect(await searchExamSuggestions("   ")).toEqual([]);
+    expect(await searchExamSuggestions("-- !")).toEqual([]);
+    expect(getExams).not.toHaveBeenCalled();
+  });
+
+  it("renvoie les premieres epreuves de la recherche du catalogue", async () => {
+    const exams = [{ id: UUID, title: "Algorithmique S1" }];
+    getExams.mockResolvedValue({ exams, total: 12, page: 1, pageSize: 5 });
+
+    expect(await searchExamSuggestions("algo")).toBe(exams);
+    expect(getExams).toHaveBeenCalledWith({ search: "algo", pageSize: 5 });
   });
 });

@@ -12,10 +12,15 @@ const Catalogue = async ({
 }: {
   searchParams: Promise<CatalogueSearchParams>;
 }) => {
+  const params = await searchParams;
+  const initialQuery = Array.isArray(params.search)
+    ? params.search[0]
+    : params.search;
+
   return (
     <PublicLayout>
       <CatalogueWelcomeSection />
-      <Research />
+      <Research initialQuery={initialQuery} />
       <p className="text-text-default text-center">
         Choisissez votre domaine d&apos;activité pour retrouver les annales de
         votre spécialité.
@@ -23,7 +28,7 @@ const Catalogue = async ({
         Accédez directement aux examens qui comptent pour votre année.
       </p>
 
-      <CatalogueEpreuveSection searchParams={await searchParams} />
+      <CatalogueEpreuveSection searchParams={params} />
       <div className="px-6">
         <ResultsResume />
         <CTACatalogue />

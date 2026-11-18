@@ -19,6 +19,7 @@ import {
   examMetadataSchema,
   examUploadSchema,
   MAX_BATCH_FILES,
+  searchTokens,
   slugify,
 } from "./schemas";
 
@@ -772,4 +773,20 @@ export async function getDomainExams(fieldId: string | null): Promise<Exam[]> {
 
   const result = await getExams({ pageSize: DOMAIN_EXAMS_PAGE_SIZE });
   return result.exams;
+}
+
+const SEARCH_SUGGESTIONS_LIMIT = 5;
+
+/**
+ * Suggestions sous la barre de recherche : meme recherche libre que le catalogue (titre, matiere,
+ * filiere), limitee aux premiers resultats. Un terme vide ou sans mot exploitable ne renvoie rien.
+ */
+export async function searchExamSuggestions(term: string): Promise<Exam[]> {
+  if (searchTokens(term).length === 0) return [];
+
+  const { exams } = await getExams({
+    search: term,
+    pageSize: SEARCH_SUGGESTIONS_LIMIT,
+  });
+  return exams;
 }
