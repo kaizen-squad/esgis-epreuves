@@ -13,8 +13,11 @@ import {
 
 const CatalogueEpreuveSection = async ({
   searchParams,
+  manageable = false,
 }: {
   searchParams: CatalogueSearchParams;
+  /** Espace BDE : cartes avec menu de gestion. */
+  manageable?: boolean;
 }) => {
   const [result, fields, levels, subjects] = await Promise.all([
     getExams(toExamFilters(searchParams)),
@@ -29,6 +32,7 @@ const CatalogueEpreuveSection = async ({
         data={result.exams.map(toExamCardProps)}
         total={result.total}
         filterOptions={{ fields, levels, subjects }}
+        manageable={manageable}
       />
     </section>
   );

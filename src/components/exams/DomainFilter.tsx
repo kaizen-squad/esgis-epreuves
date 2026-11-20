@@ -30,9 +30,12 @@ export function DomainFilterSkeleton() {
 
 export default async function DomainFilter({
   manageable = false,
+  catalogueHref = "/catalogue",
 }: {
   /** Espace BDE : cartes avec menu de gestion. */
   manageable?: boolean;
+  /** Catalogue cible du bouton "Voir le catalogue" (`/bde/catalogue` cote BDE). */
+  catalogueHref?: string;
 }) {
   const [fields, exams] = await Promise.all([
     getFields(),
@@ -52,7 +55,7 @@ export default async function DomainFilter({
       />
 
       <Link
-        href="/catalogue"
+        href={catalogueHref}
         className="bg-background-accent text-text-primary my-2 ml-auto flex w-fit items-center gap-2 rounded-lg px-3 py-2 font-semibold"
       >
         Voir le catalogue <FiArrowRight />

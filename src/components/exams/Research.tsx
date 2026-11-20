@@ -20,11 +20,15 @@ type ResearchProps = {
   live?: boolean;
   /** Terme deja present dans l'URL (page catalogue), pour pre-remplir le champ. */
   initialQuery?: string;
+  /** Catalogue vers lequel renvoie la recherche hors catalogue (`/bde/catalogue` cote BDE). */
+  catalogueHref?: string;
 };
 
-function catalogueHref(query: string): string {
+const DEFAULT_CATALOGUE_HREF = "/catalogue";
+
+function catalogueSearchHref(basePath: string, query: string): string {
   const term = query.trim();
-  return term ? `/catalogue?search=${encodeURIComponent(term)}` : "/catalogue";
+  return term ? `${basePath}?search=${encodeURIComponent(term)}` : basePath;
 }
 
 /** Appelle `callback` apres DEBOUNCE_MS sans nouvel appel ; `cancel` annule l'appel en attente. */
@@ -129,7 +133,7 @@ type CountState =
   | { status: "error" };
 
 /** Hors catalogue : nombre de resultats sous le champ, avec un lien vers le catalogue filtre. */
-function LinkResearch() {
+function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [count, setCount] = useState<CountState>({ status: "idle" });
@@ -182,7 +186,7 @@ function LinkResearch() {
           onFocus={() => setIsOpen(true)}
           onSubmit={() => {
             setIsOpen(false);
-            router.push(catalogueHref(query));
+            router.push(catalogueSearchHref(catalogueHref, query));
           }}
         />
 
@@ -210,7 +214,7 @@ function LinkResearch() {
                 </p>
               ) : (
                 <Link
-                  href={catalogueHref(query)}
+                  href={catalogueSearchHref(catalogueHref, query)}
                   onClick={() => setIsOpen(false)}
                   className="text-text-default flex items-center justify-between gap-3 px-4 py-3 font-medium hover:bg-gray-100"
                 >
@@ -229,7 +233,15 @@ function LinkResearch() {
   );
 }
 
-const Research = ({ live = false, initialQuery }: ResearchProps) =>
-  live ? <LiveResearch initialQuery={initialQuery} /> : <LinkResearch />;
+const Research = ({
+  live = false,
+  initialQuery,
+  catalogueHref = DEFAULT_CATALOGUE_HREF,
+}: ResearchProps) =>
+  live ? (
+    <LiveResearch initialQuery={initialQuery} />
+  ) : (
+    <LinkResearch catalogueHref={catalogueHref} />
+  );
 
 export default Research;

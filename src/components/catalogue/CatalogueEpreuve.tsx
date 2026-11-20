@@ -12,12 +12,15 @@ type CatalogueEpreuvesProps = {
   /** Total cote serveur (toutes pages confondues) pour les filtres en cours. */
   total: number;
   filterOptions: CatalogueFilterOptions;
+  /** Espace BDE : cartes avec menu de gestion. */
+  manageable?: boolean;
 };
 
 const CatalogueEpreuves = ({
   data,
   total,
   filterOptions,
+  manageable = false,
 }: CatalogueEpreuvesProps) => {
   const [open, setOpen] = useState<boolean>(true);
   const filters = useCatalogueFilters();
@@ -69,7 +72,11 @@ const CatalogueEpreuves = ({
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(min(17rem,100%),1fr))] gap-6">
               {data.map((epreuve) => (
-                <ExamCard {...epreuve} key={epreuve.slug ?? epreuve.name} />
+                <ExamCard
+                  {...epreuve}
+                  manageable={manageable}
+                  key={epreuve.slug ?? epreuve.name}
+                />
               ))}
             </div>
           )}
