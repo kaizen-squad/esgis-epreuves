@@ -2,7 +2,7 @@ import {
   GRID_CLASS,
   HOME_CARDS_LIMIT,
   cardVisibilityClass,
-} from "./filieresLayout";
+} from "@/components/fields/filieresLayout";
 
 export default function FilieresSkeleton() {
   return (

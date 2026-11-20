@@ -4,8 +4,8 @@ import ExamCard, { ExamCardProps } from "@/components/exams/ExamCard";
 import CatalogueFilter from "./CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
 import { useState } from "react";
-import { useCatalogueFilters } from "../../components/filter/useCatalogueFilters";
-import type { CatalogueFilterOptions } from "../../utils/catalogueFilters";
+import { useCatalogueFilters } from "@/components/exams/useCatalogueFilters";
+import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 
 type CatalogueEpreuvesProps = {
   data: ExamCardProps[];

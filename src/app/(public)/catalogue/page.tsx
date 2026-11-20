@@ -1,10 +1,10 @@
 import React from "react";
 import CatalogueWelcomeSection from "./components/CatalogueWelcomeSection";
 import Research from "@/components/exams/Research";
-import ResultsResume from "../accueil/components/ResultsResume";
-import CTACatalogue from "../accueil/components/CTACatalogue";
+import ResultsResume from "@/components/home/ResultsResume";
+import CTACatalogue from "@/components/home/CTACatalogue";
 import CatalogueEpreuveSection from "./components/CatalogueEpreuveSection";
-import type { CatalogueSearchParams } from "../utils/catalogueFilters";
+import type { CatalogueSearchParams } from "@/components/exams/catalogueFilters";
 
 const Catalogue = async ({
   searchParams,

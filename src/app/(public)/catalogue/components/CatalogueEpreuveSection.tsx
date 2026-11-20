@@ -9,7 +9,7 @@ import { toExamCardProps } from "@/components/exams/toExamCardProps";
 import {
   toExamFilters,
   type CatalogueSearchParams,
-} from "../../utils/catalogueFilters";
+} from "@/components/exams/catalogueFilters";
 
 const CatalogueEpreuveSection = async ({
   searchParams,

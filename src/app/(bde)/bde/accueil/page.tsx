@@ -7,10 +7,10 @@ import RecentlyAdded, {
 import DomainFilter, {
   DomainFilterSkeleton,
 } from "@/components/exams/DomainFilter";
-import ResultsResume from "@/app/(public)/accueil/components/ResultsResume";
-import CTACatalogue from "@/app/(public)/accueil/components/CTACatalogue";
-import Filieres from "@/app/(public)/accueil/components/Filieres";
-import FilieresSkeleton from "@/app/(public)/accueil/components/FilieresSkeleton";
+import ResultsResume from "@/components/home/ResultsResume";
+import CTACatalogue from "@/components/home/CTACatalogue";
+import Filieres from "@/components/fields/Filieres";
+import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
 
 const BDEAccueil = () => {
   return (

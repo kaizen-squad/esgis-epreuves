@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import type { CatalogueFilterKey } from "../../utils/catalogueFilters";
+import type { CatalogueFilterKey } from "@/components/exams/catalogueFilters";
 
 /** Filtres comptes dans le badge (la recherche et la page n'en sont pas). */
 const COUNTED_KEYS: CatalogueFilterKey[] = [

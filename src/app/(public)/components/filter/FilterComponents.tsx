@@ -1,6 +1,6 @@
 import { FiX } from "react-icons/fi";
-import type { CatalogueFilterOptions } from "../../utils/catalogueFilters";
-import type { CatalogueFilters } from "./useCatalogueFilters";
+import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
+import type { CatalogueFilters } from "@/components/exams/useCatalogueFilters";
 import FiliereCard from "./filiere/FiliereCard";
 import HideFilterComponent from "./HideFilterComponent";
 import MatiereFilterWrapper from "./matiere/MatiereFilterWrapper";

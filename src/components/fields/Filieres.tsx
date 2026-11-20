@@ -1,9 +1,9 @@
 import { FiArrowRight } from "react-icons/fi";
-import FiliereCard from "../../components/FiliereCard";
+import FiliereCard from "@/components/fields/FiliereCard";
 import Link from "next/link";
 import { connection } from "next/server";
 import { getFieldLevelSummaries } from "@/features/exams/queries";
-import { toFiliereCardData } from "../../utils/fieldLabel";
+import { toFiliereCardData } from "@/components/fields/fieldLabel";
 
 const HOME_CARDS_LIMIT = 6;
 const MOBILE_VISIBLE_CARDS = 3;

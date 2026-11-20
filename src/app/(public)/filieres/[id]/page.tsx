@@ -11,13 +11,13 @@ import {
 import {
   toExamFilters,
   type CatalogueSearchParams,
-} from "../../utils/catalogueFilters";
+} from "@/components/exams/catalogueFilters";
 import Research from "@/components/exams/Research";
-import ImageHandler from "../../components/ImageHandler";
+import ImageHandler from "@/components/ui/ImageHandler";
 import FiliereCatalogueSection from "../components/FiliereCatalogueSection";
-import CTACatalogue from "../../accueil/components/CTACatalogue";
+import CTACatalogue from "@/components/home/CTACatalogue";
 import { toExamCardProps } from "@/components/exams/toExamCardProps";
-import { fieldPageTitle } from "../../utils/fieldLabel";
+import { fieldPageTitle } from "@/components/fields/fieldLabel";
 
 type FilierePageProps = {
   params: Promise<{ id: string }>;

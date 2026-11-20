@@ -1,5 +1,5 @@
 import { SiSatellite } from "react-icons/si";
-import ResumeCard from "./ResumeCard";
+import ResumeCard from "@/components/home/ResumeCard";
 import Image from "next/image";
 
 const ResultsResume = () => {

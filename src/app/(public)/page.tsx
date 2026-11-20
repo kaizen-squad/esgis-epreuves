@@ -1,16 +1,16 @@
 import { Suspense } from "react";
-import CTACatalogue from "./accueil/components/CTACatalogue";
+import CTACatalogue from "@/components/home/CTACatalogue";
 import DomainFilter, {
   DomainFilterSkeleton,
 } from "@/components/exams/DomainFilter";
-import Filieres from "./accueil/components/Filieres";
+import Filieres from "@/components/fields/Filieres";
 import RecentlyAdded, {
   RecentlyAddedSkeleton,
 } from "@/components/exams/RecentlyAdded";
 import Research from "@/components/exams/Research";
-import ResultsResume from "./accueil/components/ResultsResume";
+import ResultsResume from "@/components/home/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
-import FilieresSkeleton from "./accueil/components/FilieresSkeleton";
+import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
 
 export default function Accueil() {
   return (
