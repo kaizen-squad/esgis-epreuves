@@ -73,7 +73,9 @@ const ExamCard = (data: ExamCardProps) => {
             <GoDotFill size={6} />
             <span>{sizeLabel}</span>
           </div>
-          {data.manageable ? <ExamManageMenu /> : null}
+          {data.manageable && data.id && data.slug ? (
+            <ExamManageMenu id={data.id} slug={data.slug} name={data.name} />
+          ) : null}
         </div>
 
         <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
