@@ -12,23 +12,25 @@ import CTACatalogue from "@/components/home/CTACatalogue";
 import Filieres from "@/components/fields/Filieres";
 import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
 
+const BDE_CATALOGUE_HREF = "/bde/catalogue";
+
 const BDEAccueil = () => {
   return (
     <>
       <BDEWelcomeSection />
-      <Research />
+      <Research catalogueHref={BDE_CATALOGUE_HREF} />
       <div className="px-6">
         <Suspense fallback={<RecentlyAddedSkeleton />}>
           <RecentlyAdded title="Epreuves ajoutées" manageable />
         </Suspense>
         <Suspense fallback={<DomainFilterSkeleton />}>
-          <DomainFilter manageable />
+          <DomainFilter manageable catalogueHref={BDE_CATALOGUE_HREF} />
         </Suspense>
         <Suspense fallback={<FilieresSkeleton />}>
           <Filieres />
         </Suspense>
         <ResultsResume />
-        <CTACatalogue />
+        <CTACatalogue catalogueHref={BDE_CATALOGUE_HREF} />
       </div>
     </>
   );
