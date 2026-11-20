@@ -4,9 +4,9 @@ import { useState, useTransition } from "react";
 import { getDomainExams } from "@/features/exams/actions";
 import type { Exam } from "@/features/exams/types";
 import type { Field } from "@/features/referentials/types";
-import EpreuveCard from "@/components/exams/EpreuveCard";
+import ExamCard from "@/components/exams/ExamCard";
 import DomainSelectFilter from "@/components/exams/DomainSelectFilter";
-import { toEpreuveCardProps } from "@/components/exams/toEpreuveCardProps";
+import { toExamCardProps } from "@/components/exams/toExamCardProps";
 
 const GRID_CLASS =
   "mb-4 grid grid-cols-1 justify-center gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
@@ -14,11 +14,14 @@ const GRID_CLASS =
 type DomainFilterContentProps = {
   fields: Field[];
   initialExams: Exam[];
+  /** Espace BDE : cartes avec menu de gestion. */
+  manageable?: boolean;
 };
 
 export default function DomainFilterContent({
   fields,
   initialExams,
+  manageable = false,
 }: DomainFilterContentProps) {
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [exams, setExams] = useState(initialExams);
@@ -77,7 +80,11 @@ export default function DomainFilterContent({
       ) : (
         <div className={GRID_CLASS}>
           {exams.map((exam) => (
-            <EpreuveCard {...toEpreuveCardProps(exam)} key={exam.id} />
+            <ExamCard
+              {...toExamCardProps(exam)}
+              manageable={manageable}
+              key={exam.id}
+            />
           ))}
         </div>
       )}

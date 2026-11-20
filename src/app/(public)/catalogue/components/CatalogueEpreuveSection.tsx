@@ -5,7 +5,7 @@ import {
   getSubjects,
 } from "@/features/referentials/queries";
 import CatalogueEpreuves from "./CatalogueEpreuve";
-import { toEpreuveCardProps } from "@/components/exams/toEpreuveCardProps";
+import { toExamCardProps } from "@/components/exams/toExamCardProps";
 import {
   toExamFilters,
   type CatalogueSearchParams,
@@ -26,7 +26,7 @@ const CatalogueEpreuveSection = async ({
   return (
     <section className="mx-auto mb-20 w-full max-w-7xl px-4 lg:px-6">
       <CatalogueEpreuves
-        data={result.exams.map(toEpreuveCardProps)}
+        data={result.exams.map(toExamCardProps)}
         total={result.total}
         filterOptions={{ fields, levels, subjects }}
       />

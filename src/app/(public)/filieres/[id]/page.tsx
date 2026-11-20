@@ -16,7 +16,7 @@ import Research from "@/components/exams/Research";
 import ImageHandler from "../../components/ImageHandler";
 import FiliereCatalogueSection from "../components/FiliereCatalogueSection";
 import CTACatalogue from "../../accueil/components/CTACatalogue";
-import { toEpreuveCardProps } from "@/components/exams/toEpreuveCardProps";
+import { toExamCardProps } from "@/components/exams/toExamCardProps";
 import { fieldPageTitle } from "../../utils/fieldLabel";
 
 type FilierePageProps = {
@@ -72,7 +72,7 @@ export default async function FilierePage({
         image_className="object-cover object-top"
       />
       <FiliereCatalogueSection
-        exams={result.exams.exams.map(toEpreuveCardProps)}
+        exams={result.exams.exams.map(toExamCardProps)}
         total={result.exams.total}
         filterOptions={{
           // Filiere fixee par la page : pas de filtre filiere, matieres de cette filiere seulement.

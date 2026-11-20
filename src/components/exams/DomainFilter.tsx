@@ -28,7 +28,12 @@ export function DomainFilterSkeleton() {
   );
 }
 
-export default async function DomainFilter() {
+export default async function DomainFilter({
+  manageable = false,
+}: {
+  /** Espace BDE : cartes avec menu de gestion. */
+  manageable?: boolean;
+}) {
   const [fields, exams] = await Promise.all([
     getFields(),
     getDomainExams(null),
@@ -40,7 +45,11 @@ export default async function DomainFilter() {
         Filtrez par domaine d&apos;activité
       </h3>
 
-      <DomainFilterContent fields={fields} initialExams={exams} />
+      <DomainFilterContent
+        fields={fields}
+        initialExams={exams}
+        manageable={manageable}
+      />
 
       <Link
         href="/catalogue"

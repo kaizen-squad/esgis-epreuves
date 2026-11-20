@@ -1,8 +1,8 @@
 import { getRecentExams } from "@/features/exams/queries";
 import Slider from "@/components/ui/Slider";
 import { connection } from "next/server";
-import EpreuveCard from "@/components/exams/EpreuveCard";
-import { toEpreuveCardProps } from "@/components/exams/toEpreuveCardProps";
+import ExamCard from "@/components/exams/ExamCard";
+import { toExamCardProps } from "@/components/exams/toExamCardProps";
 
 export function RecentlyAddedSkeleton() {
   return (
@@ -17,7 +17,16 @@ export function RecentlyAddedSkeleton() {
   );
 }
 
-export default async function RecentlyAdded({ title }: { title: string }) {
+type RecentlyAddedProps = {
+  title: string;
+  /** Espace BDE : cartes avec menu de gestion. */
+  manageable?: boolean;
+};
+
+export default async function RecentlyAdded({
+  title,
+  manageable = false,
+}: RecentlyAddedProps) {
   await connection();
   const exams = await getRecentExams();
 
@@ -41,7 +50,7 @@ export default async function RecentlyAdded({ title }: { title: string }) {
             key={exam.id}
             className="relative w-full shrink-0 snap-start md:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-3rem)/4)]"
           >
-            <EpreuveCard {...toEpreuveCardProps(exam)} />
+            <ExamCard {...toExamCardProps(exam)} manageable={manageable} />
           </div>
         ))}
       </Slider>

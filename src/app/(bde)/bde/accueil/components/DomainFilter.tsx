@@ -1,6 +1,6 @@
 "use client";
 
-import BDEEpreuveCard from "@/app/(bde)/components/BDEEpreuveCard";
+import ExamCard from "@/components/exams/ExamCard";
 import DomainSelectFilter from "@/components/exams/DomainSelectFilter";
 import { epreuvesMock } from "@/app/(public)/constants/epreuve.constants";
 import { FiArrowRight } from "react-icons/fi";
@@ -16,7 +16,7 @@ const DomainFilter = () => {
 
       <div className="mb-4 grid grid-cols-1 justify-center gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {epreuvesMock.map((epreuve) => (
-          <BDEEpreuveCard {...epreuve} key={epreuve.name} />
+          <ExamCard {...epreuve} manageable key={epreuve.name} />
         ))}
       </div>
 

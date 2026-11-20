@@ -1,6 +1,6 @@
 "use client";
 
-import EpreuveCard, { EpreuveCardProps } from "@/components/exams/EpreuveCard";
+import ExamCard, { ExamCardProps } from "@/components/exams/ExamCard";
 import CatalogueFilter from "./CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
 import { useState } from "react";
@@ -8,7 +8,7 @@ import { useCatalogueFilters } from "../../components/filter/useCatalogueFilters
 import type { CatalogueFilterOptions } from "../../utils/catalogueFilters";
 
 type CatalogueEpreuvesProps = {
-  data: EpreuveCardProps[];
+  data: ExamCardProps[];
   /** Total cote serveur (toutes pages confondues) pour les filtres en cours. */
   total: number;
   filterOptions: CatalogueFilterOptions;
@@ -69,7 +69,7 @@ const CatalogueEpreuves = ({
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(min(17rem,100%),1fr))] gap-6">
               {data.map((epreuve) => (
-                <EpreuveCard {...epreuve} key={epreuve.slug ?? epreuve.name} />
+                <ExamCard {...epreuve} key={epreuve.slug ?? epreuve.name} />
               ))}
             </div>
           )}

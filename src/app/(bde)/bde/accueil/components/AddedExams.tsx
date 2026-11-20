@@ -1,6 +1,6 @@
 "use client";
 
-import BDEEpreuveCard from "@/app/(bde)/components/BDEEpreuveCard";
+import ExamCard from "@/components/exams/ExamCard";
 import { epreuvesMock } from "@/app/(public)/constants/epreuve.constants";
 import Slider from "@/components/ui/Slider";
 
@@ -14,7 +14,7 @@ const AddedExams = ({ title }: { title: string }) => {
             key={epreuve.name}
             className="relative w-full shrink-0 snap-start md:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-3rem)/4)]"
           >
-            <BDEEpreuveCard {...epreuve} />
+            <ExamCard {...epreuve} manageable />
           </div>
         ))}
       </Slider>

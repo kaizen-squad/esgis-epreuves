@@ -2,8 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
+import ExamManageMenu from "./ExamManageMenu";
 
-export interface EpreuveCardProps {
+export interface ExamCardProps {
+  /** Identifiant de l'epreuve, absent des donnees factices. */
+  id?: string;
   img_src: string;
   name: string;
   year: number;
@@ -12,6 +15,8 @@ export interface EpreuveCardProps {
   type: string;
   slug?: string;
   fileSize?: number;
+  /** Espace BDE : affiche le menu de gestion (modifier, remplacer, supprimer). */
+  manageable?: boolean;
 }
 
 function formatFileSize(bytes: number): string {
@@ -20,7 +25,7 @@ function formatFileSize(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
 }
 
-const EpreuveCard = (data: EpreuveCardProps) => {
+const ExamCard = (data: ExamCardProps) => {
   const previewHref = data.slug ? `/api/exams/${data.slug}` : null;
   const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
   const sizeLabel =
@@ -59,13 +64,16 @@ const EpreuveCard = (data: EpreuveCardProps) => {
           {data.name}
         </h4>
 
-        <div className="text-text-paragraph mt-auto flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1">
-            <FiCalendar size={12} />
-            {data.year - 1}-{data.year}
-          </span>
-          <GoDotFill size={6} />
-          <span>{sizeLabel}</span>
+        <div className="text-text-paragraph mt-auto flex items-center justify-between text-xs">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <FiCalendar size={12} />
+              {data.year - 1}-{data.year}
+            </span>
+            <GoDotFill size={6} />
+            <span>{sizeLabel}</span>
+          </div>
+          {data.manageable ? <ExamManageMenu /> : null}
         </div>
 
         <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
@@ -105,4 +113,4 @@ const EpreuveCard = (data: EpreuveCardProps) => {
   );
 };
 
-export default EpreuveCard;
+export default ExamCard;
