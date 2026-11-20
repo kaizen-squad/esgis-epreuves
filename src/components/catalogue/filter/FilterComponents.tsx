@@ -1,13 +1,13 @@
 import { FiX } from "react-icons/fi";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 import type { CatalogueFilters } from "@/components/exams/useCatalogueFilters";
-import FiliereCard from "./filiere/FiliereCard";
-import HideFilterComponent from "./HideFilterComponent";
-import MatiereFilterWrapper from "./matiere/MatiereFilterWrapper";
-import NiveauCard from "./niveau/NiveauCard";
-import TypeEvaluationFilterWrapper from "./type_evaluation/TypeEvaluationFilterWrapper";
-import SessionFilterWrapper from "./session/SessionFilterWrapper";
-import DateAjoutFilterWrapper from "./data_ajout/DateAjoutFilterWrapper";
+import FiliereCard from "@/components/catalogue/filter/filiere/FiliereCard";
+import HideFilterComponent from "@/components/catalogue/filter/HideFilterComponent";
+import MatiereFilterWrapper from "@/components/catalogue/filter/matiere/MatiereFilterWrapper";
+import NiveauCard from "@/components/catalogue/filter/niveau/NiveauCard";
+import TypeEvaluationFilterWrapper from "@/components/catalogue/filter/type_evaluation/TypeEvaluationFilterWrapper";
+import SessionFilterWrapper from "@/components/catalogue/filter/session/SessionFilterWrapper";
+import DateAjoutFilterWrapper from "@/components/catalogue/filter/data_ajout/DateAjoutFilterWrapper";
 
 interface FilterComponentsProps {
   onClose?: () => void;

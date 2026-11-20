@@ -1,5 +1,5 @@
 import type { ExamCardProps } from "@/components/exams/ExamCard";
-import CatalogueEpreuves from "../../catalogue/components/CatalogueEpreuve";
+import CatalogueEpreuves from "@/components/catalogue/CatalogueEpreuve";
 import DomainSelectFilter from "@/components/exams/DomainSelectFilter";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 

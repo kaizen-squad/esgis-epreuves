@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FiFilter } from "react-icons/fi";
 import { Drawer } from "vaul";
-import FilterComponents from "../../components/filter/FilterComponents";
+import FilterComponents from "@/components/catalogue/filter/FilterComponents";
 import type { CatalogueFilters } from "@/components/exams/useCatalogueFilters";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 

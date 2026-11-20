@@ -4,7 +4,7 @@ import {
   getLevels,
   getSubjects,
 } from "@/features/referentials/queries";
-import CatalogueEpreuves from "./CatalogueEpreuve";
+import CatalogueEpreuves from "@/components/catalogue/CatalogueEpreuve";
 import { toExamCardProps } from "@/components/exams/toExamCardProps";
 import {
   toExamFilters,

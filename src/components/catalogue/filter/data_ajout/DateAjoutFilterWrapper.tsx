@@ -1,5 +1,5 @@
-import { dateAjoutMocks } from "@/app/(public)/constants/filter.constants";
-import DateAjoutCard from "./DateAjoutCard";
+import { dateAjoutMocks } from "@/components/catalogue/filter/filter.constants";
+import DateAjoutCard from "@/components/catalogue/filter/data_ajout/DateAjoutCard";
 
 const DateAjoutFilterWrapper = () => {
   return (

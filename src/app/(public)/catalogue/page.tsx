@@ -3,7 +3,7 @@ import CatalogueWelcomeSection from "./components/CatalogueWelcomeSection";
 import Research from "@/components/exams/Research";
 import ResultsResume from "@/components/home/ResultsResume";
 import CTACatalogue from "@/components/home/CTACatalogue";
-import CatalogueEpreuveSection from "./components/CatalogueEpreuveSection";
+import CatalogueEpreuveSection from "@/components/catalogue/CatalogueEpreuveSection";
 import type { CatalogueSearchParams } from "@/components/exams/catalogueFilters";
 
 const Catalogue = async ({

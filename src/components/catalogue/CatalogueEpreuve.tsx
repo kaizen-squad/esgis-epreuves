@@ -1,7 +1,7 @@
 "use client";
 
 import ExamCard, { ExamCardProps } from "@/components/exams/ExamCard";
-import CatalogueFilter from "./CatalogueFilter";
+import CatalogueFilter from "@/components/catalogue/CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
 import { useState } from "react";
 import { useCatalogueFilters } from "@/components/exams/useCatalogueFilters";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import type { Subject } from "@/features/referentials/types";
 import { searchTokens } from "@/features/exams/schemas";
-import MatiereCard from "./MatiereCard";
+import MatiereCard from "@/components/catalogue/filter/matiere/MatiereCard";
 
 interface MatiereFilterWrapperProps {
   subjects: Subject[];

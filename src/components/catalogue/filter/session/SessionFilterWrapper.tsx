@@ -1,4 +1,4 @@
-import SegmentedFilter from "../SegmentedFilter";
+import SegmentedFilter from "@/components/catalogue/filter/SegmentedFilter";
 
 const SESSIONS = [
   { label: "Toutes", value: null },
