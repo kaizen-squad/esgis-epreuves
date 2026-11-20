@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { CgSpinner } from "react-icons/cg";
+import { useState, useTransition } from "react";
 import { FiFileText, FiRotateCcw, FiTrash } from "react-icons/fi";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import { deleteExam } from "@/features/exams/actions";
 
@@ -15,8 +15,9 @@ type ExamManageMenuProps = {
 
 /**
  * Actions de gestion d'une epreuve, affichees sur `ExamCard` dans l'espace BDE (`manageable`).
- * Modifier et Remplacer menent aux pages dediees ; Supprimer demande une confirmation puis
- * appelle `deleteExam` et recharge les donnees de la page.
+ * Modifier et Remplacer menent aux pages dediees. Supprimer ouvre une fenetre de confirmation :
+ * en cas de succes elle se ferme et la page se recharge, en cas d'echec l'erreur s'affiche dans
+ * la fenetre, qui reste ouverte pour reessayer ou annuler.
  */
 export default function ExamManageMenu({
   id,
@@ -24,63 +25,75 @@ export default function ExamManageMenu({
   name,
 }: ExamManageMenuProps) {
   const router = useRouter();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDeleting, startDelete] = useTransition();
 
-  const handleDelete = () => {
-    const confirmed = window.confirm(
-      `Supprimer définitivement l'épreuve « ${name} » ? Cette action est irréversible.`,
-    );
-    if (!confirmed) return;
+  const openConfirm = () => {
+    setError(null);
+    setConfirmOpen(true);
+  };
 
+  const handleConfirm = () => {
+    setError(null);
     startDelete(async () => {
       const result = await deleteExam(id);
       if (!result.ok) {
-        window.alert(result.error);
+        setError(result.error);
         return;
       }
+      setConfirmOpen(false);
       router.refresh();
     });
   };
 
-  if (isDeleting) {
-    return (
-      <span
-        className="flex items-center gap-1 p-2"
-        role="status"
-        aria-live="polite"
-      >
-        <CgSpinner className="animate-spin" size={16} />
-        Suppression…
-      </span>
-    );
-  }
-
   return (
-    <Menu label={`Gérer l'épreuve ${name}`}>
-      <MenuItem
-        href={`/bde/epreuves/${slug}/modifier`}
-        name={
-          <span className="flex items-center gap-2 text-sm">
-            <span>Modifier les données</span> <FiFileText />
-          </span>
+    <>
+      <Menu label={`Gérer l'épreuve ${name}`}>
+        <MenuItem
+          href={`/bde/epreuves/${slug}/modifier`}
+          name={
+            <span className="flex items-center gap-2 text-sm">
+              <span>Modifier les données</span> <FiFileText />
+            </span>
+          }
+        />
+        <MenuItem
+          href={`/bde/epreuves/${slug}/remplacer`}
+          name={
+            <span className="flex items-center gap-2 text-sm">
+              Remplacer l&apos;épreuve <FiRotateCcw />
+            </span>
+          }
+        />
+        <MenuItem
+          onClick={openConfirm}
+          name={
+            <span className="text-background-accent flex items-center gap-2 text-sm">
+              Supprimer l&apos;épreuve <FiTrash />
+            </span>
+          }
+        />
+      </Menu>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Supprimer l'épreuve ?"
+        description={
+          <p>
+            L&apos;épreuve{" "}
+            <strong className="text-text-default">« {name} »</strong> et son
+            fichier PDF seront supprimés définitivement. Cette action est
+            irréversible.
+          </p>
         }
+        confirmLabel={isDeleting ? "Suppression…" : "Supprimer"}
+        tone="danger"
+        pending={isDeleting}
+        error={error}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmOpen(false)}
       />
-      <MenuItem
-        href={`/bde/epreuves/${slug}/remplacer`}
-        name={
-          <span className="flex items-center gap-2 text-sm">
-            Remplacer l&apos;épreuve <FiRotateCcw />
-          </span>
-        }
-      />
-      <MenuItem
-        onClick={handleDelete}
-        name={
-          <span className="text-background-accent flex items-center gap-2 text-sm">
-            Supprimer l&apos;épreuve <FiTrash />
-          </span>
-        }
-      />
-    </Menu>
+    </>
   );
 }
