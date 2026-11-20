@@ -1,5 +1,4 @@
 import React from "react";
-import PublicLayout from "../components/PublicLayout";
 import CatalogueWelcomeSection from "./components/CatalogueWelcomeSection";
 import Research from "../accueil/components/Research";
 import ResultsResume from "../accueil/components/ResultsResume";
@@ -18,7 +17,7 @@ const Catalogue = async ({
     : params.search;
 
   return (
-    <PublicLayout>
+    <>
       <CatalogueWelcomeSection />
       <Research live initialQuery={initialQuery} />
       <p className="text-text-default text-center">
@@ -33,7 +32,7 @@ const Catalogue = async ({
         <ResultsResume />
         <CTACatalogue />
       </div>
-    </PublicLayout>
+    </>
   );
 };
 

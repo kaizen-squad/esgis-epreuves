@@ -15,7 +15,6 @@ import {
 import Research from "../../accueil/components/Research";
 import ImageHandler from "../../components/ImageHandler";
 import FiliereCatalogueSection from "../components/FiliereCatalogueSection";
-import PublicLayout from "../../components/PublicLayout";
 import CTACatalogue from "../../accueil/components/CTACatalogue";
 import { toEpreuveCardProps } from "../../accueil/components/toEpreuveCardProps";
 import { fieldPageTitle } from "../../utils/fieldLabel";
@@ -51,7 +50,7 @@ export default async function FilierePage({
   );
 
   return (
-    <PublicLayout>
+    <>
       <div>
         <h1 className="head-title text-center">
           Découvrez les
@@ -85,6 +84,6 @@ export default async function FilierePage({
         }}
       />
       <CTACatalogue />
-    </PublicLayout>
+    </>
   );
 }

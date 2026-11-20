@@ -1,4 +1,3 @@
-import BDELayout from "@/app/(bde)/components/BDELayout";
 import BDEWelcomeSection from "./components/BDEWelcomeSection";
 import Research from "@/app/(public)/accueil/components/Research";
 import ResultsResume from "@/app/(public)/accueil/components/ResultsResume";
@@ -9,7 +8,7 @@ import DomainFilter from "./components/DomainFilter";
 
 const BDEAccueil = () => {
   return (
-    <BDELayout>
+    <>
       <BDEWelcomeSection />
       <Research />
       <AddedExams title="Epreuves ajoutées" />
@@ -17,7 +16,7 @@ const BDEAccueil = () => {
       <Filieres />
       <ResultsResume />
       <CTACatalogue />
-    </BDELayout>
+    </>
   );
 };
 

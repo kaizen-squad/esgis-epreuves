@@ -10,12 +10,11 @@ import RecentlyAdded, {
 import Research from "./accueil/components/Research";
 import ResultsResume from "./accueil/components/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
-import PublicLayout from "./components/PublicLayout";
 import FilieresSkeleton from "./accueil/components/FilieresSkeleton";
 
 export default function Accueil() {
   return (
-    <PublicLayout>
+    <>
       <WelcomeSection />
       <Research />
       <div className="px-6">
@@ -31,6 +30,6 @@ export default function Accueil() {
         <ResultsResume />
         <CTACatalogue />
       </div>
-    </PublicLayout>
+    </>
   );
 }

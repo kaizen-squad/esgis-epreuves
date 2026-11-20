@@ -1,9 +1,9 @@
-import React from "react";
 import Navbar from "@/app/(public)/components/navbar/components/Navbar";
 import Footer from "@/app/(public)/components/footer/components/Footer";
-import { bdeNavLinks } from "@/app/(bde)/constants/navLinks";
+import { bdeNavLinks } from "./constants/navLinks";
 
-const BDELayout = ({ children }: { children: React.ReactNode }) => {
+/** Mise en page commune a toutes les pages de l'espace BDE. */
+export default function BdeLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-dvh flex-col">
       <Navbar links={bdeNavLinks} />
@@ -11,6 +11,4 @@ const BDELayout = ({ children }: { children: React.ReactNode }) => {
       <Footer links={bdeNavLinks} />
     </div>
   );
-};
-
-export default BDELayout;
+}
