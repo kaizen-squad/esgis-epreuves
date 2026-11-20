@@ -1,3 +1,4 @@
+import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import { Suspense } from "react";
 import BDEWelcomeSection from "./components/BDEWelcomeSection";
 import Research from "@/components/exams/Research";
@@ -14,7 +15,9 @@ import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
 
 const BDE_CATALOGUE_HREF = "/bde/catalogue";
 
-const BDEAccueil = () => {
+const BDEAccueil = async () => {
+  await requireBdeSession();
+
   return (
     <>
       <BDEWelcomeSection />

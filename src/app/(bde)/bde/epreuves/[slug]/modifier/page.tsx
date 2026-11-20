@@ -1,3 +1,4 @@
+import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
@@ -13,6 +14,7 @@ import ExamMetadataForm from "../../components/ExamMetadataForm";
 export default async function ModifierEpreuvePage({
   params,
 }: PageProps<"/bde/epreuves/[slug]/modifier">) {
+  await requireBdeSession();
   const { slug } = await params;
   const [exam, fields, levels, subjects, options] = await Promise.all([
     getExamBySlug(slug),

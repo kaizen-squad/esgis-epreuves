@@ -1,3 +1,4 @@
+import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
@@ -7,6 +8,7 @@ import ExamFileReplaceForm from "../../components/ExamFileReplaceForm";
 export default async function RemplacerEpreuvePage({
   params,
 }: PageProps<"/bde/epreuves/[slug]/remplacer">) {
+  await requireBdeSession();
   const { slug } = await params;
   const exam = await getExamBySlug(slug);
   if (!exam) notFound();

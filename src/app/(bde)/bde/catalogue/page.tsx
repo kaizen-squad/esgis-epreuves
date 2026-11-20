@@ -1,9 +1,11 @@
+import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import CatalogueEpreuveSection from "@/components/catalogue/CatalogueEpreuveSection";
 import Research from "@/components/exams/Research";
 
 export default async function BDECataloguePage({
   searchParams,
 }: PageProps<"/bde/catalogue">) {
+  await requireBdeSession();
   const params = await searchParams;
   const initialQuery = Array.isArray(params.search)
     ? params.search[0]
