@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
 
 export type NavLink = {
@@ -12,9 +12,11 @@ export type NavLink = {
 
 type NavbarProps = {
   links: NavLink[];
+  /** Contenu affiche a droite de la barre (ex. bouton de deconnexion de l'espace BDE). */
+  endSlot?: ReactNode;
 };
 
-const Navbar = ({ links }: NavbarProps) => {
+const Navbar = ({ links, endSlot }: NavbarProps) => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -56,6 +58,12 @@ const Navbar = ({ links }: NavbarProps) => {
           })}
         </div>
 
+        {endSlot ? (
+          <div className="hidden items-center justify-end lg:flex">
+            {endSlot}
+          </div>
+        ) : null}
+
         {/** Mobile Navbar */}
         {isOpen && (
           <div className="flex flex-col py-4">
@@ -72,6 +80,7 @@ const Navbar = ({ links }: NavbarProps) => {
                 </Link>
               );
             })}
+            {endSlot ? <div className="pt-2">{endSlot}</div> : null}
           </div>
         )}
       </nav>
