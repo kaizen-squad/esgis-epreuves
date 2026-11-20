@@ -1,4 +1,4 @@
-import { EpreuveCardProps } from "../components/EpreuveCard";
+import { EpreuveCardProps } from "@/components/exams/EpreuveCard";
 
 export const epreuvesMock: EpreuveCardProps[] = [
   {

@@ -5,7 +5,7 @@ import {
   getSubjects,
 } from "@/features/referentials/queries";
 import CatalogueEpreuves from "./CatalogueEpreuve";
-import { toEpreuveCardProps } from "../../accueil/components/toEpreuveCardProps";
+import { toEpreuveCardProps } from "@/components/exams/toEpreuveCardProps";
 import {
   toExamFilters,
   type CatalogueSearchParams,

@@ -1,7 +1,7 @@
 import { getDomainExams } from "@/features/exams/actions";
 import { getFields } from "@/features/referentials/queries";
 import { FiArrowRight } from "react-icons/fi";
-import DomainFilterContent from "./DomainFilterContent";
+import DomainFilterContent from "@/components/exams/DomainFilterContent";
 import Link from "next/link";
 
 export function DomainFilterSkeleton() {

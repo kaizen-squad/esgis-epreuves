@@ -1,4 +1,4 @@
-import { type EpreuveCardProps } from "@/app/(public)/components/EpreuveCard";
+import { type EpreuveCardProps } from "@/components/exams/EpreuveCard";
 import Menu, { MenuItem } from "@/components/ui/Menu";
 import Image from "next/image";
 import {

@@ -4,9 +4,9 @@ import { useState, useTransition } from "react";
 import { getDomainExams } from "@/features/exams/actions";
 import type { Exam } from "@/features/exams/types";
 import type { Field } from "@/features/referentials/types";
-import EpreuveCard from "../../components/EpreuveCard";
-import DomainSelectFilter from "../../components/DomainSelectFilter";
-import { toEpreuveCardProps } from "./toEpreuveCardProps";
+import EpreuveCard from "@/components/exams/EpreuveCard";
+import DomainSelectFilter from "@/components/exams/DomainSelectFilter";
+import { toEpreuveCardProps } from "@/components/exams/toEpreuveCardProps";
 
 const GRID_CLASS =
   "mb-4 grid grid-cols-1 justify-center gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";

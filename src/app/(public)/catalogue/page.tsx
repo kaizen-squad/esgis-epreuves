@@ -1,6 +1,6 @@
 import React from "react";
 import CatalogueWelcomeSection from "./components/CatalogueWelcomeSection";
-import Research from "../accueil/components/Research";
+import Research from "@/components/exams/Research";
 import ResultsResume from "../accueil/components/ResultsResume";
 import CTACatalogue from "../accueil/components/CTACatalogue";
 import CatalogueEpreuveSection from "./components/CatalogueEpreuveSection";

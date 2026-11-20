@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import CTACatalogue from "../accueil/components/CTACatalogue";
-import Research from "../accueil/components/Research";
+import Research from "@/components/exams/Research";
 import FIliereCategories from "./components/FIliereCategories";
 import FiliereCategoriesSkeleton from "./components/FiliereCategoriesSkeleton";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import BDEEpreuveCard from "@/app/(bde)/components/BDEEpreuveCard";
-import DomainSelectFilter from "@/app/(public)/components/DomainSelectFilter";
+import DomainSelectFilter from "@/components/exams/DomainSelectFilter";
 import { epreuvesMock } from "@/app/(public)/constants/epreuve.constants";
 import { FiArrowRight } from "react-icons/fi";
 

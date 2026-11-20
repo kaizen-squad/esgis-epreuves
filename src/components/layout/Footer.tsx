@@ -1,17 +1,12 @@
 import Link from "next/link";
-import { navLinks as defaultNavLinks } from "@/app/(public)/constants/navLinks";
+import type { NavLink } from "./Navbar";
 import { FiLinkedin } from "react-icons/fi";
 
-type FooterLink = {
-  name: string;
-  link: string;
-};
-
 type FooterProps = {
-  links?: FooterLink[];
+  links: NavLink[];
 };
 
-const Footer = ({ links = defaultNavLinks }: FooterProps) => {
+const Footer = ({ links }: FooterProps) => {
   return (
     <footer className="bg-background-secondary rounded-t-4xl px-4 py-8 lg:px-10">
       <div className="flex flex-col justify-between lg:flex-row">

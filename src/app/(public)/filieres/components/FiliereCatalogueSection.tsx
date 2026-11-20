@@ -1,6 +1,6 @@
-import type { EpreuveCardProps } from "../../components/EpreuveCard";
+import type { EpreuveCardProps } from "@/components/exams/EpreuveCard";
 import CatalogueEpreuves from "../../catalogue/components/CatalogueEpreuve";
-import DomainSelectFilter from "../../components/DomainSelectFilter";
+import DomainSelectFilter from "@/components/exams/DomainSelectFilter";
 import type { CatalogueFilterOptions } from "../../utils/catalogueFilters";
 
 type FiliereCatalogueSectionProps = {

@@ -1,5 +1,5 @@
 import BDEWelcomeSection from "./components/BDEWelcomeSection";
-import Research from "@/app/(public)/accueil/components/Research";
+import Research from "@/components/exams/Research";
 import ResultsResume from "@/app/(public)/accueil/components/ResultsResume";
 import CTACatalogue from "@/app/(public)/accueil/components/CTACatalogue";
 import Filieres from "@/app/(public)/accueil/components/Filieres";

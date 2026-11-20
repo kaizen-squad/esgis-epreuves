@@ -1,5 +1,5 @@
-import Navbar from "@/app/(public)/components/navbar/components/Navbar";
-import Footer from "@/app/(public)/components/footer/components/Footer";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import { bdeNavLinks } from "./constants/navLinks";
 
 /** Mise en page commune a toutes les pages de l'espace BDE. */

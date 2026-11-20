@@ -1,8 +1,8 @@
 "use client";
 
 import type { Field } from "@/features/referentials/types";
-import { activityDomain } from "../constants/domain.constants";
-import { useDomainStore } from "../store/domain.store";
+import { activityDomain } from "@/components/exams/domain.constants";
+import { useDomainStore } from "@/components/exams/domain.store";
 
 type DomainSelectFilterProps = {
   fields?: Field[];

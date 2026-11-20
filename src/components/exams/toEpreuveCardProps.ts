@@ -1,5 +1,5 @@
 import type { Exam } from "@/features/exams/types";
-import type { EpreuveCardProps } from "@/app/(public)/components/EpreuveCard";
+import type { EpreuveCardProps } from "@/components/exams/EpreuveCard";
 
 export function toEpreuveCardProps(exam: Exam): EpreuveCardProps {
   const endYear = exam.academicYear.split("-")[1] ?? exam.academicYear;

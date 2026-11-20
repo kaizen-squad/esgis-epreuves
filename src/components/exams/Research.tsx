@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FiArrowRight } from "react-icons/fi";
 import { countSearchResults } from "@/features/exams/actions";
 import { searchTokens } from "@/features/exams/schemas";
-import { useCatalogueFilters } from "../../components/filter/useCatalogueFilters";
+import { useCatalogueFilters } from "@/app/(public)/components/filter/useCatalogueFilters";
 
 const DEBOUNCE_MS = 300;
 /** Aligne sur MAX_SEARCH_LENGTH d'examFiltersSchema : au-dela, le serveur ignorerait le terme. */

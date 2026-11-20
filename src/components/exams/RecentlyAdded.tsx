@@ -1,8 +1,8 @@
 import { getRecentExams } from "@/features/exams/queries";
 import Slider from "@/components/ui/Slider";
 import { connection } from "next/server";
-import EpreuveCard from "../../components/EpreuveCard";
-import { toEpreuveCardProps } from "./toEpreuveCardProps";
+import EpreuveCard from "@/components/exams/EpreuveCard";
+import { toEpreuveCardProps } from "@/components/exams/toEpreuveCardProps";
 
 export function RecentlyAddedSkeleton() {
   return (

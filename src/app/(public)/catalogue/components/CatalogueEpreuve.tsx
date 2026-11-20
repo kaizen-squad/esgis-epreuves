@@ -1,6 +1,6 @@
 "use client";
 
-import EpreuveCard, { EpreuveCardProps } from "../../components/EpreuveCard";
+import EpreuveCard, { EpreuveCardProps } from "@/components/exams/EpreuveCard";
 import CatalogueFilter from "./CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
 import { useState } from "react";

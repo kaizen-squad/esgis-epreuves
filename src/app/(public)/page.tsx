@@ -2,12 +2,12 @@ import { Suspense } from "react";
 import CTACatalogue from "./accueil/components/CTACatalogue";
 import DomainFilter, {
   DomainFilterSkeleton,
-} from "./accueil/components/DomainFilter";
+} from "@/components/exams/DomainFilter";
 import Filieres from "./accueil/components/Filieres";
 import RecentlyAdded, {
   RecentlyAddedSkeleton,
-} from "./accueil/components/RecentlyAdded";
-import Research from "./accueil/components/Research";
+} from "@/components/exams/RecentlyAdded";
+import Research from "@/components/exams/Research";
 import ResultsResume from "./accueil/components/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
 import FilieresSkeleton from "./accueil/components/FilieresSkeleton";

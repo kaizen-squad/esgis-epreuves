@@ -12,11 +12,11 @@ import {
   toExamFilters,
   type CatalogueSearchParams,
 } from "../../utils/catalogueFilters";
-import Research from "../../accueil/components/Research";
+import Research from "@/components/exams/Research";
 import ImageHandler from "../../components/ImageHandler";
 import FiliereCatalogueSection from "../components/FiliereCatalogueSection";
 import CTACatalogue from "../../accueil/components/CTACatalogue";
-import { toEpreuveCardProps } from "../../accueil/components/toEpreuveCardProps";
+import { toEpreuveCardProps } from "@/components/exams/toEpreuveCardProps";
 import { fieldPageTitle } from "../../utils/fieldLabel";
 
 type FilierePageProps = {

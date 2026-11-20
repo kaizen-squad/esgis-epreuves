@@ -4,18 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
-import { navLinks as defaultNavLinks } from "@/app/(public)/constants/navLinks";
 
-type NavLink = {
+export type NavLink = {
   name: string;
   link: string;
 };
 
 type NavbarProps = {
-  links?: NavLink[];
+  links: NavLink[];
 };
 
-const Navbar = ({ links = defaultNavLinks }: NavbarProps) => {
+const Navbar = ({ links }: NavbarProps) => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   return (
