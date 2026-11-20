@@ -1,4 +1,4 @@
-import FiliereCard from "../../components/FiliereCard";
+import FiliereCard from "@/components/fields/FiliereCard";
 
 type FiliereCardData = {
   label: string;

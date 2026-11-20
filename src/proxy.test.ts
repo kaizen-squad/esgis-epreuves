@@ -6,7 +6,7 @@ vi.mock("@/lib/supabase/proxy", () => ({
   updateSession: (...args: unknown[]) => updateSession(...args),
 }));
 
-const { proxy } = await import("./proxy");
+const { proxy, config } = await import("./proxy");
 
 describe("proxy", () => {
   it("laisse passer la requete si une session existe", async () => {
@@ -27,5 +27,9 @@ describe("proxy", () => {
 
     expect(result.headers.get("location")).toBe("http://localhost/login");
     expect(result.cookies.get("sb-access-token")?.value).toBe("refreshed");
+  });
+
+  it("couvre les espaces reserves /admin et /bde, jamais les pages publiques", () => {
+    expect(config.matcher).toEqual(["/admin/:path*", "/bde/:path*"]);
   });
 });

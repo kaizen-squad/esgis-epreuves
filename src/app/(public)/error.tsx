@@ -14,7 +14,7 @@ export default function PublicError({
   }, [error]);
 
   return (
-    <main className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center">
       <h1 className="section-title">Une erreur est survenue</h1>
       <p className="text-text-paragraph">
         Impossible de charger cette page pour le moment.
@@ -26,6 +26,6 @@ export default function PublicError({
       >
         Réessayer
       </button>
-    </main>
+    </div>
   );
 }

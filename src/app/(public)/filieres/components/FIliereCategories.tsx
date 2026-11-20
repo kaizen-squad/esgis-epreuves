@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { getFieldCategories } from "@/features/exams/queries";
-import { toFiliereCardData } from "../../utils/fieldLabel";
+import { toFiliereCardData } from "@/components/fields/fieldLabel";
 import FiliereCategory from "./FiliereCategory";
 
 const FIliereCategories = async () => {

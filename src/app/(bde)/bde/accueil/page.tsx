@@ -1,23 +1,41 @@
-import BDELayout from "@/app/(bde)/components/BDELayout";
+import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
+import { Suspense } from "react";
 import BDEWelcomeSection from "./components/BDEWelcomeSection";
-import Research from "@/app/(public)/accueil/components/Research";
-import ResultsResume from "@/app/(public)/accueil/components/ResultsResume";
-import CTACatalogue from "@/app/(public)/accueil/components/CTACatalogue";
-import Filieres from "@/app/(public)/accueil/components/Filieres";
-import AddedExams from "./components/AddedExams";
-import DomainFilter from "./components/DomainFilter";
+import Research from "@/components/exams/Research";
+import RecentlyAdded, {
+  RecentlyAddedSkeleton,
+} from "@/components/exams/RecentlyAdded";
+import DomainFilter, {
+  DomainFilterSkeleton,
+} from "@/components/exams/DomainFilter";
+import ResultsResume from "@/components/home/ResultsResume";
+import CTACatalogue from "@/components/home/CTACatalogue";
+import Filieres from "@/components/fields/Filieres";
+import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
 
-const BDEAccueil = () => {
+const BDE_CATALOGUE_HREF = "/bde/catalogue";
+
+const BDEAccueil = async () => {
+  await requireBdeSession();
+
   return (
-    <BDELayout>
+    <>
       <BDEWelcomeSection />
-      <Research />
-      <AddedExams title="Epreuves ajoutées" />
-      <DomainFilter />
-      <Filieres />
-      <ResultsResume />
-      <CTACatalogue />
-    </BDELayout>
+      <Research catalogueHref={BDE_CATALOGUE_HREF} />
+      <div className="px-6">
+        <Suspense fallback={<RecentlyAddedSkeleton />}>
+          <RecentlyAdded title="Epreuves ajoutées" manageable />
+        </Suspense>
+        <Suspense fallback={<DomainFilterSkeleton />}>
+          <DomainFilter manageable catalogueHref={BDE_CATALOGUE_HREF} />
+        </Suspense>
+        <Suspense fallback={<FilieresSkeleton />}>
+          <Filieres />
+        </Suspense>
+        <ResultsResume />
+        <CTACatalogue catalogueHref={BDE_CATALOGUE_HREF} />
+      </div>
+    </>
   );
 };
 

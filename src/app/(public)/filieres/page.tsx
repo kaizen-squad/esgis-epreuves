@@ -1,13 +1,12 @@
 import { Suspense } from "react";
-import CTACatalogue from "../accueil/components/CTACatalogue";
-import Research from "../accueil/components/Research";
-import PublicLayout from "../components/PublicLayout";
+import CTACatalogue from "@/components/home/CTACatalogue";
+import Research from "@/components/exams/Research";
 import FIliereCategories from "./components/FIliereCategories";
 import FiliereCategoriesSkeleton from "./components/FiliereCategoriesSkeleton";
 
 const Filieres = () => {
   return (
-    <PublicLayout>
+    <>
       <div className="text-center">
         <h1 className="head-title">Filtrez selon votre filière</h1>
         <p className="mb-6">
@@ -21,7 +20,7 @@ const Filieres = () => {
         <FIliereCategories />
       </Suspense>
       <CTACatalogue />
-    </PublicLayout>
+    </>
   );
 };
 

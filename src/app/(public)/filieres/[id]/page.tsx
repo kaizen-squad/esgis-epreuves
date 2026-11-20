@@ -11,14 +11,13 @@ import {
 import {
   toExamFilters,
   type CatalogueSearchParams,
-} from "../../utils/catalogueFilters";
-import Research from "../../accueil/components/Research";
-import ImageHandler from "../../components/ImageHandler";
+} from "@/components/exams/catalogueFilters";
+import Research from "@/components/exams/Research";
+import ImageHandler from "@/components/ui/ImageHandler";
 import FiliereCatalogueSection from "../components/FiliereCatalogueSection";
-import PublicLayout from "../../components/PublicLayout";
-import CTACatalogue from "../../accueil/components/CTACatalogue";
-import { toEpreuveCardProps } from "../../accueil/components/toEpreuveCardProps";
-import { fieldPageTitle } from "../../utils/fieldLabel";
+import CTACatalogue from "@/components/home/CTACatalogue";
+import { toExamCardProps } from "@/components/exams/toExamCardProps";
+import { fieldPageTitle } from "@/components/fields/fieldLabel";
 
 type FilierePageProps = {
   params: Promise<{ id: string }>;
@@ -51,7 +50,7 @@ export default async function FilierePage({
   );
 
   return (
-    <PublicLayout>
+    <>
       <div>
         <h1 className="head-title text-center">
           Découvrez les
@@ -73,7 +72,7 @@ export default async function FilierePage({
         image_className="object-cover object-top"
       />
       <FiliereCatalogueSection
-        exams={result.exams.exams.map(toEpreuveCardProps)}
+        exams={result.exams.exams.map(toExamCardProps)}
         total={result.exams.total}
         filterOptions={{
           // Filiere fixee par la page : pas de filtre filiere, matieres de cette filiere seulement.
@@ -85,6 +84,6 @@ export default async function FilierePage({
         }}
       />
       <CTACatalogue />
-    </PublicLayout>
+    </>
   );
 }

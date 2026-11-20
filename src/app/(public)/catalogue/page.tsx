@@ -1,11 +1,10 @@
 import React from "react";
-import PublicLayout from "../components/PublicLayout";
 import CatalogueWelcomeSection from "./components/CatalogueWelcomeSection";
-import Research from "../accueil/components/Research";
-import ResultsResume from "../accueil/components/ResultsResume";
-import CTACatalogue from "../accueil/components/CTACatalogue";
-import CatalogueEpreuveSection from "./components/CatalogueEpreuveSection";
-import type { CatalogueSearchParams } from "../utils/catalogueFilters";
+import Research from "@/components/exams/Research";
+import ResultsResume from "@/components/home/ResultsResume";
+import CTACatalogue from "@/components/home/CTACatalogue";
+import CatalogueEpreuveSection from "@/components/catalogue/CatalogueEpreuveSection";
+import type { CatalogueSearchParams } from "@/components/exams/catalogueFilters";
 
 const Catalogue = async ({
   searchParams,
@@ -18,7 +17,7 @@ const Catalogue = async ({
     : params.search;
 
   return (
-    <PublicLayout>
+    <>
       <CatalogueWelcomeSection />
       <Research live initialQuery={initialQuery} />
       <p className="text-text-default text-center">
@@ -33,7 +32,7 @@ const Catalogue = async ({
         <ResultsResume />
         <CTACatalogue />
       </div>
-    </PublicLayout>
+    </>
   );
 };
 

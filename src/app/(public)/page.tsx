@@ -1,21 +1,20 @@
 import { Suspense } from "react";
-import CTACatalogue from "./accueil/components/CTACatalogue";
+import CTACatalogue from "@/components/home/CTACatalogue";
 import DomainFilter, {
   DomainFilterSkeleton,
-} from "./accueil/components/DomainFilter";
-import Filieres from "./accueil/components/Filieres";
+} from "@/components/exams/DomainFilter";
+import Filieres from "@/components/fields/Filieres";
 import RecentlyAdded, {
   RecentlyAddedSkeleton,
-} from "./accueil/components/RecentlyAdded";
-import Research from "./accueil/components/Research";
-import ResultsResume from "./accueil/components/ResultsResume";
+} from "@/components/exams/RecentlyAdded";
+import Research from "@/components/exams/Research";
+import ResultsResume from "@/components/home/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
-import PublicLayout from "./components/PublicLayout";
-import FilieresSkeleton from "./accueil/components/FilieresSkeleton";
+import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
 
 export default function Accueil() {
   return (
-    <PublicLayout>
+    <>
       <WelcomeSection />
       <Research />
       <div className="px-6">
@@ -31,6 +30,6 @@ export default function Accueil() {
         <ResultsResume />
         <CTACatalogue />
       </div>
-    </PublicLayout>
+    </>
   );
 }

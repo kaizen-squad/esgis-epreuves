@@ -1,4 +1,4 @@
-import ImageHandler from "@/app/(public)/components/ImageHandler";
+import ImageHandler from "@/components/ui/ImageHandler";
 import Image from "next/image";
 import { FiArrowRight } from "react-icons/fi";
 
