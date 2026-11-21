@@ -24,7 +24,7 @@ Schéma Zod de `{ email, password }` pour la connexion. `email` doit être un em
 
 ### `login(prevState: ActionResult<void> | null, formData: FormData): Promise<ActionResult<void>>`
 
-Server Action de connexion BDE/Admin. Signature `(prevState, formData)` : à brancher avec `useActionState` côté écran (#17), seul moyen d'afficher l'erreur sous le formulaire sans recharger la page ; `prevState` n'est pas lu par l'action elle-même. Lit `email`/`password` du `FormData`, valide via `loginSchema`, puis `supabase.auth.signInWithPassword`. En cas de succès, redirige elle-même vers `/admin` (jamais d'`ActionResult` de succès à gérer côté écran). En cas d'échec, message générique ("Email ou mot de passe incorrect.") que l'identifiant soit inconnu ou le mot de passe faux, pour ne jamais confirmer l'existence d'un compte ; un 429 (limitation de débit Supabase Auth) renvoie un message distinct sans ambiguïté sur un compte. Pas d'inscription publique (#15) : les seuls comptes existants sont BDE/Admin, créés à la main. **Dépendance de prod (#26)** : `[auth] enable_signup = false` (ligne globale, coupe tous les providers) n'est posé que dans `supabase/config.toml` (stack locale). Sur le projet Supabase hébergé `esgis-epreuves` (prod), aucun outil de ce dépôt ni du MCP Supabase n'expose ce réglage ; `supabase config push` l'exposerait mais pousse tout `config.toml` d'un coup, y compris les URLs locales (`site_url`, `additional_redirect_urls`), donc plus risqué qu'utile ici ; l'API de gestion Supabase a aussi `PATCH /v1/projects/{ref}/config/auth` (`disable_signup`), qui change ce seul réglage, mais aucun outil de ce dépôt ni du MCP Supabase ne l'appelle. À couper à la main dans le dashboard avant la mise en ligne : Authentication > Sign In / Providers > réglage global "Allow new users to sign up" (celui qui coupe tous les providers à la fois, pas seulement Email).
+Server Action de connexion BDE/Admin. Signature `(prevState, formData)` : à brancher avec `useActionState` côté écran (#17), seul moyen d'afficher l'erreur sous le formulaire sans recharger la page ; `prevState` n'est pas lu par l'action elle-même. Lit `email`/`password` du `FormData`, valide via `loginSchema`, puis `supabase.auth.signInWithPassword`. En cas de succès, redirige elle-même selon le rôle lu dans `profiles` : `/admin` pour un compte ADMIN, `/bde/accueil` sinon (un compte BDE ne peut pas lire sa propre ligne de `profiles`, la RLS ne l'ouvre qu'à ADMIN) (jamais d'`ActionResult` de succès à gérer côté écran). En cas d'échec, message générique ("Email ou mot de passe incorrect.") que l'identifiant soit inconnu ou le mot de passe faux, pour ne jamais confirmer l'existence d'un compte ; un 429 (limitation de débit Supabase Auth) renvoie un message distinct sans ambiguïté sur un compte. Pas d'inscription publique (#15) : les seuls comptes existants sont BDE/Admin, créés à la main. **Dépendance de prod (#26)** : `[auth] enable_signup = false` (ligne globale, coupe tous les providers) n'est posé que dans `supabase/config.toml` (stack locale). Sur le projet Supabase hébergé `esgis-epreuves` (prod), aucun outil de ce dépôt ni du MCP Supabase n'expose ce réglage ; `supabase config push` l'exposerait mais pousse tout `config.toml` d'un coup, y compris les URLs locales (`site_url`, `additional_redirect_urls`), donc plus risqué qu'utile ici ; l'API de gestion Supabase a aussi `PATCH /v1/projects/{ref}/config/auth` (`disable_signup`), qui change ce seul réglage, mais aucun outil de ce dépôt ni du MCP Supabase ne l'appelle. À couper à la main dans le dashboard avant la mise en ligne : Authentication > Sign In / Providers > réglage global "Allow new users to sign up" (celui qui coupe tous les providers à la fois, pas seulement Email).
 
 ### `logout(): Promise<never>`
 
@@ -91,6 +91,42 @@ Valident `formData` avec `referentialRenameSchema` (`{ name }` seulement) : **ne
 ### `setFieldActive(id, isActive): Promise<ActionResult<null>>`, `setLevelActive`, `setSubjectActive`, `setOptionActive`
 
 Change uniquement la colonne `is_active` (`true` réactive, `false` désactive). `id` (uuid) et `isActive` (booléen) sont tous deux validés par Zod avant toute requête ; un `id` qui n'est pas un uuid, un `isActive` qui n'est pas un booléen, ou une ligne introuvable (0 ligne affectée) renvoient « Introuvable. » ou « Données invalides. ». Désactiver un référentiel le retire des listes publiques (`getFields`/`getLevels`/`getSubjects`/`getOptions` sans `includeInactive`) sans toucher aux épreuves qui le référencent déjà : « désactivé » veut dire masqué des listes de choix, jamais interdit en écriture (`uploadExam`/`updateExamMetadata` n'excluent pas un `subjectId`/`optionId` désactivé, cas déjà couvert côté front par la liste affichée). Désactiver une filière ne désactive pas en cascade ses matières ni ses options : elles continuent de sortir de `getSubjects`/`getOptions` tant qu'elles ne sont pas désactivées elles-mêmes (limitation connue, à revoir si le front en a besoin).
+
+## `src/features/members/schemas.ts`
+
+### `memberCreateSchema`, `memberUpdateSchema`
+
+Formulaire d'un compte BDE : `lastName`, `firstNames` (requis, 80 caractères max, espaces retirés), `email` (mis en minuscules) et `password` (8 à 72 caractères, plafond bcrypt de Supabase Auth). En modification, `password` vide = mot de passe inchangé. `toFullName(lastName, firstNames)` construit `profiles.full_name` (nom d'abord). `sanitizeMemberSearch` retire de la recherche les caractères qui ont un sens dans un filtre PostgREST `or(...)` ou un motif `ilike`. `parsePage` lit `?page=` (entier ≥ 1, 1 sinon). `MEMBERS_PAGE_SIZE = 10`.
+
+## `src/features/members/queries.ts`
+
+### `getCurrentUserRole(): Promise<"ADMIN" | "BDE" | null>`
+
+`null` sans session. `"ADMIN"` seulement si la ligne `profiles` de l'utilisateur est lisible et porte ce rôle ; toute autre session valide est `"BDE"` (la RLS ne laisse pas un compte BDE lire sa propre ligne). Utilisée par la garde `requireAdminSession` et par les actions Admin.
+
+### `getBdeMembers({ search?, page? }): Promise<BdeMemberPage>`
+
+Comptes `role = 'BDE'` du plus récent au plus ancien, filtrés par `ilike` sur `full_name` ou `email`, paginés par `MEMBERS_PAGE_SIZE`. Retourne `{ members, total, page, pageCount }` ; une page au-delà de la dernière est ramenée à la dernière. Lecture via la RLS (ADMIN uniquement).
+
+### `countBdeMembers(): Promise<number>`
+
+Nombre total de comptes BDE (indicateur du tableau de bord, et bascule vers l'état vide).
+
+### `getBdeMember(id: string): Promise<BdeMemberDetail | null>`
+
+Compte BDE à modifier, `null` si l'id n'est pas un uuid ou ne désigne pas un compte BDE. Nom et prénoms viennent des métadonnées Auth (`last_name`, `first_names`) posées à la création, lues avec le client admin ; à défaut (compte créé à la main ou clé secrète absente), le premier mot de `full_name` est pris comme nom.
+
+## `src/features/members/actions.ts`
+
+Création et modification des comptes BDE par l'Admin. Ces actions utilisent l'API d'administration Supabase Auth via `createAdminClient()` (`src/lib/supabase/admin.ts`, clé `SUPABASE_SECRET_KEY`, qui **contourne la RLS**) : le rôle ADMIN de l'appelant est donc vérifié dans l'action, avant toute écriture (« Action réservée à l'administrateur. » sinon). Clé absente : erreur explicite, aucune écriture. Pas de suppression de compte pour l'instant.
+
+### `createBdeMember(formData): Promise<ActionResult<{ id: string }>>`
+
+Valide avec `memberCreateSchema`, crée l'utilisateur Auth confirmé d'office (`email_confirm: true`, pas d'email d'invitation, métadonnées nom/prénoms), puis insère son profil `role = 'BDE'`. Si l'insertion du profil échoue, le compte Auth est supprimé (pas de compte connectable absent de la liste). Email déjà utilisé : `fieldErrors.email`.
+
+### `updateBdeMember(memberId, formData): Promise<ActionResult<{ id: string }>>`
+
+Valide avec `memberUpdateSchema`, refuse tout id qui n'est pas un compte BDE (un compte ADMIN n'est jamais modifiable ici, « Membre introuvable. »), met à jour l'utilisateur Auth (email, métadonnées, mot de passe seulement s'il est renseigné) puis `profiles.email`/`full_name`.
 
 ## `src/features/exams/schemas.ts`
 

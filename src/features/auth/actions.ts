@@ -10,7 +10,8 @@ import { loginSchema } from "./schemas";
  * Connexion BDE/Admin. Pas d'inscription publique (#15) : les comptes sont crees a la main.
  * Signature `(prevState, formData)` pour s'utiliser avec `useActionState` cote ecran (#17),
  * seul moyen d'afficher l'erreur de connexion sans recharger la page. Redirige vers `/admin`
- * en cas de succes ; ne renvoie `ActionResult` qu'en cas d'echec.
+ * (compte ADMIN) ou `/bde/accueil` (compte BDE) en cas de succes ; ne renvoie `ActionResult`
+ * qu'en cas d'echec.
  */
 export async function login(
   _prevState: ActionResult<void> | null,
@@ -28,7 +29,7 @@ export async function login(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
     if (error.status === 429) {
       return actionError(
@@ -38,7 +39,16 @@ export async function login(
     return actionError("Email ou mot de passe incorrect.");
   }
 
-  redirect("/bde/accueil");
+  // `profiles` n'est lisible que par un ADMIN : un compte BDE ne lit aucune ligne et reste sur
+  // l'espace BDE.
+  const { data: profile } = data?.user
+    ? await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .maybeSingle()
+    : { data: null };
+  redirect(profile?.role === "ADMIN" ? "/admin" : "/bde/accueil");
 }
 
 /**
