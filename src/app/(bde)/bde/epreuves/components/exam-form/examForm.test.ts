@@ -3,12 +3,16 @@ import { MAX_FILE_SIZE_BYTES } from "@/features/exams/schemas";
 import {
   academicYears,
   addExamFormSchema,
+  editExamFormSchema,
   mergeFiles,
+  replaceFileFormSchema,
   toBatchFormData,
   titleFromFileName,
+  toEditFieldErrors,
   toFieldErrors,
+  toMetadataFormData,
   validateExamFile,
-} from "./addExamForm";
+} from "./examForm";
 
 const UUID = "3f2b8c1e-4a5d-4e6f-8a9b-0c1d2e3f4a5b";
 
@@ -164,5 +168,57 @@ describe("toBatchFormData", () => {
     }
     expect(formData.getAll("optionId")).toEqual(["", ""]);
     expect(formData.getAll("title")).toEqual(["Devoir A", "Devoir B"]);
+  });
+});
+
+describe("editExamFormSchema", () => {
+  const editValues = {
+    ...validValues,
+    title: "Devoir d'algorithmique",
+    academicYear: "2024-2025",
+    optionId: "",
+  };
+
+  it("accepte une epreuve sans option", () => {
+    expect(editExamFormSchema.safeParse(editValues).success).toBe(true);
+  });
+
+  it("renvoie le premier message par champ", () => {
+    const result = editExamFormSchema.safeParse({
+      ...editValues,
+      title: "a",
+      academicYear: "",
+      optionId: "pas-un-uuid",
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(toEditFieldErrors(result.error)).toEqual({
+      title: "Le titre doit contenir au moins 3 caractères.",
+      academicYear: "Choisissez une année académique.",
+      optionId: "Option invalide.",
+    });
+  });
+
+  it("produit le FormData attendu par updateExamMetadata", () => {
+    const formData = toMetadataFormData(editExamFormSchema.parse(editValues));
+    expect(Object.fromEntries(formData)).toEqual(editValues);
+  });
+});
+
+describe("replaceFileFormSchema", () => {
+  it("accepte un PDF valide", () => {
+    expect(replaceFileFormSchema.safeParse({ file: pdf() }).success).toBe(true);
+  });
+
+  it("exige un fichier et refuse un fichier invalide", () => {
+    const missing = replaceFileFormSchema.safeParse({ file: null });
+    expect(missing.success).toBe(false);
+    if (!missing.success) {
+      expect(missing.error.issues[0]?.message).toBe(
+        "Ajoutez le nouveau fichier.",
+      );
+    }
+    const text = new File(["x"], "a.txt", { type: "text/plain" });
+    expect(replaceFileFormSchema.safeParse({ file: text }).success).toBe(false);
   });
 });

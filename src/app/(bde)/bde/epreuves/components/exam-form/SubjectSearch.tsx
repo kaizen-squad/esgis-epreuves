@@ -39,13 +39,13 @@ export default function SubjectSearch({
   error?: string;
 }) {
   const listId = useId();
-  const [query, setQuery] = useState("");
+  const selected = subjects.find((subject) => subject.id === subjectId);
+  // Prerempli avec la matiere deja choisie (formulaire de modification).
+  const [query, setQuery] = useState(selected?.name ?? "");
   const [open, setOpen] = useState(false);
 
   const fieldName = new Map(fields.map((field) => [field.id, field.name]));
   const levelName = new Map(levels.map((level) => [level.id, level.name]));
-
-  const selected = subjects.find((subject) => subject.id === subjectId);
   const scoped = subjects.filter(
     (subject) =>
       (!fieldId || subject.fieldId === fieldId) &&

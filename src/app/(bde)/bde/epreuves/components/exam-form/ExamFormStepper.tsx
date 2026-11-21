@@ -1,9 +1,9 @@
 import { FiCheck, FiX } from "react-icons/fi";
 
-export type AddExamStep = "form" | "saving" | "result";
-export type AddExamOutcome = "success" | "failure";
+export type ExamFormStep = "form" | "saving" | "result";
+export type ExamFormOutcome = "success" | "failure";
 
-const STEPS: { id: AddExamStep; label: string }[] = [
+const STEPS: { id: ExamFormStep; label: string }[] = [
   { id: "form", label: "Informations" },
   { id: "saving", label: "Enregistrement" },
   { id: "result", label: "Résultat" },
@@ -14,12 +14,12 @@ const STEPS: { id: AddExamStep; label: string }[] = [
  * deux etapes se remplit quand la suivante est atteinte. La derniere etape prend la couleur du
  * resultat (succes ou echec).
  */
-export default function AddExamStepper({
+export default function ExamFormStepper({
   current,
   outcome,
 }: {
-  current: AddExamStep;
-  outcome?: AddExamOutcome;
+  current: ExamFormStep;
+  outcome?: ExamFormOutcome;
 }) {
   const currentIndex = STEPS.findIndex((step) => step.id === current);
 

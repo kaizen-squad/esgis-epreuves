@@ -5,7 +5,7 @@ import {
   getSubjects,
 } from "@/features/referentials/queries";
 import ExamWelcomeSection from "../components/ExamWelcomeSection";
-import AddExamFlow from "../components/add-exam/AddExamFlow";
+import AddExamFlow from "../components/exam-form/AddExamFlow";
 
 export default async function AjouterEpreuvePage() {
   await requireBdeSession();

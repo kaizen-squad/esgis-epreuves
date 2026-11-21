@@ -10,21 +10,7 @@ import type {
   ExamBatchReport,
 } from "@/features/exams/actions";
 import type { ActionResult } from "@/lib/action-result";
-
-type ExamRef = { slug: string; title: string };
-
-function ExamPreviewLink({ exam }: { exam: ExamRef }) {
-  return (
-    <Link
-      href={`/api/exams/${exam.slug}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="font-semibold underline"
-    >
-      {exam.title}
-    </Link>
-  );
-}
+import ExamPreviewLink from "./ExamPreviewLink";
 
 function EntryRow({ entry }: { entry: ExamBatchEntryResult }) {
   if (entry.status === "imported") {

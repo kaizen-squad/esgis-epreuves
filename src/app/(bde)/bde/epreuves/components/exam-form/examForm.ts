@@ -76,6 +76,16 @@ export function titleFromFileName(name: string): string {
     .trim();
 }
 
+const titleSchema = z
+  .string()
+  .trim()
+  .min(3, "Le titre doit contenir au moins 3 caractères.")
+  .max(200, "Le titre ne doit pas dépasser 200 caractères.");
+
+const academicYearSchema = z
+  .string()
+  .regex(/^\d{4}-\d{4}$/, "Choisissez une année académique.");
+
 /** Metadonnees propres a chaque fichier du lot ; les autres sont communes a tout le lot. */
 const examFileEntrySchema = z.object({
   file: z
@@ -84,26 +94,27 @@ const examFileEntrySchema = z.object({
       (file) => validateExamFile(file) === null,
       "Retirez ce fichier invalide avant de publier.",
     ),
-  title: z
-    .string()
-    .trim()
-    .min(3, "Le titre doit contenir au moins 3 caractères.")
-    .max(200, "Le titre ne doit pas dépasser 200 caractères."),
-  academicYear: z
-    .string()
-    .regex(/^\d{4}-\d{4}$/, "Choisissez une année académique."),
+  title: titleSchema,
+  academicYear: academicYearSchema,
 });
 
-/**
- * Validation cote client du formulaire d'ajout. Les noms des champs sont ceux attendus par
- * `uploadExamsBatch` : titre et annee academique par fichier, le reste commun au lot.
- */
-export const addExamFormSchema = z.object({
+/** Champs communs aux formulaires d'ajout et de modification (filiere, niveau, matiere...). */
+const commonExamSchema = z.object({
   fieldId: z.uuid("Choisissez une filière."),
   levelId: z.uuid("Choisissez un niveau."),
   subjectId: z.uuid("Choisissez une matière dans la liste."),
   session: z.enum(EXAM_SESSIONS, "Choisissez une session."),
   examType: z.enum(EXAM_TYPES, "Choisissez un type d'évaluation."),
+});
+
+export type ExamCommonField = keyof z.output<typeof commonExamSchema>;
+export type ExamCommonValues = Record<ExamCommonField, string>;
+
+/**
+ * Validation cote client du formulaire d'ajout. Les noms des champs sont ceux attendus par
+ * `uploadExamsBatch` : titre et annee academique par fichier, le reste commun au lot.
+ */
+export const addExamFormSchema = commonExamSchema.extend({
   files: z
     .array(examFileEntrySchema)
     .min(1, "Ajoutez au moins un fichier.")
@@ -114,7 +125,7 @@ export const addExamFormSchema = z.object({
 });
 
 export type AddExamFormValues = z.output<typeof addExamFormSchema>;
-type SharedField = Exclude<keyof AddExamFormValues, "files">;
+type SharedField = ExamCommonField;
 type FileEntryField = "file" | "title" | "academicYear";
 
 export type AddExamErrors = Partial<Record<SharedField | "files", string>>;
@@ -171,3 +182,45 @@ export function toBatchFormData(values: AddExamFormValues): FormData {
   }
   return formData;
 }
+
+/**
+ * Validation cote client du formulaire de modification (fichier inchange), memes champs que
+ * `updateExamMetadata`. `optionId` vide = aucune option.
+ */
+export const editExamFormSchema = commonExamSchema.extend({
+  title: titleSchema,
+  academicYear: academicYearSchema,
+  optionId: z.union([z.literal(""), z.uuid("Option invalide.")]),
+});
+
+export type EditExamFormValues = z.output<typeof editExamFormSchema>;
+export type EditExamErrors = Partial<Record<keyof EditExamFormValues, string>>;
+
+/** Premier message d'erreur par champ du formulaire de modification. */
+export function toEditFieldErrors(error: z.ZodError): EditExamErrors {
+  const errors: EditExamErrors = {};
+  for (const issue of error.issues) {
+    const name = issue.path[0] as keyof EditExamFormValues;
+    errors[name] ??= issue.message;
+  }
+  return errors;
+}
+
+/** `FormData` au format de `updateExamMetadata`. */
+export function toMetadataFormData(values: EditExamFormValues): FormData {
+  const formData = new FormData();
+  for (const [name, value] of Object.entries(values)) {
+    formData.append(name, value);
+  }
+  return formData;
+}
+
+/** Validation cote client du remplacement du PDF (meme regles que `examFileReplaceSchema`). */
+export const replaceFileFormSchema = z.object({
+  file: z
+    .instanceof(File, { message: "Ajoutez le nouveau fichier." })
+    .refine(
+      (file) => validateExamFile(file) === null,
+      "Retirez ce fichier invalide et choisissez un PDF valide.",
+    ),
+});
