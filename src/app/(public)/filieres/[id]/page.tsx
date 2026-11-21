@@ -74,6 +74,8 @@ export default async function FilierePage({
       <FiliereCatalogueSection
         exams={result.exams.exams.map(toExamCardProps)}
         total={result.exams.total}
+        page={result.exams.page}
+        pageSize={result.exams.pageSize}
         filterOptions={{
           // Filiere fixee par la page : pas de filtre filiere, matieres de cette filiere seulement.
           fields: null,

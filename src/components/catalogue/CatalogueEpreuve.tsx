@@ -3,7 +3,8 @@
 import ExamCard, { ExamCardProps } from "@/components/exams/ExamCard";
 import CatalogueFilter from "@/components/catalogue/CatalogueFilter";
 import { FiFilter } from "react-icons/fi";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import CataloguePagination from "@/components/catalogue/CataloguePagination";
 import { useCatalogueFilters } from "@/components/exams/useCatalogueFilters";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 
@@ -11,6 +12,9 @@ type CatalogueEpreuvesProps = {
   data: ExamCardProps[];
   /** Total cote serveur (toutes pages confondues) pour les filtres en cours. */
   total: number;
+  /** Page affichee et taille de page, telles que renvoyees par le serveur. */
+  page: number;
+  pageSize: number;
   filterOptions: CatalogueFilterOptions;
   /** Espace BDE : cartes avec menu de gestion. */
   manageable?: boolean;
@@ -19,15 +23,27 @@ type CatalogueEpreuvesProps = {
 const CatalogueEpreuves = ({
   data,
   total,
+  page,
+  pageSize,
   filterOptions,
   manageable = false,
 }: CatalogueEpreuvesProps) => {
   const [open, setOpen] = useState<boolean>(true);
   const filters = useCatalogueFilters();
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Nouvelle page : on remonte en haut du catalogue (pas de la page, qui commence par l'en-tete).
+  const handlePageChange = (next: number) => {
+    filters.goToPage(next);
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between gap-4 border-b border-gray-200 pb-4">
+      <div
+        ref={topRef}
+        className="mb-6 flex scroll-mt-6 items-center justify-between gap-4 border-b border-gray-200 pb-4"
+      >
         <button
           type="button"
           onClick={() => setOpen(!open)}
@@ -80,6 +96,14 @@ const CatalogueEpreuves = ({
               ))}
             </div>
           )}
+          <CataloguePagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            shown={data.length}
+            disabled={filters.isPending}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     </>

@@ -31,6 +31,8 @@ const CatalogueEpreuveSection = async ({
       <CatalogueEpreuves
         data={result.exams.map(toExamCardProps)}
         total={result.total}
+        page={result.page}
+        pageSize={result.pageSize}
         filterOptions={{ fields, levels, subjects }}
         manageable={manageable}
       />

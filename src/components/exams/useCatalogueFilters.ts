@@ -43,6 +43,20 @@ export function useCatalogueFilters() {
     });
   };
 
+  /** Change de page sans toucher aux filtres ; `push` pour que « retour » ramene a la page precedente. */
+  const goToPage = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    if (page > 1) params.set("page", String(page));
+    else params.delete("page");
+
+    const query = params.toString();
+    startTransition(() => {
+      router.push(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    });
+  };
+
   /** Re-cliquer sur la valeur active la desactive. */
   const toggle = (key: CatalogueFilterKey, value: string) =>
     set(key, get(key) === value ? null : value);
@@ -51,5 +65,7 @@ export function useCatalogueFilters() {
     searchParams.has(key),
   ).length;
 
-  return { get, set, toggle, activeCount, isPending };
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+
+  return { get, set, toggle, goToPage, page, activeCount, isPending };
 }
