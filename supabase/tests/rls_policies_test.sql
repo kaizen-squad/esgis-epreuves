@@ -1,5 +1,5 @@
 begin;
-select plan(20);
+select plan(24);
 
 -- Tables et RLS forcee
 select has_table('public', 'profiles', 'profiles existe');
@@ -135,6 +135,46 @@ select is(
   (select created_by from public.exams where slug = 'epreuve-falsifiee-2024-2025'),
   '11111111-1111-1111-1111-111111111111'::uuid,
   'created_by est force a auth.uid(), pas a la valeur envoyee par le client'
+);
+
+-- #94 : private.set_updated_at et private.set_exam_created_by ont desormais un search_path fixe,
+-- comme private.has_role (advisor Supabase function_search_path_mutable). Comme pour has_role,
+-- le schema private n'est pas expose a authenticated : appel en proprietaire.
+reset role;
+select is(
+  (select proconfig from pg_proc where oid = 'private.set_updated_at()'::regprocedure),
+  array['search_path=""'],
+  'set_updated_at a un search_path fixe'
+);
+select is(
+  (select proconfig from pg_proc where oid = 'private.set_exam_created_by()'::regprocedure),
+  array['search_path=""'],
+  'set_exam_created_by a un search_path fixe'
+);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+
+-- set_updated_at fonctionne toujours : now() dans le trigger resout bien pg_catalog.now() malgre
+-- `set search_path = ''` (pg_catalog est cherche en premier, meme absent du search_path).
+-- updated_at est fige dans le passe hors trigger (reset role, pas de politique RLS a contourner),
+-- puisque now() est constant pour toute la transaction du test : sans ce repere, le trigger
+-- pourrait ne rien faire et le test passerait quand meme.
+reset role;
+update public.exams set updated_at = '2000-01-01'
+where slug = 'comptabilite-generale-2024-2025';
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+
+select lives_ok(
+  $$ update public.exams set title = 'Comptabilite generale (revisee)'
+     where slug = 'comptabilite-generale-2024-2025' $$,
+  'le trigger set_updated_at (search_path fixe) ne leve pas d''erreur'
+);
+
+select is(
+  (select updated_at from public.exams where slug = 'comptabilite-generale-2024-2025'),
+  now(),
+  'set_updated_at remet bien updated_at a now(), malgre le search_path fixe'
 );
 
 -- Un BDE desactive perd tout droit d'ecriture, meme avec une session encore valide
