@@ -138,3 +138,67 @@ export async function updateBdeMember(
   revalidatePath("/admin");
   return actionOk({ id: memberId });
 }
+
+// Duree recommandee par la doc Supabase pour un bannissement sans fin ; "none" le leve.
+const BAN_FOREVER = "876000h";
+
+/**
+ * Desactive ou reactive un compte BDE. On ne supprime jamais un membre (ses epreuves le
+ * referencent) : le compte Auth est banni pour bloquer la connexion, et `profiles.is_active`
+ * retire immediatement tout droit d'ecriture via `has_role`, meme si une session est encore ouverte.
+ */
+export async function setBdeMemberActive(
+  memberId: string,
+  active: boolean,
+): Promise<ActionResult<{ id: string }>> {
+  if (!z.uuid().safeParse(memberId).success) {
+    return actionError("Membre introuvable.");
+  }
+  if (!z.boolean().safeParse(active).success) {
+    return actionError("Statut invalide.");
+  }
+
+  const caller = await adminClientForCaller();
+  if (!caller.admin) return actionError(caller.error);
+  const { admin } = caller;
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("id, is_active")
+    .eq("id", memberId)
+    .eq("role", "BDE")
+    .maybeSingle();
+  if (!profile) return actionError("Membre introuvable.");
+
+  const failure = active
+    ? "Impossible de réactiver le compte. Réessayez."
+    : "Impossible de désactiver le compte. Réessayez.";
+
+  const { error } = await admin.auth.admin.updateUserById(memberId, {
+    ban_duration: active ? "none" : BAN_FOREVER,
+  });
+  if (error) return actionError(failure);
+
+  const { error: profileError } = await admin
+    .from("profiles")
+    .update({ is_active: active })
+    .eq("id", memberId);
+  if (profileError) {
+    // Auth et profil doivent dire la meme chose : on remet le bannissement tel que le profil
+    // l'indiquait avant l'appel.
+    const { error: rollbackError } = await admin.auth.admin.updateUserById(
+      memberId,
+      { ban_duration: profile.is_active ? "none" : BAN_FOREVER },
+    );
+    if (rollbackError) {
+      console.error(
+        `setBdeMemberActive : bannissement Auth et profil divergent pour ${memberId}`,
+        rollbackError,
+      );
+    }
+    return actionError(failure);
+  }
+
+  revalidatePath("/admin");
+  return actionOk({ id: memberId });
+}

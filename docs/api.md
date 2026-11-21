@@ -106,11 +106,15 @@ Formulaire d'un compte BDE : `lastName`, `firstNames` (requis, 80 caractères ma
 
 ### `getBdeMembers({ search?, page? }): Promise<BdeMemberPage>`
 
-Comptes `role = 'BDE'` du plus récent au plus ancien, filtrés par `ilike` sur `full_name` ou `email`, paginés par `MEMBERS_PAGE_SIZE`. Retourne `{ members, total, page, pageCount }` ; une page au-delà de la dernière est ramenée à la dernière. Lecture via la RLS (ADMIN uniquement).
+Comptes `role = 'BDE'`, actifs d'abord puis désactivés, chacun du plus récent au plus ancien (chaque membre porte `isActive`), filtrés par `ilike` sur `full_name` ou `email`, paginés par `MEMBERS_PAGE_SIZE`. Retourne `{ members, total, page, pageCount }` ; une page au-delà de la dernière est ramenée à la dernière. Lecture via la RLS (ADMIN uniquement).
 
 ### `countBdeMembers(): Promise<number>`
 
-Nombre total de comptes BDE (indicateur du tableau de bord, et bascule vers l'état vide).
+Nombre total de comptes BDE, désactivés compris : décide de la bascule vers l'état vide. Ne pas l'utiliser pour l'indicateur "Membres du BDE" (voir `countActiveBdeMembers`) ; à l'inverse, ne jamais baser l'état vide sur les seuls actifs, sinon la liste et le bouton de réactivation disparaissent dès que le dernier compte actif est désactivé.
+
+### `countActiveBdeMembers(): Promise<number>`
+
+Nombre de comptes BDE actifs : la valeur à afficher dans l'indicateur "Membres du BDE".
 
 ### `getBdeMember(id: string): Promise<BdeMemberDetail | null>`
 
@@ -118,7 +122,7 @@ Compte BDE à modifier, `null` si l'id n'est pas un uuid ou ne désigne pas un c
 
 ## `src/features/members/actions.ts`
 
-Création et modification des comptes BDE par l'Admin. Ces actions utilisent l'API d'administration Supabase Auth via `createAdminClient()` (`src/lib/supabase/admin.ts`, clé `SUPABASE_SECRET_KEY`, qui **contourne la RLS**) : le rôle ADMIN de l'appelant est donc vérifié dans l'action, avant toute écriture (« Action réservée à l'administrateur. » sinon). Clé absente : erreur explicite, aucune écriture. Pas de suppression de compte pour l'instant.
+Création, modification et désactivation des comptes BDE par l'Admin. Ces actions utilisent l'API d'administration Supabase Auth via `createAdminClient()` (`src/lib/supabase/admin.ts`, clé `SUPABASE_SECRET_KEY`, qui **contourne la RLS**) : le rôle ADMIN de l'appelant est donc vérifié dans l'action, avant toute écriture (« Action réservée à l'administrateur. » sinon). Clé absente : erreur explicite, aucune écriture. Jamais de suppression : un membre a pu déposer des épreuves (`exams.created_by` le référence), on le désactive.
 
 ### `createBdeMember(formData): Promise<ActionResult<{ id: string }>>`
 
@@ -127,6 +131,10 @@ Valide avec `memberCreateSchema`, crée l'utilisateur Auth confirmé d'office (`
 ### `updateBdeMember(memberId, formData): Promise<ActionResult<{ id: string }>>`
 
 Valide avec `memberUpdateSchema`, refuse tout id qui n'est pas un compte BDE (un compte ADMIN n'est jamais modifiable ici, « Membre introuvable. »), met à jour l'utilisateur Auth (email, métadonnées, mot de passe seulement s'il est renseigné) puis `profiles.email`/`full_name`.
+
+### `setBdeMemberActive(memberId, active): Promise<ActionResult<{ id: string }>>`
+
+Désactive (`active = false`) ou réactive un compte BDE ; refuse tout id qui n'est pas un compte BDE (« Membre introuvable. »). Désactiver bannit le compte Auth (`ban_duration: '876000h'`, connexion et rafraîchissement de session bloqués) puis passe `profiles.is_active` à `false` : `private.has_role` exige un profil actif, donc le membre perd tout droit d'écriture tout de suite, même avec une session encore ouverte. Réactiver lève le bannissement (`'none'`) et repasse le profil à `true`. Si la mise à jour du profil échoue, le bannissement est remis tel que le profil l'indiquait avant l'appel (un échec de cette remise est journalisé). `active` doit être un booléen (« Statut invalide. » sinon). Les épreuves déposées par un membre désactivé restent publiées.
 
 ## `src/features/exams/schemas.ts`
 
