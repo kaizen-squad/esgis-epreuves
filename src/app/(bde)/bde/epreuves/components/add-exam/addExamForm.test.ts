@@ -5,6 +5,7 @@ import {
   addExamFormSchema,
   mergeFiles,
   toBatchFormData,
+  titleFromFileName,
   toFieldErrors,
   validateExamFile,
 } from "./addExamForm";
@@ -19,14 +20,16 @@ function pdf(name = "devoir.pdf", size = 10, lastModified = 1) {
 }
 
 const validValues = {
-  title: "Devoir d'algorithmique",
   fieldId: UUID,
   levelId: UUID,
   subjectId: UUID,
-  academicYear: "2025-2026",
   session: "Session Normale",
   examType: "Contrôle Continu",
 };
+
+function entry(file = pdf(), title = "Devoir d'algorithmique") {
+  return { file, title, academicYear: "2025-2026" };
+}
 
 describe("academicYears", () => {
   it("bascule sur la nouvelle annee en septembre", () => {
@@ -72,20 +75,24 @@ describe("mergeFiles", () => {
   });
 });
 
+describe("titleFromFileName", () => {
+  it("retire l'extension et les separateurs", () => {
+    expect(titleFromFileName("devoir_algo-2025.pdf")).toBe("devoir algo 2025");
+  });
+});
+
 describe("addExamFormSchema", () => {
   it("accepte un formulaire complet", () => {
     expect(
-      addExamFormSchema.safeParse({ ...validValues, files: [pdf()] }).success,
+      addExamFormSchema.safeParse({ ...validValues, files: [entry()] }).success,
     ).toBe(true);
   });
 
-  it("renvoie un message par champ manquant", () => {
+  it("renvoie un message par champ commun manquant", () => {
     const result = addExamFormSchema.safeParse({
-      title: "",
       fieldId: "",
       levelId: "",
       subjectId: "",
-      academicYear: "",
       session: null,
       examType: null,
       files: [],
@@ -93,23 +100,42 @@ describe("addExamFormSchema", () => {
     expect(result.success).toBe(false);
     if (result.success) return;
     expect(toFieldErrors(result.error)).toEqual({
-      title: "Le titre doit contenir au moins 3 caractères.",
-      fieldId: "Choisissez une filière.",
-      levelId: "Choisissez un niveau.",
-      subjectId: "Choisissez une matière dans la liste.",
-      academicYear: "Choisissez une année académique.",
-      session: "Choisissez une session.",
-      examType: "Choisissez un type d'évaluation.",
-      files: "Ajoutez au moins un fichier.",
+      errors: {
+        fieldId: "Choisissez une filière.",
+        levelId: "Choisissez un niveau.",
+        subjectId: "Choisissez une matière dans la liste.",
+        session: "Choisissez une session.",
+        examType: "Choisissez un type d'évaluation.",
+        files: "Ajoutez au moins un fichier.",
+      },
+      fileErrors: {},
+    });
+  });
+
+  it("indexe les erreurs de titre et d'annee par fichier", () => {
+    const result = addExamFormSchema.safeParse({
+      ...validValues,
+      files: [entry(), { file: pdf("b.pdf"), title: "", academicYear: "" }],
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(toFieldErrors(result.error).fileErrors).toEqual({
+      1: {
+        title: "Le titre doit contenir au moins 3 caractères.",
+        academicYear: "Choisissez une année académique.",
+      },
     });
   });
 
   it("refuse un lot contenant un fichier invalide ou trop de fichiers", () => {
     const invalid = new File(["x"], "a.txt", { type: "text/plain" });
     expect(
-      addExamFormSchema.safeParse({ ...validValues, files: [invalid] }).success,
+      addExamFormSchema.safeParse({
+        ...validValues,
+        files: [entry(invalid)],
+      }).success,
     ).toBe(false);
-    const tooMany = [1, 2, 3, 4, 5].map((i) => pdf(`${i}.pdf`));
+    const tooMany = [1, 2, 3, 4, 5].map((i) => entry(pdf(`${i}.pdf`)));
     expect(
       addExamFormSchema.safeParse({ ...validValues, files: tooMany }).success,
     ).toBe(false);
@@ -120,7 +146,7 @@ describe("toBatchFormData", () => {
   it("aligne une valeur de chaque metadonnee par fichier", () => {
     const parsed = addExamFormSchema.parse({
       ...validValues,
-      files: [pdf("a.pdf"), pdf("b.pdf")],
+      files: [entry(pdf("a.pdf"), "Devoir A"), entry(pdf("b.pdf"), "Devoir B")],
     });
     const formData = toBatchFormData(parsed);
     expect(formData.getAll("files")).toHaveLength(2);
@@ -137,5 +163,6 @@ describe("toBatchFormData", () => {
       expect(formData.getAll(name)).toHaveLength(2);
     }
     expect(formData.getAll("optionId")).toEqual(["", ""]);
+    expect(formData.getAll("title")).toEqual(["Devoir A", "Devoir B"]);
   });
 });

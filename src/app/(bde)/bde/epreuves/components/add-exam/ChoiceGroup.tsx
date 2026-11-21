@@ -29,12 +29,12 @@ export default function ChoiceGroup({
     >
       <legend className="mb-1 font-medium">{legend}</legend>
       <div
-        className={`bg-background-default flex rounded p-1 ${error ? "ring-1 ring-red-400" : ""}`}
+        className={`bg-background-default flex gap-3 rounded-lg p-2 ${error ? "ring-1 ring-red-400" : ""}`}
       >
         {choices.map((choice) => (
           <label
             key={choice.value}
-            className="has-checked:bg-background-accent has-checked:text-text-primary has-focus-visible:ring-background-accent flex min-w-0 flex-1 cursor-pointer rounded p-1 py-3 text-center has-focus-visible:ring-2"
+            className="bg-background-primary has-checked:border-background-accent has-checked:bg-background-accent has-checked:text-text-primary has-focus-visible:ring-background-accent flex min-w-0 flex-1 cursor-pointer rounded-md border border-gray-200 p-1 py-3 text-center shadow-sm transition-colors hover:border-gray-400 has-focus-visible:ring-2"
           >
             <input
               type="radio"

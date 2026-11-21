@@ -3,52 +3,76 @@
 import { useId, useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import { searchTokens } from "@/features/exams/schemas";
-import type { Subject } from "@/features/referentials/types";
+import type { Field, Level, Subject } from "@/features/referentials/types";
 
 const MAX_SUGGESTIONS = 8;
+const PLACEHOLDER_EXAMPLES = 2;
+
+function matches(subject: Subject, tokens: string[]) {
+  const name = searchTokens(subject.name).join(" ");
+  return tokens.every((token) => name.includes(token));
+}
 
 /**
- * Recherche de matiere parmi celles de la filiere (et du niveau, s'il est choisi) selectionnes.
- * Le texte saisi ne sert qu'a filtrer : seule une matiere choisie dans la liste remplit
- * `subjectId` (champ cache envoye avec le formulaire).
+ * Recherche de matiere. La liste est restreinte a la filiere et au niveau choisis quand ils le
+ * sont ; sinon (ou si rien n'y correspond) la recherche porte sur toutes les matieres, et choisir
+ * une matiere renseigne sa filiere et son niveau. Le texte saisi ne sert qu'a filtrer : seule une
+ * matiere choisie dans la liste remplit `subjectId` (champ cache envoye avec le formulaire).
  */
 export default function SubjectSearch({
   subjects,
+  fields,
+  levels,
   fieldId,
   levelId,
   subjectId,
-  onChange,
+  onSelect,
   error,
 }: {
   subjects: Subject[];
+  fields: Field[];
+  levels: Level[];
   fieldId: string;
   levelId: string;
   subjectId: string;
-  onChange: (subjectId: string) => void;
+  onSelect: (subject: Subject | null) => void;
   error?: string;
 }) {
   const listId = useId();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
+  const fieldName = new Map(fields.map((field) => [field.id, field.name]));
+  const levelName = new Map(levels.map((level) => [level.id, level.name]));
+
   const selected = subjects.find((subject) => subject.id === subjectId);
-  const available = subjects.filter(
+  const scoped = subjects.filter(
     (subject) =>
-      subject.fieldId === fieldId && (!levelId || subject.levelId === levelId),
+      (!fieldId || subject.fieldId === fieldId) &&
+      (!levelId || subject.levelId === levelId),
   );
   const tokens = searchTokens(query);
-  const suggestions = available
-    .filter((subject) => {
-      const name = searchTokens(subject.name).join(" ");
-      return tokens.every((token) => name.includes(token));
-    })
-    .slice(0, MAX_SUGGESTIONS);
+  const scopedMatches = scoped.filter((subject) => matches(subject, tokens));
+  // Rien dans la filiere/le niveau choisis : on elargit a toutes les matieres plutot que de
+  // laisser une recherche sans resultat.
+  const outOfScope = scopedMatches.length === 0 && (!!fieldId || !!levelId);
+  const suggestions = (
+    outOfScope
+      ? subjects.filter((subject) => matches(subject, tokens))
+      : scopedMatches
+  ).slice(0, MAX_SUGGESTIONS);
 
-  const disabled = !fieldId;
+  const examples = (scoped.length ? scoped : subjects)
+    .slice(0, PLACEHOLDER_EXAMPLES)
+    .map((subject) => subject.name);
+  const placeholder = examples.length
+    ? `Ex. : ${examples.join(", ")}`
+    : "Rechercher une matière";
+
   const inputValue = selected && !open ? selected.name : query;
 
   const choose = (subject: Subject) => {
-    onChange(subject.id);
+    onSelect(subject);
     setQuery(subject.name);
     setOpen(false);
   };
@@ -60,7 +84,7 @@ export default function SubjectSearch({
       </label>
       <div className="relative">
         <div
-          className={`flex items-center rounded-lg border px-3 py-2 ${error ? "border-red-400" : "border-gray-300"} ${disabled ? "bg-background-default" : ""}`}
+          className={`flex items-center rounded-lg border px-3 py-2 ${error ? "border-red-400" : "border-gray-300"}`}
         >
           <input
             id="subject-search"
@@ -72,12 +96,11 @@ export default function SubjectSearch({
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "subjectId-error" : "subject-hint"}
             autoComplete="off"
-            disabled={false}
             value={inputValue}
             onChange={(event) => {
               setQuery(event.target.value);
               setOpen(true);
-              if (subjectId) onChange("");
+              if (subjectId) onSelect(null);
             }}
             onFocus={() => setOpen(true)}
             onBlur={() => setOpen(false)}
@@ -88,28 +111,28 @@ export default function SubjectSearch({
                 choose(suggestions[0]);
               }
             }}
-            placeholder={
-              disabled
-                ? "Choisissez d'abord une filière"
-                : "Rechercher une matière"
-            }
+            placeholder={placeholder}
             className="min-w-0 flex-1 bg-transparent outline-none"
           />
           <FiSearch size={20} className="text-text-paragraph shrink-0" />
         </div>
         <input type="hidden" name="subjectId" value={subjectId} />
 
-        {open && !disabled ? (
+        {open ? (
           <ul
             id={listId}
             role="listbox"
-            className="bg-background-primary absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-200 py-1 shadow-lg"
+            className="bg-background-primary absolute z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 py-1 shadow-lg"
           >
+            {outOfScope && suggestions.length > 0 ? (
+              <li className="text-text-paragraph px-3 py-1 text-xs">
+                Aucune matière dans la filière et le niveau choisis. Autres
+                matières :
+              </li>
+            ) : null}
             {suggestions.length === 0 ? (
               <li className="text-text-paragraph px-3 py-2 text-sm">
-                {available.length === 0
-                  ? "Aucune matière pour cette filière et ce niveau."
-                  : "Aucune matière ne correspond."}
+                Aucune matière ne correspond à « {query} ».
               </li>
             ) : (
               suggestions.map((subject) => (
@@ -122,9 +145,13 @@ export default function SubjectSearch({
                     event.preventDefault();
                     choose(subject);
                   }}
-                  className="hover:bg-background-default cursor-pointer px-3 py-2 text-sm aria-selected:font-semibold"
+                  className="hover:bg-background-default flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm aria-selected:font-semibold"
                 >
-                  {subject.name}
+                  <span className="truncate">{subject.name}</span>
+                  <span className="text-text-paragraph shrink-0 text-xs font-normal">
+                    {fieldName.get(subject.fieldId)} ·{" "}
+                    {levelName.get(subject.levelId)}
+                  </span>
                 </li>
               ))
             )}
@@ -137,7 +164,8 @@ export default function SubjectSearch({
         </p>
       ) : (
         <span id="subject-hint" className="text-text-paragraph text-sm">
-          Rechercher par nom dans la filière sélectionnée.
+          Recherchez par nom. Choisir une matière renseigne sa filière et son
+          niveau.
         </span>
       )}
     </div>

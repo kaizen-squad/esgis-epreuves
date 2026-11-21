@@ -8,7 +8,7 @@ import {
   useState,
   type ChangeEvent,
   type DragEvent,
-  type FormEvent,
+  type SubmitEvent,
 } from "react";
 import { FiArrowRight, FiCloud } from "react-icons/fi";
 import {
@@ -25,20 +25,21 @@ import type { ActionResult } from "@/lib/action-result";
 import {
   ACCEPTED_FILE_TYPES,
   MAX_FILE_SIZE_LABEL,
-  academicYears,
   addExamFormSchema,
+  fileKey,
   mergeFiles,
+  titleFromFileName,
   toBatchFormData,
   toFieldErrors,
   type AddExamErrors,
-  type AddExamField,
+  type AddExamFileErrors,
 } from "./addExamForm";
 import AddExamResult from "./AddExamResult";
 import AddExamSaving from "./AddExamSaving";
 import AddExamStepper, { type AddExamStep } from "./AddExamStepper";
 import ChoiceGroup from "./ChoiceGroup";
 import SubjectSearch from "./SubjectSearch";
-import UploadedFileCard from "./UploadedFileCard";
+import UploadedFileCard, { type FileEntry } from "./UploadedFileCard";
 
 const SESSION_LABELS: Record<(typeof EXAM_SESSIONS)[number], string> = {
   "Session Normale": "Normale",
@@ -52,21 +53,23 @@ const EXAM_TYPE_LABELS: Record<(typeof EXAM_TYPES)[number], string> = {
 const INPUT_CLASS =
   "w-full rounded-lg border px-3 py-2 outline-none focus:border-background-accent";
 
-type Values = Record<Exclude<AddExamField, "files">, string>;
+type Values = Record<Exclude<keyof AddExamErrors, "files">, string>;
 
 const EMPTY_VALUES: Values = {
-  title: "",
   fieldId: "",
   levelId: "",
   subjectId: "",
-  academicYear: "",
   session: "",
   examType: "",
 };
 
 type SubmitState =
   | { status: "idle" }
-  | { status: "invalid"; errors: AddExamErrors }
+  | {
+      status: "invalid";
+      errors: AddExamErrors;
+      fileErrors: AddExamFileErrors;
+    }
   | { status: "done"; id: number; result: ActionResult<ExamBatchReport> };
 
 function FieldError({ name, error }: { name: string; error?: string }) {
@@ -82,6 +85,16 @@ function inputClass(error?: string) {
   return `${INPUT_CLASS} ${error ? "border-red-400" : "border-gray-300"}`;
 }
 
+/** Nouveau fichier du lot : titre propose a partir du nom de fichier, annee a choisir. */
+function toEntry(file: File): FileEntry {
+  return {
+    key: fileKey(file),
+    file,
+    title: titleFromFileName(file.name),
+    academicYear: "",
+  };
+}
+
 export default function AddExamFlow({
   fields,
   levels,
@@ -92,25 +105,30 @@ export default function AddExamFlow({
   subjects: Subject[];
 }) {
   const [values, setValues] = useState<Values>(EMPTY_VALUES);
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<FileEntry[]>([]);
   const [dragging, setDragging] = useState(false);
   const [dismissedId, setDismissedId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
+      // Titre et annee sont repetes une fois par carte de fichier, dans l'ordre du lot.
+      const titles = formData.getAll("title");
+      const years = formData.getAll("academicYear");
       const parsed = addExamFormSchema.safeParse({
-        title: formData.get("title") ?? "",
         fieldId: formData.get("fieldId") ?? "",
         levelId: formData.get("levelId") ?? "",
         subjectId: formData.get("subjectId") ?? "",
-        academicYear: formData.get("academicYear") ?? "",
         session: formData.get("session"),
         examType: formData.get("examType"),
-        files: formData.getAll("files"),
+        files: formData.getAll("files").map((file, index) => ({
+          file,
+          title: titles[index] ?? "",
+          academicYear: years[index] ?? "",
+        })),
       });
       if (!parsed.success) {
-        return { status: "invalid", errors: toFieldErrors(parsed.error) };
+        return { status: "invalid", ...toFieldErrors(parsed.error) };
       }
 
       let result: ActionResult<ExamBatchReport>;
@@ -129,6 +147,7 @@ export default function AddExamFlow({
   );
 
   const errors = state.status === "invalid" ? state.errors : {};
+  const fileErrors = state.status === "invalid" ? state.fileErrors : {};
   const showResult = state.status === "done" && state.id !== dismissedId;
   const step: AddExamStep = pending ? "saving" : showResult ? "result" : "form";
   const outcome =
@@ -146,8 +165,21 @@ export default function AddExamFlow({
     subjects.some(
       (s) =>
         s.id === subjectId &&
-        s.fieldId === fieldId &&
+        (!fieldId || s.fieldId === fieldId) &&
         (!levelId || s.levelId === levelId),
+    );
+
+  /** Une matiere appartient a une filiere et un niveau : la choisir les renseigne. */
+  const handleSubjectSelect = (subject: Subject | null) =>
+    setValues((current) =>
+      subject
+        ? {
+            ...current,
+            subjectId: subject.id,
+            fieldId: subject.fieldId,
+            levelId: subject.levelId,
+          }
+        : { ...current, subjectId: "" },
     );
 
   const handleFieldChange = (fieldId: string) =>
@@ -170,7 +202,13 @@ export default function AddExamFlow({
 
   const addFiles = (incoming: FileList | null) => {
     if (!incoming?.length) return;
-    setFiles((current) => mergeFiles(current, Array.from(incoming)));
+    setFiles((current) => {
+      const merged = mergeFiles(
+        current.map((entry) => entry.file),
+        Array.from(incoming),
+      );
+      return [...current, ...merged.slice(current.length).map(toEntry)];
+    });
   };
 
   const handleFileInput = (event: ChangeEvent<HTMLInputElement>) => {
@@ -185,11 +223,21 @@ export default function AddExamFlow({
     addFiles(event.dataTransfer.files);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const updateEntry = (key: string, patch: Partial<FileEntry>) =>
+    setFiles((current) =>
+      current.map((entry) =>
+        entry.key === key ? { ...entry, ...patch } : entry,
+      ),
+    );
+
+  const removeEntry = (key: string) =>
+    setFiles((current) => current.filter((entry) => entry.key !== key));
+
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     // Le lot vit dans l'etat React (ajouts successifs, glisser-deposer), pas dans l'input fichier.
-    for (const file of files) formData.append("files", file);
+    for (const entry of files) formData.append("files", entry.file);
     // Hors action de formulaire native : pas de reinitialisation automatique des champs par React.
     startTransition(() => dispatch(formData));
   };
@@ -268,15 +316,14 @@ export default function AddExamFlow({
 
               {files.length > 0 ? (
                 <ul className="mt-4 flex w-full flex-col gap-2">
-                  {files.map((file, index) => (
+                  {files.map((entry, index) => (
                     <UploadedFileCard
-                      key={`${file.name}-${file.size}-${file.lastModified}`}
-                      file={file}
-                      onRemove={() =>
-                        setFiles((current) =>
-                          current.filter((_, i) => i !== index),
-                        )
-                      }
+                      key={entry.key}
+                      entry={entry}
+                      index={index}
+                      errors={fileErrors[index]}
+                      onChange={(patch) => updateEntry(entry.key, patch)}
+                      onRemove={() => removeEntry(entry.key)}
                     />
                   ))}
                 </ul>
@@ -302,29 +349,11 @@ export default function AddExamFlow({
                 Entrez les données de(s) l&apos;épreuve(s)
               </h3>
               <p className="text-text-paragraph mb-0 text-sm">
-                Tous les champs marqués * sont obligatoires
-                {files.length > 1
-                  ? ". Ces données s'appliquent à chaque fichier importé."
-                  : "."}
+                Tous les champs marqués * sont obligatoires. Le titre et
+                l&apos;année académique se renseignent sur chaque fichier
+                ci-dessus ; les données suivantes sont communes à tous les
+                fichiers.
               </p>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label htmlFor="title" className="font-medium">
-                Titre *
-              </label>
-              <input
-                id="title"
-                name="title"
-                type="text"
-                value={values.title}
-                onChange={(event) => setValue("title", event.target.value)}
-                placeholder="Devoir d'Algorithmique avancée"
-                aria-invalid={errors.title ? true : undefined}
-                aria-describedby={errors.title ? "title-error" : undefined}
-                className={inputClass(errors.title)}
-              />
-              <FieldError name="title" error={errors.title} />
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
@@ -385,41 +414,14 @@ export default function AddExamFlow({
 
             <SubjectSearch
               subjects={subjects}
+              fields={fields}
+              levels={levels}
               fieldId={values.fieldId}
               levelId={values.levelId}
               subjectId={values.subjectId}
-              onChange={(subjectId) => setValue("subjectId", subjectId)}
+              onSelect={handleSubjectSelect}
               error={errors.subjectId}
             />
-
-            <div className="flex flex-col gap-1">
-              <label htmlFor="academicYear" className="font-medium">
-                Année académique *
-              </label>
-              <select
-                id="academicYear"
-                name="academicYear"
-                value={values.academicYear}
-                onChange={(event) =>
-                  setValue("academicYear", event.target.value)
-                }
-                aria-invalid={errors.academicYear ? true : undefined}
-                aria-describedby={
-                  errors.academicYear ? "academicYear-error" : undefined
-                }
-                className={inputClass(errors.academicYear)}
-              >
-                <option value="" disabled>
-                  Choisir une année
-                </option>
-                {academicYears().map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-              <FieldError name="academicYear" error={errors.academicYear} />
-            </div>
 
             <div className="grid gap-5 md:grid-cols-1">
               <ChoiceGroup

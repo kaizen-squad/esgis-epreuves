@@ -67,55 +67,85 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
-/**
- * Validation cote client du formulaire d'ajout. Les noms des champs sont ceux attendus par
- * `uploadExamsBatch` ; les metadonnees saisies une fois s'appliquent a chaque fichier du lot.
- */
-export const addExamFormSchema = z.object({
+/** Titre propose par defaut pour un fichier : son nom sans extension, separateurs remplaces. */
+export function titleFromFileName(name: string): string {
+  return name
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Metadonnees propres a chaque fichier du lot ; les autres sont communes a tout le lot. */
+const examFileEntrySchema = z.object({
+  file: z
+    .instanceof(File, { message: "Fichier manquant." })
+    .refine(
+      (file) => validateExamFile(file) === null,
+      "Retirez ce fichier invalide avant de publier.",
+    ),
   title: z
     .string()
     .trim()
     .min(3, "Le titre doit contenir au moins 3 caractères.")
     .max(200, "Le titre ne doit pas dépasser 200 caractères."),
-  fieldId: z.uuid("Choisissez une filière."),
-  levelId: z.uuid("Choisissez un niveau."),
-  subjectId: z.uuid("Choisissez une matière dans la liste."),
   academicYear: z
     .string()
     .regex(/^\d{4}-\d{4}$/, "Choisissez une année académique."),
+});
+
+/**
+ * Validation cote client du formulaire d'ajout. Les noms des champs sont ceux attendus par
+ * `uploadExamsBatch` : titre et annee academique par fichier, le reste commun au lot.
+ */
+export const addExamFormSchema = z.object({
+  fieldId: z.uuid("Choisissez une filière."),
+  levelId: z.uuid("Choisissez un niveau."),
+  subjectId: z.uuid("Choisissez une matière dans la liste."),
   session: z.enum(EXAM_SESSIONS, "Choisissez une session."),
   examType: z.enum(EXAM_TYPES, "Choisissez un type d'évaluation."),
   files: z
-    .array(z.instanceof(File))
+    .array(examFileEntrySchema)
     .min(1, "Ajoutez au moins un fichier.")
     .max(
       MAX_BATCH_FILES,
       `Vous pouvez publier au plus ${MAX_BATCH_FILES} fichiers à la fois.`,
-    )
-    .refine(
-      (files) => files.every((file) => validateExamFile(file) === null),
-      "Retirez les fichiers invalides avant de publier.",
     ),
 });
 
 export type AddExamFormValues = z.output<typeof addExamFormSchema>;
-export type AddExamField = keyof AddExamFormValues;
-export type AddExamErrors = Partial<Record<AddExamField, string>>;
+type SharedField = Exclude<keyof AddExamFormValues, "files">;
+type FileEntryField = "file" | "title" | "academicYear";
 
-/** Premier message d'erreur par champ, pour l'affichage sous chaque champ. */
-export function toFieldErrors(error: z.ZodError): AddExamErrors {
-  const { fieldErrors } = z.flattenError(error);
+export type AddExamErrors = Partial<Record<SharedField | "files", string>>;
+/** Erreurs par fichier, indexees par la position du fichier dans le lot. */
+export type AddExamFileErrors = Record<
+  number,
+  Partial<Record<FileEntryField, string>>
+>;
+
+/** Premier message par champ commun, et par champ de chaque fichier du lot. */
+export function toFieldErrors(error: z.ZodError): {
+  errors: AddExamErrors;
+  fileErrors: AddExamFileErrors;
+} {
   const errors: AddExamErrors = {};
-  for (const [name, messages] of Object.entries(fieldErrors)) {
-    const first = (messages as string[] | undefined)?.[0];
-    if (first) errors[name as AddExamField] = first;
+  const fileErrors: AddExamFileErrors = {};
+  for (const issue of error.issues) {
+    const [head, index, field] = issue.path;
+    if (head === "files" && typeof index === "number") {
+      const entry = (fileErrors[index] ??= {});
+      const name = field as FileEntryField;
+      entry[name] ??= issue.message;
+    } else {
+      const name = head as SharedField | "files";
+      errors[name] ??= issue.message;
+    }
   }
-  return errors;
+  return { errors, fileErrors };
 }
 
-const BATCH_METADATA_FIELDS = [
-  "title",
-  "academicYear",
+const SHARED_BATCH_FIELDS = [
   "session",
   "examType",
   "fieldId",
@@ -130,9 +160,11 @@ const BATCH_METADATA_FIELDS = [
  */
 export function toBatchFormData(values: AddExamFormValues): FormData {
   const formData = new FormData();
-  for (const file of values.files) {
-    formData.append("files", file);
-    for (const name of BATCH_METADATA_FIELDS) {
+  for (const entry of values.files) {
+    formData.append("files", entry.file);
+    formData.append("title", entry.title);
+    formData.append("academicYear", entry.academicYear);
+    for (const name of SHARED_BATCH_FIELDS) {
       formData.append(name, values[name]);
     }
     formData.append("optionId", "");
