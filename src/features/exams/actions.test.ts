@@ -312,6 +312,19 @@ describe("uploadExam", () => {
     expect(putExamFile).not.toHaveBeenCalled();
   });
 
+  it("explique un refus d'acces R2 (403) au lieu du message generique", async () => {
+    putExamFile.mockRejectedValue({
+      name: "AccessDenied",
+      $metadata: { httpStatusCode: 403 },
+    });
+
+    const result = await uploadExam(uploadForm());
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("refusé l'envoi");
+    expect(deleteEq).toHaveBeenCalledWith("id", "exam-new");
+  });
+
   it("supprime la ligne inseree quand l'envoi a R2 echoue", async () => {
     putExamFile.mockRejectedValue(new Error("R2 indisponible"));
 
