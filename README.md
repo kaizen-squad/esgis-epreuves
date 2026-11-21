@@ -103,3 +103,5 @@ Les actions sont épinglées par SHA et le `GITHUB_TOKEN` est limité à la lect
 ## Déploiement
 
 Le déploiement est assuré par Vercel. Vérifier le résultat de la CI et du build Vercel avant de merger.
+
+Les variables d'environnement Preview et Development pointent vers le projet Supabase et le bucket R2 de dev (`esgis-epreuves-dev`), distincts de ceux de Production.
