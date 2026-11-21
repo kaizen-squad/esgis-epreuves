@@ -14,9 +14,11 @@ type NavbarProps = {
   links: NavLink[];
   /** Contenu affiche a droite de la barre (ex. bouton de deconnexion de l'espace BDE). */
   endSlot?: ReactNode;
+  /** Cible du logo : l'accueil de l'espace (`/bde/accueil` cote BDE). */
+  homeHref?: string;
 };
 
-const Navbar = ({ links, endSlot }: NavbarProps) => {
+const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -25,7 +27,7 @@ const Navbar = ({ links, endSlot }: NavbarProps) => {
         <div className="flex items-center justify-between">
           <Link
             className="text-text-title justify-self-start text-2xl font-extrabold"
-            href="/"
+            href={homeHref}
           >
             Alexandria.
           </Link>

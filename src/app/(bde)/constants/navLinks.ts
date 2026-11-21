@@ -7,4 +7,8 @@ export const bdeNavLinks = [
     name: "Catalogue",
     link: "/bde/catalogue",
   },
+  {
+    name: "Filières",
+    link: "/bde/filieres",
+  },
 ];

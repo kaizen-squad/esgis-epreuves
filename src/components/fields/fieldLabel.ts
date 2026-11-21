@@ -1,3 +1,4 @@
+import type { SpaceBasePath } from "@/components/layout/spaces";
 import type { FieldLevelSummary } from "@/features/exams/types";
 
 /** Abreviations d'affichage des filieres dont le nom complet est trop long pour une carte. */
@@ -20,11 +21,14 @@ export function fieldDisplayName(name: string): string {
 }
 
 /** Donnees d'une FiliereCard ("L1 IRT", nombre d'epreuves, lien vers la page de la filiere filtree sur le niveau). */
-export function toFiliereCardData(summary: FieldLevelSummary) {
+export function toFiliereCardData(
+  summary: FieldLevelSummary,
+  basePath: SpaceBasePath = "",
+) {
   return {
     label: `${summary.levelName} ${fieldDisplayName(summary.fieldName)}`,
     examCount: summary.examCount,
-    href: `/filieres/${summary.fieldId}?levelId=${summary.levelId}`,
+    href: `${basePath}/filieres/${summary.fieldId}?levelId=${summary.levelId}`,
   };
 }
 

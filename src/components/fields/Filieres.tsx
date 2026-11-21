@@ -4,11 +4,17 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { getFieldLevelSummaries } from "@/features/exams/queries";
 import { toFiliereCardData } from "@/components/fields/fieldLabel";
+import type { SpaceBasePath } from "@/components/layout/spaces";
 
 const HOME_CARDS_LIMIT = 6;
 const MOBILE_VISIBLE_CARDS = 3;
 
-export default async function Filieres() {
+/** Apercu des filieres de l'accueil ; `basePath` garde les liens dans l'espace courant (BDE). */
+export default async function Filieres({
+  basePath = "",
+}: {
+  basePath?: SpaceBasePath;
+}) {
   // Rendu a la requete, pas au build : la CI build sans variables Supabase (meme raison que RecentlyAdded).
   await connection();
   const summaries = (await getFieldLevelSummaries()).slice(0, HOME_CARDS_LIMIT);
@@ -37,7 +43,7 @@ export default async function Filieres() {
         {summaries.map((summary, index) => (
           <FiliereCard
             key={`${summary.fieldId}-${summary.levelId}`}
-            data={toFiliereCardData(summary)}
+            data={toFiliereCardData(summary, basePath)}
             className={
               index >= MOBILE_VISIBLE_CARDS ? "hidden md:block" : "block"
             }
@@ -46,7 +52,7 @@ export default async function Filieres() {
       </div>
 
       <Link
-        href="/filieres"
+        href={`${basePath}/filieres`}
         className="border-background-secondary text-text-primary bg-background-accent ml-auto flex w-fit items-center gap-2 rounded-lg border px-3 py-2 font-semibold"
       >
         Voir toutes les filières <FiArrowRight />

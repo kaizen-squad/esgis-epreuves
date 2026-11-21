@@ -12,8 +12,9 @@ import ResultsResume from "@/components/home/ResultsResume";
 import CTACatalogue from "@/components/home/CTACatalogue";
 import Filieres from "@/components/fields/Filieres";
 import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
+import { BDE_BASE_PATH, catalogueHref } from "@/components/layout/spaces";
 
-const BDE_CATALOGUE_HREF = "/bde/catalogue";
+const BDE_CATALOGUE_HREF = catalogueHref(BDE_BASE_PATH);
 
 const BDEAccueil = async () => {
   await requireBdeSession();
@@ -30,7 +31,7 @@ const BDEAccueil = async () => {
           <DomainFilter manageable catalogueHref={BDE_CATALOGUE_HREF} />
         </Suspense>
         <Suspense fallback={<FilieresSkeleton />}>
-          <Filieres />
+          <Filieres basePath={BDE_BASE_PATH} />
         </Suspense>
         <ResultsResume />
         <CTACatalogue catalogueHref={BDE_CATALOGUE_HREF} />

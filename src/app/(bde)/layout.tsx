@@ -10,7 +10,11 @@ export default async function BdeLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <Navbar links={bdeNavLinks} endSlot={<LogoutButton />} />
+      <Navbar
+        links={bdeNavLinks}
+        endSlot={<LogoutButton />}
+        homeHref="/bde/accueil"
+      />
       <main className="flex-1 py-10">{children}</main>
       <Footer links={bdeNavLinks} />
     </div>

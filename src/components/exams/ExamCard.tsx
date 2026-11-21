@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
+import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
 import ExamManageMenu from "./ExamManageMenu";
 
 export interface ExamCardProps {
@@ -26,7 +27,10 @@ export function formatFileSize(bytes: number): string {
 }
 
 const ExamCard = (data: ExamCardProps) => {
-  const previewHref = data.slug ? `/epreuves/${data.slug}` : null;
+  // Espace BDE (cartes gerables) : la page de l'epreuve reste dans l'espace BDE.
+  const previewHref = data.slug
+    ? examHref(data.manageable ? BDE_BASE_PATH : "", data.slug)
+    : null;
   const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
   const sizeLabel =
     data.fileSize !== undefined ? formatFileSize(data.fileSize) : "1,6 Mo";
