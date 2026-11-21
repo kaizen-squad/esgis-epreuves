@@ -36,6 +36,13 @@ export async function login(
         "Trop de tentatives, reessayez dans quelques minutes.",
       );
     }
+    // Compte desactive par l'Admin (bannissement Auth). Supabase ne renvoie `user_banned` qu'apres
+    // avoir verifie le mot de passe : le message ne revele donc rien a qui ne le connait pas.
+    if (error.code === "user_banned") {
+      return actionError(
+        "Ce compte est désactivé. Contactez l'administrateur.",
+      );
+    }
     return actionError("Email ou mot de passe incorrect.");
   }
 

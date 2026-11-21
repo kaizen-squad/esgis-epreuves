@@ -68,6 +68,19 @@ describe("login", () => {
     if (!result.ok) expect(result.error).toContain("Trop de tentatives");
   });
 
+  it("signale un compte desactive (banni) par l'Admin", async () => {
+    signInWithPassword.mockResolvedValue({
+      error: { status: 400, code: "user_banned" },
+    });
+
+    const result = await login(null, loginForm("bde.dev@esgis.local", "x"));
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Ce compte est désactivé. Contactez l'administrateur.",
+    });
+  });
+
   it("redirige un compte BDE vers /bde/accueil en cas de succes", async () => {
     signInWithPassword.mockResolvedValue({
       data: { user: { id: "u1" } },

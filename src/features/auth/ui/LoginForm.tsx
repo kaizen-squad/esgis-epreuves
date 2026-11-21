@@ -67,6 +67,9 @@ export default function LoginForm() {
             {fieldErrors.password[0]}
           </p>
         ) : null}
+        <p className="text-text-paragraph mb-0 text-sm">
+          Mot de passe oublié ? Contactez l&apos;administrateur.
+        </p>
       </div>
 
       {formError ? (
