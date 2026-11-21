@@ -6,12 +6,16 @@ import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters
 type FiliereCatalogueSectionProps = {
   exams: ExamCardProps[];
   total: number;
+  page: number;
+  pageSize: number;
   filterOptions: CatalogueFilterOptions;
 };
 
 const FiliereCatalogueSection = ({
   exams,
   total,
+  page,
+  pageSize,
   filterOptions,
 }: FiliereCatalogueSectionProps) => {
   return (
@@ -20,6 +24,8 @@ const FiliereCatalogueSection = ({
       <CatalogueEpreuves
         data={exams}
         total={total}
+        page={page}
+        pageSize={pageSize}
         filterOptions={filterOptions}
       />
     </section>
