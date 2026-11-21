@@ -19,14 +19,14 @@ export interface ExamCardProps {
   manageable?: boolean;
 }
 
-function formatFileSize(bytes: number): string {
+export function formatFileSize(bytes: number): string {
   const megabytes = bytes / (1024 * 1024);
   if (megabytes >= 1) return `${megabytes.toFixed(1)} Mo`;
   return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
 }
 
 const ExamCard = (data: ExamCardProps) => {
-  const previewHref = data.slug ? `/api/exams/${data.slug}` : null;
+  const previewHref = data.slug ? `/epreuves/${data.slug}` : null;
   const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
   const sizeLabel =
     data.fileSize !== undefined ? formatFileSize(data.fileSize) : "1,6 Mo";
@@ -82,8 +82,6 @@ const ExamCard = (data: ExamCardProps) => {
           {previewHref ? (
             <Link
               href={previewHref}
-              target="_blank"
-              rel="noopener noreferrer"
               className="text-text-default flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
             >
               <FiEye size={16} />

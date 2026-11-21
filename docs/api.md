@@ -280,6 +280,12 @@ Construit l'en-tête `Content-Disposition` : `inline` pour une prévisualisation
 
 Génère une URL R2 présignée (valide 5 minutes, usage immédiat par la redirection qui suit) pour le PDF à `r2Key`, avec `Content-Type` fixé à `application/pdf` et `Content-Disposition` selon `contentDisposition`. Le bucket R2 reste privé : c'est la seule façon d'accéder au fichier.
 
+## `src/lib/r2/exists.ts`
+
+### `examFileExists(r2Key: string): Promise<boolean>`
+
+`HeadObject` sur R2 : une URL présignée se signe sans contacter R2, cette vérification est donc le seul moyen de savoir qu'un PDF est réellement présent. `false` sur un 404 ; toute autre erreur (identifiants ou endpoint R2 invalides, réseau) est journalisée puis traitée comme « indisponible », jamais levée. Utilisée par la route `/api/exams/[slug]` et la page `/epreuves/[slug]` (aperçu et bouton de téléchargement désactivés si absent).
+
 ## `src/lib/r2/upload.ts`
 
 ### `putExamFile(r2Key: string, body: Buffer): Promise<void>`
@@ -294,7 +300,7 @@ Supprime un PDF d'épreuve sur R2 sous la clé fournie (`replaceExamFile` et `de
 
 ### `GET /api/exams/[slug]`
 
-Route publique (épreuves lisibles sans authentification, comme le catalogue) qui redirige (307) vers une URL R2 présignée. `?dl=1` pour un téléchargement (pièce jointe) ; sans ce paramètre, prévisualisation en ligne. Répond `404` si le slug ne correspond à aucune épreuve.
+Route publique (épreuves lisibles sans authentification, comme le catalogue) qui redirige (307) vers une URL R2 présignée. `?dl=1` pour un téléchargement (pièce jointe) ; sans ce paramètre, prévisualisation en ligne (utilisée dans l'iframe d'aperçu de `/epreuves/[slug]`). Répond `404` (texte brut) si le slug ne correspond à aucune épreuve ou si son PDF est absent de R2 (`examFileExists`), plutôt que de rediriger vers une erreur XML de Cloudflare.
 
 ## `src/lib/security-headers.ts`
 
