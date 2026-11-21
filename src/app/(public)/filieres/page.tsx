@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import CTACatalogue from "@/components/home/CTACatalogue";
 import Research from "@/components/exams/Research";
-import FIliereCategories from "./components/FIliereCategories";
-import FiliereCategoriesSkeleton from "./components/FiliereCategoriesSkeleton";
+import FiliereCategories from "@/components/fields/FiliereCategories";
+import FiliereCategoriesSkeleton from "@/components/fields/FiliereCategoriesSkeleton";
 
 const Filieres = () => {
   return (
@@ -17,7 +17,7 @@ const Filieres = () => {
       </div>
       <Research />
       <Suspense fallback={<FiliereCategoriesSkeleton />}>
-        <FIliereCategories />
+        <FiliereCategories />
       </Suspense>
       <CTACatalogue />
     </>

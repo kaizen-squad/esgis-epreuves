@@ -1,9 +1,15 @@
 import { connection } from "next/server";
 import { getFieldCategories } from "@/features/exams/queries";
 import { toFiliereCardData } from "@/components/fields/fieldLabel";
+import type { SpaceBasePath } from "@/components/layout/spaces";
 import FiliereCategory from "./FiliereCategory";
 
-const FIliereCategories = async () => {
+/** Toutes les filieres, groupees, avec leurs niveaux ; `basePath` garde les liens dans l'espace. */
+const FiliereCategories = async ({
+  basePath = "",
+}: {
+  basePath?: SpaceBasePath;
+}) => {
   await connection();
   const categories = await getFieldCategories();
 
@@ -25,7 +31,7 @@ const FIliereCategories = async () => {
           title={category.fieldName}
           cards={category.levels.map((summary) => ({
             key: summary.levelId,
-            ...toFiliereCardData(summary),
+            ...toFiliereCardData(summary, basePath),
           }))}
         />
       ))}
@@ -33,4 +39,4 @@ const FIliereCategories = async () => {
   );
 };
 
-export default FIliereCategories;
+export default FiliereCategories;

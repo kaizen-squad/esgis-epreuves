@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { r2UploadErrorMessage } from "@/lib/r2/errors";
 import { deleteExamFile, putExamFile } from "@/lib/r2/upload";
 import {
   actionDuplicateWarning,
@@ -133,7 +134,7 @@ export async function uploadExam(
   } catch (error) {
     console.error("uploadExam: envoi du fichier vers R2", error);
     await supabase.from("exams").delete().eq("id", inserted.id);
-    return actionError("Impossible de deposer le fichier.");
+    return actionError(r2UploadErrorMessage(error));
   }
 
   if (duplicate.kind === "quadruplet") {
@@ -379,7 +380,7 @@ export async function replaceExamFile(
         r2_key: current.r2_key,
       })
       .eq("id", examId);
-    return actionError("Impossible de deposer le fichier.");
+    return actionError(r2UploadErrorMessage(error));
   }
 
   // Un remplacement par un contenu identique garde la meme cle (`exams/<hash>.pdf`) : l'ancien
@@ -745,7 +746,7 @@ export async function uploadExamsBatch(
       entries.push({
         file: label,
         status: "error",
-        message: "Impossible de deposer le fichier.",
+        message: r2UploadErrorMessage(error),
       });
       continue;
     }
