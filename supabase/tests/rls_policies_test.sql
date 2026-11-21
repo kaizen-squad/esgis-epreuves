@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(20);
 
 -- Tables et RLS forcee
 select has_table('public', 'profiles', 'profiles existe');
@@ -135,6 +135,49 @@ select is(
   (select created_by from public.exams where slug = 'epreuve-falsifiee-2024-2025'),
   '11111111-1111-1111-1111-111111111111'::uuid,
   'created_by est force a auth.uid(), pas a la valeur envoyee par le client'
+);
+
+-- Un BDE desactive perd tout droit d'ecriture, meme avec une session encore valide
+reset role;
+update public.profiles set is_active = false where id = '11111111-1111-1111-1111-111111111111';
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+
+select throws_ok(
+  $$
+  insert into public.exams (
+    title, slug, academic_year, session, exam_type,
+    subject_id, level_id, field_id,
+    file_hash, file_mime_type, file_size, r2_key, created_by
+  ) values (
+    'Epreuve apres desactivation', 'epreuve-apres-desactivation-2024-2025',
+    '2024-2025', 'Session Normale', 'Contrôle Terminal',
+    '55555555-5555-5555-5555-555555555555', '44444444-4444-4444-4444-444444444444', '33333333-3333-3333-3333-333333333333',
+    repeat('d', 64), 'application/pdf', 1024, 'exams/epreuve-apres-desactivation-2024-2025.pdf',
+    '11111111-1111-1111-1111-111111111111'
+  )
+  $$,
+  '42501',
+  null,
+  'BDE desactive ne peut plus deposer une epreuve'
+);
+
+-- Le schema private n'est pas expose a authenticated : appel en proprietaire, meme JWT simule.
+reset role;
+select is(
+  (select private.has_role('BDE')), false,
+  'has_role renvoie false pour un compte desactive'
+);
+set local role authenticated;
+
+with modifiees as (
+  update public.exams set title = 'Titre pirate'
+  where slug = 'comptabilite-generale-2024-2025'
+  returning 1
+)
+select is(
+  (select count(*) from modifiees)::int, 0,
+  'BDE desactive ne peut plus modifier une epreuve'
 );
 
 select * from finish();
