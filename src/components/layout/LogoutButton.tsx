@@ -5,14 +5,14 @@ import { CgSpinner } from "react-icons/cg";
 import { FiLogOut } from "react-icons/fi";
 import { logout } from "@/features/auth/actions";
 
-function SubmitButton() {
+function SubmitButton({ className = "mx-auto" }: { className?: string }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
       disabled={pending}
-      className="text-text-default mx-auto flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+      className={`text-text-default flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       Se déconnecter
       {pending ? <CgSpinner className="animate-spin" /> : <FiLogOut />}
@@ -21,13 +21,13 @@ function SubmitButton() {
 }
 
 /**
- * Bouton de deconnexion de l'espace BDE, affiche a droite de la barre de navigation. Appelle
- * l'action `logout` existante (session locale fermee, puis redirection vers /login).
+ * Bouton de deconnexion des espaces BDE (barre de navigation) et Admin (bas de la barre laterale).
+ * Appelle l'action `logout` existante (session locale fermee, puis redirection vers /login).
  */
-export default function LogoutButton() {
+export default function LogoutButton({ className }: { className?: string }) {
   return (
     <form action={logout}>
-      <SubmitButton />
+      <SubmitButton className={className} />
     </form>
   );
 }

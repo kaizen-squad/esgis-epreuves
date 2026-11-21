@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const signInWithPassword = vi.fn();
 const signOut = vi.fn();
+const maybeSingle = vi.fn();
 const redirect = vi.fn((url: string) => {
   throw new Error(`REDIRECT:${url}`);
 });
@@ -10,7 +11,10 @@ vi.mock("next/navigation", () => ({
   redirect: (url: string) => redirect(url),
 }));
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: async () => ({ auth: { signInWithPassword, signOut } }),
+  createClient: async () => ({
+    auth: { signInWithPassword, signOut },
+    from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }),
+  }),
 }));
 
 const { login, logout } = await import("./actions");
@@ -25,6 +29,8 @@ function loginForm(email: string, password: string) {
 beforeEach(() => {
   signInWithPassword.mockReset();
   signOut.mockReset();
+  maybeSingle.mockReset();
+  maybeSingle.mockResolvedValue({ data: null });
   redirect.mockClear();
 });
 
@@ -62,12 +68,27 @@ describe("login", () => {
     if (!result.ok) expect(result.error).toContain("Trop de tentatives");
   });
 
-  it("redirige vers /bde/accueil en cas de succes", async () => {
-    signInWithPassword.mockResolvedValue({ error: null });
+  it("redirige un compte BDE vers /bde/accueil en cas de succes", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: "u1" } },
+      error: null,
+    });
 
     await expect(
       login(null, loginForm("bde.dev@esgis.local", "x")),
     ).rejects.toThrow("REDIRECT:/bde/accueil");
+  });
+
+  it("redirige un compte ADMIN vers /admin en cas de succes", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: "u1" } },
+      error: null,
+    });
+    maybeSingle.mockResolvedValue({ data: { role: "ADMIN" } });
+
+    await expect(
+      login(null, loginForm("admin.dev@esgis.local", "x")),
+    ).rejects.toThrow("REDIRECT:/admin");
   });
 });
 
