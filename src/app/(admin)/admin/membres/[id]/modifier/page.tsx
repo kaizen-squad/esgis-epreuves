@@ -16,7 +16,11 @@ export default async function EditMemberPage({
     <>
       <AdminPageHeader
         title="Modifier un membre du BDE"
-        description={`Mettez à jour le compte de ${member.fullName}.`}
+        description={
+          member.isActive
+            ? `Mettez à jour le compte de ${member.fullName}.`
+            : `Mettez à jour le compte de ${member.fullName}. Ce compte est désactivé : réactivez-le depuis le dashboard pour qu'il puisse se connecter.`
+        }
       />
       <MemberForm member={member} />
     </>

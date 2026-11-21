@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FiEdit2 } from "react-icons/fi";
 import type { BdeMember } from "@/features/members/types";
+import MemberStatusButton from "./MemberStatusButton";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -17,7 +18,11 @@ function initials(fullName: string) {
     .join("");
 }
 
-/** Liste des membres BDE : nom, email, date d'ajout et action de modification. */
+/**
+ * Liste des membres BDE : nom, email, date d'ajout, statut écrit en toutes lettres et actions
+ * (modifier, activer / désactiver). Les membres désactivés arrivent en bas (tri de la requête)
+ * et sont grisés.
+ */
 export default function MembersTable({
   members,
   search,
@@ -27,7 +32,7 @@ export default function MembersTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[40rem] text-left text-sm">
+      <table className="w-full min-w-[48rem] text-left text-sm">
         <thead className="bg-background-default text-text-paragraph text-xs uppercase">
           <tr>
             <th scope="col" className="px-5 py-3 font-medium">
@@ -39,6 +44,9 @@ export default function MembersTable({
             <th scope="col" className="px-5 py-3 font-medium">
               Date d&apos;ajout
             </th>
+            <th scope="col" className="px-5 py-3 font-medium">
+              Statut
+            </th>
             <th scope="col" className="px-5 py-3 text-right font-medium">
               Actions
             </th>
@@ -48,7 +56,7 @@ export default function MembersTable({
           {members.length === 0 ? (
             <tr>
               <td
-                colSpan={4}
+                colSpan={5}
                 className="text-text-paragraph px-5 py-12 text-center"
               >
                 Aucun membre ne correspond à « {search} ».{" "}
@@ -61,42 +69,82 @@ export default function MembersTable({
               </td>
             </tr>
           ) : (
-            members.map((member) => (
-              <tr key={member.id} className="hover:bg-background-default/60">
-                <td className="px-5 py-3">
-                  <div className="flex items-center gap-3">
-                    <span
-                      aria-hidden
-                      className="bg-background-partial text-text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-                    >
-                      {initials(member.fullName) || "?"}
-                    </span>
-                    <span className="text-text-default font-medium">
-                      {member.fullName || "—"}
-                    </span>
-                  </div>
-                </td>
-                <td className="text-text-paragraph px-5 py-3">
-                  {member.email}
-                </td>
-                <td className="text-text-paragraph px-5 py-3 whitespace-nowrap">
-                  <time dateTime={member.createdAt}>
-                    {dateFormat.format(new Date(member.createdAt))}
-                  </time>
-                </td>
-                <td className="px-5 py-3">
-                  <div className="flex justify-end">
-                    <Link
-                      href={`/admin/membres/${member.id}/modifier`}
-                      aria-label={`Modifier ${member.fullName}`}
-                      className="text-text-default flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
-                    >
-                      <FiEdit2 size={13} /> Modifier
-                    </Link>
-                  </div>
-                </td>
-              </tr>
-            ))
+            members.map((member) => {
+              const name = member.fullName || member.email;
+              return (
+                <tr
+                  key={member.id}
+                  className={
+                    member.isActive
+                      ? "hover:bg-background-default/60"
+                      : "bg-gray-50 text-gray-400"
+                  }
+                >
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        aria-hidden
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${member.isActive ? "bg-background-partial text-text-primary" : "bg-gray-200 text-gray-500"}`}
+                      >
+                        {initials(member.fullName) || "?"}
+                      </span>
+                      <span
+                        className={`font-medium ${member.isActive ? "text-text-default" : "text-gray-500"}`}
+                      >
+                        {member.fullName || "—"}
+                      </span>
+                    </div>
+                  </td>
+                  <td
+                    className={`px-5 py-3 ${member.isActive ? "text-text-paragraph" : ""}`}
+                  >
+                    {member.email}
+                  </td>
+                  <td
+                    className={`px-5 py-3 whitespace-nowrap ${member.isActive ? "text-text-paragraph" : ""}`}
+                  >
+                    <time dateTime={member.createdAt}>
+                      {dateFormat.format(new Date(member.createdAt))}
+                    </time>
+                  </td>
+                  <td className="px-5 py-3">
+                    {member.isActive ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                        <span
+                          aria-hidden
+                          className="size-1.5 rounded-full bg-green-600"
+                        />
+                        Actif
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+                        <span
+                          aria-hidden
+                          className="size-1.5 rounded-full bg-gray-500"
+                        />
+                        Désactivé
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex justify-end gap-2">
+                      <Link
+                        href={`/admin/membres/${member.id}/modifier`}
+                        aria-label={`Modifier ${name}`}
+                        className="text-text-default flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
+                      >
+                        <FiEdit2 size={13} /> Modifier
+                      </Link>
+                      <MemberStatusButton
+                        id={member.id}
+                        name={name}
+                        isActive={member.isActive}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>
