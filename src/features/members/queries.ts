@@ -9,13 +9,14 @@ import type {
   UserRole,
 } from "./types";
 
-const MEMBER_SELECT = "id, full_name, email, created_at";
+const MEMBER_SELECT = "id, full_name, email, created_at, is_active";
 
 type MemberRow = {
   id: string;
   full_name: string | null;
   email: string;
   created_at: string;
+  is_active: boolean;
 };
 
 function toMember(row: MemberRow): BdeMember {
@@ -24,6 +25,7 @@ function toMember(row: MemberRow): BdeMember {
     fullName: row.full_name ?? "",
     email: row.email,
     createdAt: row.created_at,
+    isActive: row.is_active,
   };
 }
 
@@ -47,7 +49,8 @@ export async function getCurrentUserRole(): Promise<UserRole | null> {
 }
 
 /**
- * Membres BDE pour le tableau de bord Admin, du plus recent au plus ancien, filtres par nom ou
+ * Membres BDE pour le tableau de bord Admin, actifs d'abord puis desactives, chacun du plus recent
+ * au plus ancien, filtres par nom ou
  * email (`search`) et pagines (`MEMBERS_PAGE_SIZE`). Une page au-dela de la derniere est ramenee
  * a la derniere. Lecture protegee par la RLS (ADMIN uniquement).
  */
@@ -64,6 +67,7 @@ export async function getBdeMembers({
       .from("profiles")
       .select(MEMBER_SELECT, { count: "exact" })
       .eq("role", "BDE")
+      .order("is_active", { ascending: false })
       .order("created_at", { ascending: false })
       .range(from, from + MEMBERS_PAGE_SIZE - 1);
     if (term) {
@@ -86,13 +90,28 @@ export async function getBdeMembers({
   return { members: rows.map(toMember), total, page: current, pageCount };
 }
 
-/** Nombre total de comptes BDE (indicateur du tableau de bord). */
+/**
+ * Nombre total de comptes BDE, desactives compris : decide de l'etat vide du tableau de bord.
+ * Ne compter que les actifs cacherait la liste, et donc le bouton de reactivation, des que le
+ * dernier compte actif est desactive.
+ */
 export async function countBdeMembers(): Promise<number> {
+  return countBde(false);
+}
+
+/** Nombre de comptes BDE actifs (indicateur "Membres du BDE" du tableau de bord). */
+export async function countActiveBdeMembers(): Promise<number> {
+  return countBde(true);
+}
+
+async function countBde(activeOnly: boolean): Promise<number> {
   const supabase = await createClient();
-  const { count, error } = await supabase
+  let query = supabase
     .from("profiles")
     .select("id", { count: "exact", head: true })
     .eq("role", "BDE");
+  if (activeOnly) query = query.eq("is_active", true);
+  const { count, error } = await query;
   if (error) throw error;
   return count ?? 0;
 }

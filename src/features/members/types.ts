@@ -6,6 +6,8 @@ export type BdeMember = {
   fullName: string;
   email: string;
   createdAt: string;
+  /** `false` : compte desactive, connexion bloquee et plus aucun droit d'ecriture. */
+  isActive: boolean;
 };
 
 /** Compte BDE en edition : nom et prenoms separes, tels que saisis a la creation. */
