@@ -1,5 +1,6 @@
 import ImageHandler from "@/components/ui/ImageHandler";
 import Image from "next/image";
+import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
 
 const BDEWelcomeSection = () => {
@@ -16,9 +17,12 @@ const BDEWelcomeSection = () => {
         maximiser leur réussite.
       </p>
 
-      <button className="bg-background-accent text-text-primary mx-auto mb-10 flex items-center gap-2 rounded-lg border border-black px-4 py-2">
+      <Link
+        href="/bde/epreuves/ajouter"
+        className="bg-background-accent text-text-primary mx-auto mb-10 flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-black px-4 py-2"
+      >
         Ajouter une épreuve <FiArrowRight />
-      </button>
+      </Link>
 
       <ImageHandler
         image_url="/images/accueil_image3.png"
