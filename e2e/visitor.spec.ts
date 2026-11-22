@@ -15,19 +15,17 @@ test("un visiteur recherche une epreuve, l'ouvre et telecharge son fichier", asy
     .first()
     .fill(SEARCHABLE_EXAM_TITLE);
 
+  // Le champ debounce 300ms avant de pousser `?search=...` via router.replace : sans attendre
+  // que cette navigation ait eu lieu, elle peut se declencher juste apres le clic sur
+  // "Visualiser" et ramener le navigateur sur /catalogue.
+  await page.waitForURL(
+    (url) => url.searchParams.get("search") === SEARCHABLE_EXAM_TITLE,
+  );
+
   const card = page.locator("article", { hasText: SEARCHABLE_EXAM_TITLE });
   await expect(card).toBeVisible();
   await card.scrollIntoViewIfNeeded();
   const link = card.getByRole("link", { name: "Visualiser" });
-  // L'apercu PDF de la carte charge en differe (succes ou 404) et decale encore la mise en page
-  // juste apres le scroll : sans attendre une position stable entre deux lectures, le clic peut
-  // partir avant que le lien n'ait fini de se stabiliser a sa position finale.
-  let previousBox = await link.boundingBox();
-  await expect(async () => {
-    const box = await link.boundingBox();
-    expect(box).toEqual(previousBox);
-    previousBox = box;
-  }).toPass();
   await link.click();
 
   await expect(
