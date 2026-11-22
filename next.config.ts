@@ -20,6 +20,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Acces au serveur de dev depuis un telephone sur le meme Wi-Fi (IP locale, change selon le
+  // bail DHCP) : sans ça, Next.js bloque les requetes cross-origin vers les assets de dev (JS,
+  // HMR), ce qui empeche l'hydratation cote client. Ignore en production.
+  allowedDevOrigins: ["192.168.1.*"],
   // Rendu des apercus de PDF : binaire natif et fichiers charges a l'execution (worker, polices),
   // que le traçage automatique des fichiers deployes ne voit pas.
   serverExternalPackages: ["pdfjs-dist", "@napi-rs/canvas"],

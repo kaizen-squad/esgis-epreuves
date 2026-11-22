@@ -1,8 +1,11 @@
 export const HOME_CARDS_LIMIT = 6;
 export const MOBILE_VISIBLE_CARDS = 3;
 
+/** Grille des intercalaires, dans leur logement (`.filing-tray`) : accueil, page filieres et squelettes. */
+export const TRAY_CLASS =
+  "filing-tray rounded-[calc(var(--radius-card)+0.5rem)] px-3 pt-3 pb-8 sm:px-5";
 export const GRID_CLASS =
-  "mb-6 grid grid-cols-1 grid-rows-3 gap-4 md:grid-cols-2 md:grid-rows-2 lg:grid-cols-3";
+  "grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2 lg:grid-cols-3";
 
 export function cardVisibilityClass(index: number): string {
   return index >= MOBILE_VISIBLE_CARDS ? "hidden md:block" : "block";

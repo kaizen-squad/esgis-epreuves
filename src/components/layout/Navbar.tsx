@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useId, useState, type ReactNode } from "react";
-import { FiMenu, FiX } from "@/components/icons";
+import type { ReactNode } from "react";
 import { isNavLinkActive } from "./spaces";
 
 export type NavLink = {
@@ -13,110 +12,92 @@ export type NavLink = {
 
 type NavbarProps = {
   links: NavLink[];
-  /** Contenu affiche a droite de la barre (ex. bouton de deconnexion de l'espace BDE). */
+  /** Contenu affiche a droite du logo (ex. bouton de deconnexion de l'espace BDE). */
   endSlot?: ReactNode;
   /** Cible du logo : l'accueil de l'espace (`/bde/accueil` cote BDE). */
   homeHref?: string;
 };
 
 /**
- * Bande en surplomb façon tranche de classeur : les rubriques sont des onglets intercalaires,
- * l'onglet actif "sorti" du bandeau sombre (R-04). L'etat actif suit `isNavLinkActive` : une
- * sous-page (`/filieres/[id]`) garde l'onglet de sa section active, pas seulement sa racine.
+ * Bande en surplomb facon couverture de classeur : chaque rubrique est l'intercalaire d'une
+ * feuille, l'onglet actif est la languette de la page affichee juste en dessous (R-04, voir
+ * `.binder-tab` dans `globals.css`). La profondeur d'un onglet inactif (1 ou 2) est sa distance
+ * a l'onglet actif : plus il est loin, plus sa feuille est enfoncee dans la pile.
+ *
+ * Les onglets restent visibles sur mobile, sans menu burger : trois rubriques courtes tiennent
+ * des 320px, et le classeur doit se lire des le premier ecran du telephone. Au-dela de quatre
+ * rubriques, il faudra revoir cette largeur.
+ *
+ * L'etat actif suit `isNavLinkActive` : une sous-page (`/filieres/[id]`) garde l'onglet de sa
+ * section actif, pas seulement sa racine.
  */
 const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
-  const mobilePanelId = useId();
+  const activeIndex = links.findIndex((link) =>
+    isNavLinkActive(pathname, link.link),
+  );
 
   return (
-    <header className="bg-background-secondary px-4 pt-4 pb-0 lg:px-10">
-      <nav
-        aria-label="Navigation principale"
-        className="lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-end"
-      >
-        <div className="flex items-center justify-between pb-4">
+    // Pas de fond propre : la couverture marine vient de la mise en page, pour que la tranche
+    // des feuilles du dessous (ombre portee de la page) reste visible sous les onglets.
+    <header className="isolate px-4 pt-5 lg:px-14 lg:pt-8">
+      <nav aria-label="Navigation principale" className="flex flex-col">
+        {/* `flex-wrap` : sous 360px, le bouton de l'espace BDE passe sous le logo. */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-5 lg:pb-4">
           <Link
-            className="text-text-primary justify-self-start text-2xl font-extrabold tracking-tight"
+            className="text-text-primary text-3xl font-extrabold tracking-tight lg:text-4xl"
             href={homeHref}
           >
             Alexandria<span className="text-background-accent">.</span>
           </Link>
 
-          <button
-            type="button"
-            onClick={() => setIsOpen((open) => !open)}
-            aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
-            aria-expanded={isOpen}
-            aria-controls={isOpen ? mobilePanelId : undefined}
-            className="bg-background-accent rounded-control p-2 lg:hidden"
-          >
-            {isOpen ? (
-              <FiX size={24} color="#fff" aria-hidden="true" />
-            ) : (
-              <FiMenu size={24} color="#fff" aria-hidden="true" />
-            )}
-          </button>
+          {endSlot ? (
+            <div className="bg-background-primary rounded-control flex shrink-0 items-center p-1">
+              {endSlot}
+            </div>
+          ) : null}
         </div>
 
-        {/** Onglets intercalaires, desktop */}
-        <div className="hidden gap-1 lg:flex">
-          {links.map((link) => {
-            const isActive = isNavLinkActive(pathname, link.link);
+        {/* Marge droite : l'onglet le plus a droite et son conge restent sur le bord droit de
+            la feuille, jamais au-dessus de son coin arrondi. */}
+        <div className="mr-5 flex items-end justify-end lg:mr-4">
+          {links.map((link, index) => {
+            const isActive = index === activeIndex;
+            const depth =
+              activeIndex === -1
+                ? 1
+                : Math.min(Math.abs(index - activeIndex), 2);
+
             return (
               <Link
                 key={link.name}
                 href={link.link}
                 aria-current={isActive ? "page" : undefined}
-                className={
+                data-depth={depth}
+                className={`binder-tab group text-text-default not-first:-ml-2 lg:not-first:-ml-2.5 ${
                   isActive
-                    ? "bg-background-primary text-text-default rounded-t-control px-4 py-3 text-sm font-semibold"
-                    : "text-text-primary/70 hover:text-text-primary rounded-t-control px-4 py-3 text-sm font-medium transition-colors"
-                }
-              >
-                {link.name}
-              </Link>
-            );
-          })}
-        </div>
-
-        {endSlot ? (
-          <div className="bg-background-primary rounded-control mb-3 hidden items-center justify-end justify-self-end p-1 lg:flex">
-            {endSlot}
-          </div>
-        ) : null}
-      </nav>
-
-      {/** Panneau mobile */}
-      {isOpen ? (
-        <div
-          id={mobilePanelId}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") setIsOpen(false);
-          }}
-          className="bg-background-primary rounded-t-card flex flex-col py-4 lg:hidden"
-        >
-          {links.map((link) => {
-            const isActive = isNavLinkActive(pathname, link.link);
-            return (
-              <Link
-                key={link.name}
-                href={link.link}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => setIsOpen(false)}
-                className={`py-2 text-center ${
-                  isActive
-                    ? "text-background-accent font-semibold"
-                    : "text-text-default hover:bg-background-default"
+                    ? "px-4 py-3 text-base font-semibold sm:px-5 lg:px-8 lg:py-4 lg:text-lg"
+                    : `px-3 text-sm font-medium sm:px-4 lg:px-6 lg:text-base ${
+                        // Feuille plus enfoncee : base 4px plus haut (voir `globals.css`),
+                        // hauteur 4px plus courte pour garder les sommets alignes.
+                        depth === 2 ? "py-2 lg:py-2.5" : "py-2.5 lg:py-3"
+                      }`
                 }`}
               >
-                {link.name}
+                <span
+                  className={`block ${
+                    isActive
+                      ? ""
+                      : "text-text-default/75 group-hover:text-text-default transition-[color,translate] duration-300 group-hover:-translate-y-0.5"
+                  }`}
+                >
+                  {link.name}
+                </span>
               </Link>
             );
           })}
-          {endSlot ? <div className="pt-2">{endSlot}</div> : null}
         </div>
-      ) : null}
+      </nav>
     </header>
   );
 };

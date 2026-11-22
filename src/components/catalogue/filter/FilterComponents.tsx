@@ -62,7 +62,9 @@ const FilterComponents = ({
         <hr className="my-4 w-full text-gray-300" />
         <div className="px-4">
           <HideFilterComponent label="Niveau" defaultOpen>
-            <div className="flex gap-2 overflow-x-auto">
+            {/* Retour a la ligne plutot qu'un scroll horizontal (meme traitement qu'"Annee
+                academique" plus bas) : peu d'options, pas besoin de scroll ni de son affordance. */}
+            <div className="flex flex-wrap gap-2">
               {options.levels.map((level) => (
                 <NiveauCard
                   key={level.id}
