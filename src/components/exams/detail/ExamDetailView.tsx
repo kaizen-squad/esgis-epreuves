@@ -127,7 +127,10 @@ export default async function ExamDetailView({
                 <FiDownload size={18} /> Télécharger l&apos;épreuve
               </button>
             )}
-            <ShareExamButton path={publicExamPath(exam.slug)} />
+            <ShareExamButton
+              path={publicExamPath(exam.slug)}
+              title={exam.title}
+            />
           </div>
 
           {basePath === BDE_BASE_PATH ? (
