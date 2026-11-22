@@ -41,7 +41,7 @@ export function optionDisplayName(name: string): string {
 }
 
 /**
- * Titre de la page d'une filiere : "L1 IRT – Tronc commun" en L1/L2, "L3 IRT – AL / SRS" ensuite
+ * Titre de la page d'une filiere : "L1 IRT : Tronc commun" en L1/L2, "L3 IRT : AL / SRS" ensuite
  * (options presentes dans les epreuves du niveau). Sans niveau : seulement l'abreviation de la filiere.
  */
 export function fieldPageTitle(
@@ -56,5 +56,5 @@ export function fieldPageTitle(
     ? "Tronc commun"
     : optionNames.map(optionDisplayName).join(" / ");
 
-  return suffix ? `${levelName} ${field} – ${suffix}` : `${levelName} ${field}`;
+  return suffix ? `${levelName} ${field} : ${suffix}` : `${levelName} ${field}`;
 }

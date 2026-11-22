@@ -16,6 +16,7 @@ import {
 import Research from "@/components/exams/Research";
 import { toExamCardProps } from "@/components/exams/toExamCardProps";
 import PinFieldButton from "@/components/classeur/PinFieldButton";
+import FieldBreadcrumb from "@/components/fields/FieldBreadcrumb";
 import { fieldPageTitle } from "@/components/fields/fieldLabel";
 import FiliereCatalogueSection from "@/components/fields/FiliereCatalogueSection";
 import CTACatalogue from "@/components/home/CTACatalogue";
@@ -57,25 +58,24 @@ export default async function FieldExamsView({
     optionNames,
   );
   const spaceCatalogue = catalogueHref(basePath);
+  const contextualCatalogueHref = `${spaceCatalogue}?fieldId=${result.field.id}`;
 
   return (
     <>
       <div>
+        <FieldBreadcrumb fieldName={result.field.name} basePath={basePath} />
         {basePath === "" ? (
           <PinFieldButton
             field={{ id: result.field.id, name: result.field.name }}
           />
         ) : null}
-        <h1 className="head-title text-center">
-          Découvrez les épreuves de la{" "}
-          <span className="text-red-600 uppercase underline">{title}</span>
-        </h1>
+        <h1 className="head-title text-center">Épreuves : {title}</h1>
         <p className="mb-6 text-center">
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en
           un instant. Notre interface fluide simplifie vos révisions avant
           l&apos;examen.
         </p>
-        <Research catalogueHref={spaceCatalogue} />
+        <Research catalogueHref={contextualCatalogueHref} />
       </div>
       <ImageHandler
         className="md:hidden"
@@ -84,6 +84,7 @@ export default async function FieldExamsView({
         image_className="object-cover object-top"
       />
       <FiliereCatalogueSection
+        levels={levels}
         exams={result.exams.exams.map(toExamCardProps)}
         total={result.exams.total}
         page={result.exams.page}
