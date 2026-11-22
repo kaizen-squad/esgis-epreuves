@@ -4,10 +4,15 @@ import { IoIosArrowUp } from "react-icons/io";
 interface HideFilterComponentProps {
   children: React.ReactNode;
   label: string;
+  defaultOpen?: boolean;
 }
 
-const HideFilterComponent = ({ children, label }: HideFilterComponentProps) => {
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+const HideFilterComponent = ({
+  children,
+  label,
+  defaultOpen = false,
+}: HideFilterComponentProps) => {
+  const [isVisible, setIsVisible] = useState<boolean>(defaultOpen);
   const onHide = () => {
     setIsVisible(!isVisible);
   };
@@ -21,7 +26,7 @@ const HideFilterComponent = ({ children, label }: HideFilterComponentProps) => {
         <h3 className="text-lg">{label}</h3>
         <IoIosArrowUp
           size={22}
-          className={`${isVisible ? "rotate-180" : "rotate-0"} transition-all duration-300`}
+          className={`${isVisible ? "rotate-0" : "rotate-180"} transition-all duration-300`}
         />
       </button>
 
