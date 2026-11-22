@@ -9,7 +9,7 @@ export default function AdminNotFound() {
       </p>
       <Link
         href="/admin"
-        className="bg-background-accent text-text-primary rounded-lg px-4 py-2"
+        className="bg-background-accent text-text-primary rounded-control px-4 py-2"
       >
         Retour au tableau de bord
       </Link>

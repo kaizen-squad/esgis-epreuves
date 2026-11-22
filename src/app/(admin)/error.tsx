@@ -22,7 +22,7 @@ export default function AdminError({
       <button
         type="button"
         onClick={reset}
-        className="bg-background-accent text-text-primary rounded-lg px-4 py-2"
+        className="bg-background-accent text-text-primary rounded-control px-4 py-2"
       >
         Réessayer
       </button>

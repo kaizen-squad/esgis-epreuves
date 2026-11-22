@@ -10,7 +10,7 @@ export default function BdeNotFound() {
       </p>
       <Link
         href="/bde/accueil"
-        className="bg-background-accent text-text-primary rounded-lg px-4 py-2"
+        className="bg-background-accent text-text-primary rounded-control px-4 py-2"
       >
         Retour à l&apos;accueil BDE
       </Link>
