@@ -43,6 +43,15 @@ export type ExamFilters = {
   pageSize?: number;
 };
 
+/** Couverture du fonds pour une matiere (R-16) : son niveau et son nombre d'epreuves archivees. */
+export type SubjectCoverage = {
+  subjectId: string;
+  subjectName: string;
+  levelId: string;
+  levelName: string;
+  examCount: number;
+};
+
 export type ExamListResult = {
   exams: Exam[];
   total: number;

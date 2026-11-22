@@ -1,29 +1,34 @@
-import { Suspense } from "react";
 import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
-import Research from "@/components/exams/Research";
-import FiliereCategories from "@/components/fields/FiliereCategories";
-import FiliereCategoriesSkeleton from "@/components/fields/FiliereCategoriesSkeleton";
-import CTACatalogue from "@/components/home/CTACatalogue";
-import { BDE_BASE_PATH, catalogueHref } from "@/components/layout/spaces";
+import { getFields } from "@/features/referentials/queries";
+import FieldCoverageMatrix from "@/components/fields/FieldCoverageMatrix";
 
 const BDEFilieresPage = async () => {
   await requireBdeSession();
+  const fields = await getFields();
 
   return (
-    <>
-      <div className="text-center">
-        <h1 className="head-title">Filtrez selon la filière</h1>
-        <p className="mb-6">
-          Retrouvez les épreuves de chaque filière et de chaque niveau, puis
-          gérez-les depuis leur menu.
+    <div className="mx-auto mb-16 max-w-7xl px-6">
+      <div className="mb-8 text-center">
+        <h1 className="head-title">Lacunes du fonds</h1>
+        <p className="text-text-paragraph">
+          Les matières sans épreuve archivée, filière par filière.
         </p>
       </div>
-      <Research catalogueHref={catalogueHref(BDE_BASE_PATH)} />
-      <Suspense fallback={<FiliereCategoriesSkeleton />}>
-        <FiliereCategories basePath={BDE_BASE_PATH} />
-      </Suspense>
-      <CTACatalogue catalogueHref={catalogueHref(BDE_BASE_PATH)} />
-    </>
+
+      {fields.length === 0 ? (
+        <p className="text-text-paragraph text-center">
+          Aucune filière n&apos;a encore été ajoutée.
+        </p>
+      ) : (
+        fields.map((field) => (
+          <FieldCoverageMatrix
+            key={field.id}
+            fieldId={field.id}
+            fieldName={field.name}
+          />
+        ))
+      )}
+    </div>
   );
 };
 
