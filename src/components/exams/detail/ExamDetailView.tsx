@@ -139,7 +139,8 @@ export default async function ExamDetailView({
                 field: exam.field,
                 subject: exam.subject,
                 academicYear: exam.academicYear,
-                savedAt: new Date().toISOString(),
+                // Horodate par le store au moment reel du clic, pas ici au rendu de la page.
+                savedAt: "",
               }}
             />
             <Link href="/classeur" className={MANAGE_LINK_CLASS}>

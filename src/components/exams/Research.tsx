@@ -38,6 +38,12 @@ function catalogueSearchHref(catalogueHref: string, query: string): string {
   return `${path}?${params.toString()}`;
 }
 
+/** `fieldId` deja present dans `catalogueHref` (page filiere) : garde l'apercu de recherche dans le meme contexte. */
+function fieldIdFromCatalogueHref(catalogueHref: string): string | undefined {
+  const [, existingQuery] = catalogueHref.split("?");
+  return new URLSearchParams(existingQuery).get("fieldId") ?? undefined;
+}
+
 /** `catalogueHref` ("/catalogue" ou "/bde/catalogue") -> espace, pour construire le lien de chaque epreuve trouvee. */
 function spaceFromCatalogueHref(
   catalogueHref: string,
@@ -167,11 +173,12 @@ function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
   /** Numero de la derniere requete : une reponse plus ancienne arrivee en retard est ignoree. */
   const requestRef = useRef(0);
   const basePath = spaceFromCatalogueHref(catalogueHref);
+  const fieldId = fieldIdFromCatalogueHref(catalogueHref);
 
   const debounced = useDebounced(async (value: string) => {
     const requestId = requestRef.current;
     try {
-      const result = await searchExamPreview(value);
+      const result = await searchExamPreview(value, fieldId);
       if (requestId === requestRef.current)
         setPreview({ status: "done", ...result });
     } catch {

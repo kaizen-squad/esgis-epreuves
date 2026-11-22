@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import type { CatalogueFilterKey } from "@/components/exams/catalogueFilters";
 
 /** Changer de filiere ou de niveau rend la matiere choisie potentiellement hors sujet : on la retire. */
@@ -16,14 +16,28 @@ export function useCatalogueFilters() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  /**
+   * `searchParams` ne reflete le dernier `replace`/`push` qu'au rendu suivant : deux clics rapides
+   * (deux puces) liraient tous les deux l'URL d'avant le premier clic et le second ecraserait le
+   * premier. On enchaine donc sur le dernier params ecrit, pas sur `searchParams` directement ;
+   * l'effet remet ce relais a zero une fois que l'URL reelle a rattrape ce qu'on a ecrit.
+   */
+  const pendingParams = useRef<URLSearchParams | null>(null);
+  useEffect(() => {
+    pendingParams.current = null;
+  }, [searchParams]);
+  const currentParams = () =>
+    new URLSearchParams(pendingParams.current ?? searchParams);
+
   const get = (key: CatalogueFilterKey) => searchParams.get(key);
 
   const set = (key: CatalogueFilterKey, value: string | null) => {
-    const params = new URLSearchParams(searchParams);
+    const params = currentParams();
     if (value) params.set(key, value);
     else params.delete(key);
     params.delete("page");
     if (CLEARS_SUBJECT.includes(key)) params.delete("subjectId");
+    pendingParams.current = params;
 
     const query = params.toString();
     startTransition(() => {
@@ -35,9 +49,10 @@ export function useCatalogueFilters() {
 
   /** Change de page sans toucher aux filtres ; `push` pour que « retour » ramene a la page precedente. */
   const goToPage = (page: number) => {
-    const params = new URLSearchParams(searchParams);
+    const params = currentParams();
     if (page > 1) params.set("page", String(page));
     else params.delete("page");
+    pendingParams.current = params;
 
     const query = params.toString();
     startTransition(() => {
@@ -51,8 +66,9 @@ export function useCatalogueFilters() {
   const toggle = (key: CatalogueFilterKey, value: string) =>
     set(key, get(key) === value ? null : value);
 
-  /** Retire tous les filtres (recherche comprise), sans toucher au reste de l'URL. */
+  /** Retire tous les parametres de l'URL (filtres et recherche compris, page aussi). */
   const reset = () => {
+    pendingParams.current = new URLSearchParams();
     startTransition(() => {
       router.replace(pathname, { scroll: false });
     });

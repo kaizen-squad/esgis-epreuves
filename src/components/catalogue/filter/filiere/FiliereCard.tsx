@@ -1,16 +1,17 @@
 interface FiliereCardProps {
+  name: string;
   label: string;
   checked: boolean;
   onChange: () => void;
 }
 
-const FiliereCard = ({ label, checked, onChange }: FiliereCardProps) => {
+const FiliereCard = ({ name, label, checked, onChange }: FiliereCardProps) => {
   return (
     <div className="mb-4">
       <label className="flex cursor-pointer items-center gap-4">
         <input
           type="radio"
-          name="filiere"
+          name={name}
           checked={checked}
           onChange={onChange}
           onClick={checked ? onChange : undefined}

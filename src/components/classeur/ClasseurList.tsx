@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { FiArrowRight, FiX } from "@/components/icons";
 import { publicExamPath } from "@/components/layout/spaces";
@@ -7,12 +8,24 @@ import { useClasseur } from "@/features/classeur/useClasseur";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
 
+const noopSubscribe = () => () => {};
+
 /** Liste des favoris du classeur local (R-11), tries du plus recent au plus ancien. */
 export default function ClasseurList() {
   const { state, toggleFavorite } = useClasseur();
+  // Le premier rendu client reprend l'etat vide du serveur (voir useClasseur) : sans ce drapeau,
+  // "aucun favori" clignote une frame avant que le vrai etat du localStorage ne s'affiche.
+  const hydrated = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+
   const favorites = Object.values(state.favorites).sort((a, b) =>
     b.savedAt.localeCompare(a.savedAt),
   );
+
+  if (!hydrated) return null;
 
   if (favorites.length === 0) {
     return (

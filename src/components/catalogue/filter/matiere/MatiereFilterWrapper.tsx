@@ -5,12 +5,14 @@ import { searchTokens } from "@/features/exams/schemas";
 import MatiereCard from "@/components/catalogue/filter/matiere/MatiereCard";
 
 interface MatiereFilterWrapperProps {
+  name: string;
   subjects: Subject[];
   selectedId: string | null;
   onToggle: (subjectId: string) => void;
 }
 
 const MatiereFilterWrapper = ({
+  name,
   subjects,
   selectedId,
   onToggle,
@@ -43,6 +45,7 @@ const MatiereFilterWrapper = ({
           visible.map((subject) => (
             <MatiereCard
               key={subject.id}
+              name={name}
               label={subject.name}
               checked={selectedId === subject.id}
               onChange={() => onToggle(subject.id)}

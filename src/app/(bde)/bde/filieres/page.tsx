@@ -25,6 +25,7 @@ const BDEFilieresPage = async () => {
             key={field.id}
             fieldId={field.id}
             fieldName={field.name}
+            href={`/bde/filieres/${field.id}`}
           />
         ))
       )}

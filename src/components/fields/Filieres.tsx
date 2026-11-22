@@ -41,7 +41,7 @@ export default async function Filieres({
             key={`${summary.fieldId}-${summary.levelId}`}
             data={toFiliereCardData(summary, basePath)}
             className={
-              index >= MOBILE_VISIBLE_CARDS ? "hidden md:block" : "block"
+              index >= MOBILE_VISIBLE_CARDS ? "hidden md:flex" : "flex"
             }
           />
         ))}

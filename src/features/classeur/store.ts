@@ -14,16 +14,31 @@ let cachedRaw: string | null = null;
 let cachedState: ClasseurState = EMPTY_STATE;
 const subscribers = new Set<() => void>();
 
+/**
+ * Stockage bloque (cookies tiers desactives, quota plein, navigation privee restrictive) : la
+ * simple lecture de `window.localStorage` peut lever une `SecurityError`, pas seulement l'ecriture.
+ * Une fois constate, on arrete d'y toucher et la memoire de cet onglet devient la seule source.
+ */
+let storageBroken = false;
+
 function hasStorage(): boolean {
-  return typeof window !== "undefined" && !!window.localStorage;
+  if (storageBroken || typeof window === "undefined") return false;
+  try {
+    return !!window.localStorage;
+  } catch {
+    storageBroken = true;
+    return false;
+  }
 }
 
 function readRaw(): string | null {
-  if (!hasStorage()) return null;
+  // Stockage indisponible : la memoire de cet onglet est deja la source, `cachedRaw` la reflete.
+  if (!hasStorage()) return cachedRaw;
   try {
     return window.localStorage.getItem(STORAGE_KEY);
   } catch {
-    return null;
+    storageBroken = true;
+    return cachedRaw;
   }
 }
 
@@ -43,7 +58,9 @@ function write(state: ClasseurState) {
   try {
     window.localStorage.setItem(STORAGE_KEY, cachedRaw);
   } catch {
-    // Navigation privee ou quota plein : l'etat reste correct en memoire pour cet onglet.
+    // Quota plein ou navigation privee : l'etat reste correct en memoire pour cet onglet
+    // (`storageBroken` empeche `readRaw` d'ecraser cet etat avec l'ancienne valeur du disque).
+    storageBroken = true;
   }
 }
 
@@ -83,11 +100,20 @@ if (
   window.addEventListener("storage", notifyStorageEvent);
 }
 
+/**
+ * Bascule le favori. `savedAt` est horodate ici, au moment reel du clic : la page qui fournit
+ * `snapshot` est rendue avant que l'utilisateur ne clique, un horodatage pris a ce moment-la
+ * resterait celui du rendu de la page, pas celui de la mise en favori.
+ */
 export function toggleFavorite(snapshot: FavoriteSnapshot) {
   const current = getSnapshot();
   const favorites = { ...current.favorites };
   if (favorites[snapshot.slug]) delete favorites[snapshot.slug];
-  else favorites[snapshot.slug] = snapshot;
+  else
+    favorites[snapshot.slug] = {
+      ...snapshot,
+      savedAt: new Date().toISOString(),
+    };
   write({ ...current, favorites });
   notify();
 }

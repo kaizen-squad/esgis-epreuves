@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { FiX } from "react-icons/fi";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 import type { CatalogueFilters } from "@/components/exams/useCatalogueFilters";
@@ -21,6 +22,9 @@ const FilterComponents = ({
   filters,
   total,
 }: FilterComponentsProps) => {
+  // Desktop et mobile sont montes en meme temps (l'aside reste dans le DOM, juste masque) : un
+  // `name` de groupe unique par instance evite que les radios des deux se desynchronisent.
+  const groupId = useId();
   const fieldId = filters.get("fieldId");
   const levelId = filters.get("levelId");
   // Matieres restreintes a la filiere et au niveau choisis, s'il y en a.
@@ -75,6 +79,7 @@ const FilterComponents = ({
                 {options.fields.map((field) => (
                   <FiliereCard
                     key={field.id}
+                    name={`filiere-${groupId}`}
                     label={field.name}
                     checked={fieldId === field.id}
                     onChange={() => filters.toggle("fieldId", field.id)}
@@ -85,6 +90,7 @@ const FilterComponents = ({
           )}
           <HideFilterComponent label="Matière">
             <MatiereFilterWrapper
+              name={`matiere-${groupId}`}
               subjects={subjects}
               selectedId={filters.get("subjectId")}
               onToggle={(subjectId) => filters.toggle("subjectId", subjectId)}
