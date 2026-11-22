@@ -65,6 +65,8 @@ export default function ExamDropzone({
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
+        tabIndex={-1}
+        aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${errorName}-error` : undefined}
         className={`flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors ${dragging ? "border-background-accent bg-red-50" : error ? "border-red-400" : "bg-background-default border-gray-300"}`}
       >

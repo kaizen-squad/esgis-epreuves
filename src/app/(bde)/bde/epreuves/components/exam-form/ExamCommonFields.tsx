@@ -80,6 +80,27 @@ export default function ExamCommonFields({
 
   return (
     <>
+      <SubjectSearch
+        subjects={subjects}
+        fields={fields}
+        levels={levels}
+        fieldId={values.fieldId}
+        levelId={values.levelId}
+        subjectId={values.subjectId}
+        onSelect={handleSubjectSelect}
+        error={errors.subjectId}
+      />
+      <p className="text-text-paragraph mb-0 text-sm">
+        Matière manquante ?{" "}
+        <a
+          href="/admin/referentiels/matieres"
+          className="text-background-accent underline"
+        >
+          Demandez son ajout à l&apos;administrateur
+        </a>
+        .
+      </p>
+
       <div className="grid gap-5 md:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="fieldId" className="font-medium">
@@ -131,17 +152,6 @@ export default function ExamCommonFields({
           <FieldError name="levelId" error={errors.levelId} />
         </div>
       </div>
-
-      <SubjectSearch
-        subjects={subjects}
-        fields={fields}
-        levels={levels}
-        fieldId={values.fieldId}
-        levelId={values.levelId}
-        subjectId={values.subjectId}
-        onSelect={handleSubjectSelect}
-        error={errors.subjectId}
-      />
 
       {afterSubject}
 
