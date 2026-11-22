@@ -15,6 +15,7 @@ import {
 } from "@/components/exams/catalogueFilters";
 import Research from "@/components/exams/Research";
 import { toExamCardProps } from "@/components/exams/toExamCardProps";
+import PinFieldButton from "@/components/classeur/PinFieldButton";
 import { fieldPageTitle } from "@/components/fields/fieldLabel";
 import FiliereCatalogueSection from "@/components/fields/FiliereCatalogueSection";
 import CTACatalogue from "@/components/home/CTACatalogue";
@@ -60,6 +61,11 @@ export default async function FieldExamsView({
   return (
     <>
       <div>
+        {basePath === "" ? (
+          <PinFieldButton
+            field={{ id: result.field.id, name: result.field.name }}
+          />
+        ) : null}
         <h1 className="head-title text-center">
           Découvrez les épreuves de la{" "}
           <span className="text-red-600 uppercase underline">{title}</span>

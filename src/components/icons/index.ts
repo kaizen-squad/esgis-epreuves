@@ -8,6 +8,7 @@
 export {
   FiArrowLeft,
   FiArrowRight,
+  FiBookmark,
   FiCalendar,
   FiCompass,
   FiDownload,
@@ -19,6 +20,7 @@ export {
   FiMenu,
   FiMoreVertical,
   FiRefreshCw,
+  FiStar,
   FiX,
 } from "react-icons/fi";
 export { GoDotFill } from "react-icons/go";
