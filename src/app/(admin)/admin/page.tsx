@@ -58,7 +58,7 @@ export default async function AdminDashboardPage({
         />
       </section>
 
-      <section className="bg-background-primary overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+      <section className="bg-background-primary rounded-card shadow-card overflow-hidden border border-gray-200">
         <div className="flex flex-col gap-4 border-b border-gray-200 p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-text-secondary mb-0 text-lg font-semibold">
