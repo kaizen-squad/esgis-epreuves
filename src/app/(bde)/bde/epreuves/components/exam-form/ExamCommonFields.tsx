@@ -25,9 +25,9 @@ export function inputClass(error?: string) {
 }
 
 /**
- * Champs communs aux formulaires d'ajout et de modification d'une epreuve : filiere, niveau,
- * matiere (recherche), session et type. Changer de filiere ou de niveau vide la matiere devenue
- * incompatible ; choisir une matiere renseigne sa filiere et son niveau.
+ * Champs communs aux formulaires d'ajout et de modification d'une epreuve : matiere (recherche,
+ * en premier), filiere, niveau, session et type. Changer de filiere ou de niveau vide la matiere
+ * devenue incompatible ; choisir une matiere renseigne sa filiere et son niveau.
  */
 export default function ExamCommonFields({
   fields,
@@ -44,7 +44,7 @@ export default function ExamCommonFields({
   values: ExamCommonValues;
   errors: Partial<Record<ExamCommonField, string>>;
   onChange: (patch: Partial<ExamCommonValues>) => void;
-  /** Champ supplementaire affiche sous la matiere (ex. option, en modification). */
+  /** Champ supplementaire affiche sous filiere/niveau (ex. option, en modification). */
   afterSubject?: ReactNode;
 }) {
   const subjectFits = (fieldId: string, levelId: string) =>
