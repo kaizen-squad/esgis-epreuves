@@ -1,10 +1,14 @@
 import Link from "next/link";
 import type { NavLink } from "./Navbar";
-import { FiLinkedin } from "@/components/icons";
 
 type FooterProps = {
   links: NavLink[];
 };
+
+const RESOURCE_LINKS: NavLink[] = [
+  { name: "Espace BDE", link: "/bde" },
+  { name: "Catalogue", link: "/catalogue" },
+];
 
 const Footer = ({ links }: FooterProps) => {
   return (
@@ -40,12 +44,18 @@ const Footer = ({ links }: FooterProps) => {
           <h3 className="text-text-primary mb-5 text-2xl font-semibold">
             Ressources
           </h3>
+          <div className="flex flex-col gap-5">
+            {RESOURCE_LINKS.map((link) => (
+              <Link
+                key={link.name}
+                className="text-text-primary text-lg transition-opacity hover:opacity-75"
+                href={link.link}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
-      <div>
-        <span className="text-text-primary flex items-center gap-4 text-xl font-extrabold">
-          Kaizen Studio <FiLinkedin />
-        </span>
       </div>
     </footer>
   );
