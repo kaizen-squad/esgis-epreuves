@@ -28,10 +28,12 @@ async function copyText(text: string): Promise<boolean> {
 }
 
 /**
- * Partage de l'epreuve (R-10) : feuille de partage native sur mobile (`navigator.share`), sinon
- * sur desktop un lien WhatsApp pre-rempli et la copie du lien, le canal reel des etudiants etant
- * WhatsApp mobile. L'URL absolue et la disponibilite de `navigator.share` ne sont connues qu'au
- * montage (cote client) : `shareUrl` reste `null` le temps de ce premier effet.
+ * Partage de l'epreuve (R-10) : feuille de partage native sur mobile (`navigator.share`, limite
+ * aux appareils a pointeur grossier : un Chrome ou Safari desktop l'expose aussi, mais le repli
+ * WhatsApp/copie est celui vise pour desktop), sinon sur desktop un lien WhatsApp pre-rempli et
+ * la copie du lien, le canal reel des etudiants etant WhatsApp mobile. L'URL absolue et la
+ * disponibilite de `navigator.share` ne sont connues qu'au montage (cote client) : `shareUrl`
+ * reste `null` le temps de ce premier effet.
  */
 export default function ShareExamButton({
   path,
@@ -46,22 +48,16 @@ export default function ShareExamButton({
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
-    // Detection cote client uniquement (URL absolue, capacite navigator.share) : ni l'une ni
-    // l'autre ne peuvent se resoudre pendant le rendu, cote serveur compris.
+    // Detection cote client uniquement (URL absolue, capacite navigator.share sur un appareil
+    // tactile) : rien de tout cela ne peut se resoudre pendant le rendu, cote serveur compris.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setShareUrl(new URL(path, window.location.origin).href);
-    setCanShare(typeof navigator.share === "function");
+    setCanShare(
+      typeof navigator.share === "function" &&
+        window.matchMedia("(pointer: coarse)").matches,
+    );
     return () => clearTimeout(timer.current);
   }, [path]);
-
-  const handleNativeShare = async () => {
-    if (!shareUrl) return;
-    try {
-      await navigator.share({ title, url: shareUrl });
-    } catch {
-      // Feuille de partage annulee ou fermee par l'utilisateur : rien a faire.
-    }
-  };
 
   const handleCopy = async () => {
     if (!shareUrl) return;
@@ -71,16 +67,39 @@ export default function ShareExamButton({
     timer.current = setTimeout(() => setStatus("idle"), COPIED_MS);
   };
 
+  const handleNativeShare = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.share({ title, url: shareUrl });
+    } catch (error) {
+      // Feuille fermee par l'utilisateur (AbortError) : rien a faire. Tout autre echec (droits,
+      // contexte non securise) retombe sur la copie, pour ne pas laisser l'action sans effet.
+      if (error instanceof Error && error.name === "AbortError") return;
+      await handleCopy();
+    }
+  };
+
   if (canShare) {
     return (
-      <button
-        type="button"
-        onClick={handleNativeShare}
-        disabled={!shareUrl}
-        className={ACTION_BUTTON_CLASS}
-      >
-        <FiShare2 size={18} /> Partager l&apos;épreuve
-      </button>
+      <div className="flex flex-col gap-1">
+        <button
+          type="button"
+          onClick={handleNativeShare}
+          disabled={!shareUrl}
+          className={ACTION_BUTTON_CLASS}
+        >
+          <FiShare2 size={18} /> Partager l&apos;épreuve
+        </button>
+        {status === "copied" ? (
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-text-paragraph mb-0 text-center text-xs"
+          >
+            Lien copié : collez-le pour partager l&apos;épreuve.
+          </p>
+        ) : null}
+      </div>
     );
   }
 

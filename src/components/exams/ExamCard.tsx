@@ -54,14 +54,14 @@ const ExamCard = (data: ExamCardProps) => {
         />
       ) : null}
 
-      <div className="relative z-0 aspect-square w-24 shrink-0 overflow-hidden border-r border-gray-200 bg-gray-100 md:aspect-2/1 md:w-full md:border-r-0 md:border-b">
+      <div className="relative aspect-square w-24 shrink-0 overflow-hidden border-r border-gray-200 bg-gray-100 md:aspect-2/1 md:w-full md:border-r-0 md:border-b">
         <ExamThumbnail src={data.preview_src} />
         <span className="text-text-default absolute top-1.5 right-1.5 flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm md:top-3 md:right-3 md:px-2.5 md:text-xs">
           <FiFileText size={12} /> {formatFileType(data.mimeType)}
         </span>
       </div>
 
-      <div className="relative z-0 flex min-w-0 flex-1 flex-col gap-2 p-3 md:gap-3 md:p-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 p-3 md:gap-3 md:p-4">
         <div className="relative z-20 flex items-center justify-between gap-2">
           <Cote
             field={data.field}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cache } from "react";
+import { Suspense } from "react";
 import {
   FiArrowLeft,
   FiDownload,
@@ -13,16 +13,15 @@ import {
   publicExamPath,
   type SpaceBasePath,
 } from "@/components/layout/spaces";
-import { getExamBySlug, getExamR2Key } from "@/features/exams/queries";
+import { getExamCached, getExamR2Key } from "@/features/exams/queries";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { examFileExists } from "@/lib/r2/exists";
 import Cote from "@/components/exams/Cote";
 import ExamFilePreview from "./ExamFilePreview";
-import RelatedExams from "./RelatedExams";
+import ExamSuggestions from "./ExamSuggestions";
 import ShareExamButton from "./ShareExamButton";
 
-/** Epreuve par slug, memoisee par requete : partagee entre `generateMetadata` et la vue. */
-export const getExamCached = cache(getExamBySlug);
+export { getExamCached };
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
 
@@ -171,18 +170,16 @@ export default async function ExamDetailView({
         </aside>
       </div>
 
-      <RelatedExams
-        title="Même matière, autres années"
-        filters={{ subjectId: exam.subjectId }}
-        excludeSlug={exam.slug}
-        manageable={basePath === BDE_BASE_PATH}
-      />
-      <RelatedExams
-        title="Même filière et niveau"
-        filters={{ fieldId: exam.fieldId, levelId: exam.levelId }}
-        excludeSlug={exam.slug}
-        manageable={basePath === BDE_BASE_PATH}
-      />
+      <Suspense fallback={null}>
+        <ExamSuggestions
+          subjectId={exam.subjectId}
+          fieldId={exam.fieldId}
+          levelId={exam.levelId}
+          academicYear={exam.academicYear}
+          excludeSlug={exam.slug}
+          manageable={basePath === BDE_BASE_PATH}
+        />
+      </Suspense>
     </article>
   );
 }

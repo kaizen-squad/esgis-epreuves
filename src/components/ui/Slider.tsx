@@ -28,12 +28,16 @@ const Slider = ({ children }: { children: React.ReactNode }) => {
 
       <div className="flex items-center gap-2">
         <button
+          type="button"
+          aria-label="Défiler vers la gauche"
           className="bg-background-primary rounded border border-gray-300 p-2"
           onClick={() => scroll("left")}
         >
           <FiChevronLeft />
         </button>
         <button
+          type="button"
+          aria-label="Défiler vers la droite"
           className="bg-background-primary rounded border border-gray-300 p-2"
           onClick={() => scroll("right")}
         >
