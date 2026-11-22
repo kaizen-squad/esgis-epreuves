@@ -62,7 +62,7 @@ const ExamCard = (data: ExamCardProps) => {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3 md:gap-3 md:p-4">
-        <div className="relative z-20 flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
           <Cote
             field={data.field}
             fieldId={data.fieldId}
@@ -73,7 +73,7 @@ const ExamCard = (data: ExamCardProps) => {
             subjectId={data.subjectId}
             academicYear={data.academicYear}
             basePath={basePath}
-            className="text-text-paragraph min-w-0 flex-wrap text-xs font-medium tracking-wide"
+            className="text-text-paragraph relative z-20 min-w-0 flex-wrap text-xs font-medium tracking-wide"
           />
           <span className="text-background-accent shrink-0 rounded-full border border-current px-2 py-0.5 text-xs font-medium">
             {data.type}
@@ -109,17 +109,17 @@ const ExamCard = (data: ExamCardProps) => {
           </div>
         </div>
 
-        <div className="relative z-20 hidden items-center gap-2 border-t border-gray-100 pt-3 md:flex">
+        <div className="hidden items-center gap-2 border-t border-gray-100 pt-3 md:flex">
           {downloadHref ? (
             <a
               href={downloadHref}
-              className="bg-background-secondary text-text-primary flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90"
+              className="bg-background-secondary text-text-primary relative z-20 flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90"
             >
               <FiDownload size={16} />
               Télécharger
             </a>
           ) : (
-            <button className="bg-background-secondary text-text-primary flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90">
+            <button className="bg-background-secondary text-text-primary relative z-20 flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90">
               <FiDownload size={16} />
               Télécharger
             </button>
