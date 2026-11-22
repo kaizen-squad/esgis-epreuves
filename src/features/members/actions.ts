@@ -21,7 +21,10 @@ const EMAIL_TAKEN = "Un compte utilise déjà cet email.";
 async function adminClientForCaller() {
   if ((await getCurrentUserRole()) !== "ADMIN") return { error: FORBIDDEN };
   const admin = createAdminClient();
-  if (!admin) return { error: NOT_CONFIGURED };
+  if (!admin) {
+    console.error("adminClientForCaller: SUPABASE_SECRET_KEY manquante");
+    return { error: NOT_CONFIGURED };
+  }
   return { admin };
 }
 
