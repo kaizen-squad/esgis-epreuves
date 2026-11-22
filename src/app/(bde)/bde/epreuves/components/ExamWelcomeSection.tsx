@@ -5,7 +5,7 @@ const ExamWelcomeSection = ({ title }: { title: string }) => {
     <div>
       <div className="text-center">
         <h1 className="head-title">{title}</h1>
-        <p>
+        <p className="mb-6">
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en
           un instant. Notre interface fluide simplifie vos révisions avant
           l&apos;examen.

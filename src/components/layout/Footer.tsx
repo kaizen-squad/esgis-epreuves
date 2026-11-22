@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { NavLink } from "./Navbar";
-import { FiLinkedin } from "react-icons/fi";
+import { FiLinkedin } from "@/components/icons";
 
 type FooterProps = {
   links: NavLink[];

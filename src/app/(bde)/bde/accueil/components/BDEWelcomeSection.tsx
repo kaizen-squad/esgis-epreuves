@@ -15,7 +15,7 @@ const BDEWelcomeSection = () => {
 
       <Link
         href="/bde/epreuves/ajouter"
-        className="bg-background-accent text-text-primary border-background-secondary mx-auto mb-10 flex w-fit items-center gap-2 rounded-[var(--radius-control)] border px-4 py-2 transition-colors hover:opacity-90"
+        className="bg-background-accent text-text-primary border-background-secondary rounded-control mx-auto mb-10 flex w-fit items-center gap-2 border px-4 py-2 transition-colors hover:opacity-90"
       >
         Ajouter une épreuve <FiArrowRight />
       </Link>

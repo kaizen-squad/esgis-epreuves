@@ -14,7 +14,7 @@ import {
   type ActionResult,
 } from "@/lib/action-result";
 import { checkExamDuplicate } from "./duplicate";
-import { getExams, getFieldExams } from "./queries";
+import { getExams, getFieldExams, searchExamTitles } from "./queries";
 import type { Exam } from "./types";
 import {
   examFileReplaceSchema,
@@ -794,12 +794,5 @@ export async function searchExamPreview(
 ): Promise<{ total: number; exams: Pick<Exam, "title" | "slug">[] }> {
   if (searchTokens(term).length === 0) return { total: 0, exams: [] };
 
-  const result = await getExams({
-    search: term,
-    pageSize: SEARCH_PREVIEW_LIMIT,
-  });
-  return {
-    total: result.total,
-    exams: result.exams.map((exam) => ({ title: exam.title, slug: exam.slug })),
-  };
+  return searchExamTitles({ search: term, pageSize: SEARCH_PREVIEW_LIMIT });
 }

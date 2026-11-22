@@ -25,7 +25,7 @@ const from = vi.fn(() => ({ insert, delete: del, select, update }));
 const putExamFile = vi.fn();
 const deleteExamFile = vi.fn();
 const checkExamDuplicate = vi.fn();
-const getExams = vi.fn();
+const searchExamTitles = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ from }),
@@ -35,8 +35,9 @@ vi.mock("@/lib/r2/upload", () => ({
   deleteExamFile: (...args: unknown[]) => deleteExamFile(...args),
 }));
 vi.mock("./queries", () => ({
-  getExams: (...args: unknown[]) => getExams(...args),
+  getExams: vi.fn(),
   getFieldExams: vi.fn(),
+  searchExamTitles: (...args: unknown[]) => searchExamTitles(...args),
 }));
 vi.mock("./duplicate", () => ({
   checkExamDuplicate: (...args: unknown[]) => checkExamDuplicate(...args),
@@ -1104,17 +1105,17 @@ describe("uploadExamsBatch", () => {
 
 describe("searchExamPreview", () => {
   beforeEach(() => {
-    getExams.mockReset();
+    searchExamTitles.mockReset();
   });
 
   it("renvoie un resultat vide sans requete pour un terme sans mot exploitable", async () => {
     expect(await searchExamPreview("   ")).toEqual({ total: 0, exams: [] });
     expect(await searchExamPreview("-- !")).toEqual({ total: 0, exams: [] });
-    expect(getExams).not.toHaveBeenCalled();
+    expect(searchExamTitles).not.toHaveBeenCalled();
   });
 
   it("renvoie le total et les titres trouves, limites a 5", async () => {
-    getExams.mockResolvedValue({
+    searchExamTitles.mockResolvedValue({
       total: 12,
       exams: [
         { title: "Algorithmique S1", slug: "algo-s1" },
@@ -1129,6 +1130,9 @@ describe("searchExamPreview", () => {
         { title: "Algorithmique S2", slug: "algo-s2" },
       ],
     });
-    expect(getExams).toHaveBeenCalledWith({ search: "algo", pageSize: 5 });
+    expect(searchExamTitles).toHaveBeenCalledWith({
+      search: "algo",
+      pageSize: 5,
+    });
   });
 });

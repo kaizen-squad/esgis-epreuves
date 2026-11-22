@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { FiArrowRight } from "react-icons/fi";
+import { FiArrowRight } from "@/components/icons";
 import { searchExamPreview } from "@/features/exams/actions";
 import { searchTokens } from "@/features/exams/schemas";
 import { useCatalogueFilters } from "@/components/exams/useCatalogueFilters";
@@ -86,10 +86,10 @@ function SearchForm({
         event.preventDefault();
         onSubmit();
       }}
-      className="bg-background-primary flex rounded-[var(--radius-control)] border border-gray-300 py-1 pr-2 pl-4"
+      className="bg-background-primary rounded-control flex border border-gray-300 py-1 pr-2 pl-4"
     >
       <input
-        className="min-w-0 flex-1 outline-none"
+        className="min-w-0 flex-1"
         type="search"
         name="search"
         value={query}
@@ -102,7 +102,7 @@ function SearchForm({
       />
       <button
         type="submit"
-        className="bg-background-accent text-text-primary flex h-full min-w-0 items-center gap-3 rounded-[var(--radius-control)] p-2"
+        className="bg-background-accent text-text-primary rounded-control flex h-full min-w-0 items-center gap-3 p-2"
       >
         Rechercher
         <FiArrowRight />
@@ -215,7 +215,7 @@ function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
 
         {showPanel && (
           <div
-            className="bg-background-primary absolute inset-x-0 top-full z-20 mt-1 rounded-[var(--radius-control)] border border-gray-300 text-left text-sm shadow-[var(--shadow-elevated)]"
+            className="bg-background-primary rounded-control shadow-elevated absolute inset-x-0 top-full z-20 mt-1 border border-gray-300 text-left text-sm"
             aria-live="polite"
           >
             {preview.status === "loading" && (

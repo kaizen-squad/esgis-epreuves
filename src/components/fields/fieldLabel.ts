@@ -36,7 +36,7 @@ export function toFiliereCardData(
 const COMMON_CORE_LEVELS = ["L1", "L2"];
 
 /** "Architecture Logicielle (AL)" devient "AL" ; sans sigle entre parentheses, le nom reste entier. */
-function optionDisplayName(name: string): string {
+export function optionDisplayName(name: string): string {
   return /\(([^)]+)\)\s*$/.exec(name)?.[1] ?? name;
 }
 

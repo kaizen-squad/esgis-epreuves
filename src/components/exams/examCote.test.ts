@@ -26,6 +26,32 @@ describe("examCote", () => {
     ).toBe("Gestion : L1 : COMPTABILITÉ : 2024-2025 : CC");
   });
 
+  it("insere l'option entre le niveau et la matiere quand elle est presente", () => {
+    expect(
+      examCote({
+        field: "Informatique, Réseaux et Télécommunications",
+        level: "L3",
+        option: "Architecture Logicielle (AL)",
+        subject: "Algèbre",
+        academicYear: "2023-2024",
+        examType: "Contrôle Terminal",
+      }),
+    ).toBe("IRT : L3 : AL : ALGÈBRE : 2023-2024 : CT");
+  });
+
+  it("omet l'option absente (tronc commun L1/L2), sans segment vide", () => {
+    expect(
+      examCote({
+        field: "Informatique, Réseaux et Télécommunications",
+        level: "L2",
+        option: null,
+        subject: "Algèbre",
+        academicYear: "2023-2024",
+        examType: "Contrôle Terminal",
+      }),
+    ).toBe("IRT : L2 : ALGÈBRE : 2023-2024 : CT");
+  });
+
   it("omet un champ manquant sans laisser de segment vide", () => {
     expect(
       examCote({

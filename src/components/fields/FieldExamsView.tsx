@@ -64,7 +64,7 @@ export default async function FieldExamsView({
           Découvrez les épreuves de la{" "}
           <span className="text-red-600 uppercase underline">{title}</span>
         </h1>
-        <p className="text-center">
+        <p className="mb-6 text-center">
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en
           un instant. Notre interface fluide simplifie vos révisions avant
           l&apos;examen.
