@@ -18,6 +18,7 @@ import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { examFileExists } from "@/lib/r2/exists";
 import Cote from "@/components/exams/Cote";
 import ExamFilePreview from "./ExamFilePreview";
+import RelatedExams from "./RelatedExams";
 import ShareExamButton from "./ShareExamButton";
 
 /** Epreuve par slug, memoisee par requete : partagee entre `generateMetadata` et la vue. */
@@ -166,6 +167,19 @@ export default async function ExamDetailView({
           </div>
         </aside>
       </div>
+
+      <RelatedExams
+        title="Même matière, autres années"
+        filters={{ subjectId: exam.subjectId }}
+        excludeSlug={exam.slug}
+        manageable={basePath === BDE_BASE_PATH}
+      />
+      <RelatedExams
+        title="Même filière et niveau"
+        filters={{ fieldId: exam.fieldId, levelId: exam.levelId }}
+        excludeSlug={exam.slug}
+        manageable={basePath === BDE_BASE_PATH}
+      />
     </article>
   );
 }
