@@ -1,16 +1,12 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserRole } from "@/features/members/queries";
 import LoginForm from "@/features/auth/ui/LoginForm";
 import Image from "next/image";
 
 export default async function LoginPage() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  if (data) {
-    redirect(
-      (await getCurrentUserRole()) === "ADMIN" ? "/admin" : "/bde/accueil",
-    );
+  const role = await getCurrentUserRole();
+  if (role) {
+    redirect(role === "ADMIN" ? "/admin" : "/bde/accueil");
   }
 
   return (

@@ -22,14 +22,15 @@ export default function LoginForm() {
 
   // Deplace le focus sur le premier champ en erreur apres un echec : le champ fautif s'il est
   // identifie (email ou mot de passe invalide), sinon le mot de passe (identifiants incorrects,
-  // aucun champ en particulier a blamer).
+  // aucun champ en particulier a blamer). Depend de `state`, pas de `formError` : deux echecs de
+  // suite avec le meme message garderaient la meme chaine et ne redeclencheraient pas l'effet.
   useEffect(() => {
-    if (!formError) return;
+    if (!state || state.ok) return;
     const target =
       formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
       formRef.current?.querySelector<HTMLElement>("#password");
     target?.focus();
-  }, [formError]);
+  }, [state]);
 
   return (
     <form
