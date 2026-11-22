@@ -11,6 +11,7 @@ import {
 import { getExamBySlug, getExamR2Key } from "@/features/exams/queries";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { examFileExists } from "@/lib/r2/exists";
+import Cote from "@/components/exams/Cote";
 import ExamFilePreview from "./ExamFilePreview";
 import ShareExamButton from "./ShareExamButton";
 
@@ -84,9 +85,17 @@ export default async function ExamDetailView({
         <h1 className="text-text-secondary mb-2 text-3xl leading-tight font-semibold md:text-4xl">
           {exam.title}
         </h1>
-        <p className="text-text-paragraph mb-0">
-          {exam.subject} · {exam.level} {exam.field}
-        </p>
+        <Cote
+          field={exam.field}
+          fieldId={exam.fieldId}
+          level={exam.level}
+          levelId={exam.levelId}
+          subject={exam.subject}
+          subjectId={exam.subjectId}
+          academicYear={exam.academicYear}
+          basePath={basePath}
+          className="text-text-paragraph text-sm"
+        />
       </header>
 
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
