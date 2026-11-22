@@ -14,7 +14,7 @@ import {
   type ActionResult,
 } from "@/lib/action-result";
 import { checkExamDuplicate } from "./duplicate";
-import { getExams, getFieldExams, searchExamTitles } from "./queries";
+import { searchExamTitles } from "./queries";
 import type { Exam } from "./types";
 import {
   examFileReplaceSchema,
@@ -765,20 +765,6 @@ export async function uploadExamsBatch(
   }
 
   return actionOk({ entries, summary: summarizeBatch(entries) });
-}
-
-const DOMAIN_EXAMS_PAGE_SIZE = 4;
-
-export async function getDomainExams(fieldId: string | null): Promise<Exam[]> {
-  if (fieldId) {
-    const result = await getFieldExams(fieldId, {
-      pageSize: DOMAIN_EXAMS_PAGE_SIZE,
-    });
-    return result?.exams.exams ?? [];
-  }
-
-  const result = await getExams({ pageSize: DOMAIN_EXAMS_PAGE_SIZE });
-  return result.exams;
 }
 
 const SEARCH_PREVIEW_LIMIT = 5;

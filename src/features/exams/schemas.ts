@@ -82,6 +82,7 @@ export const examFiltersSchema = z.object({
     .regex(/^\d{4}-\d{4}$/)
     .optional()
     .catch(undefined),
+  createdBy: z.uuid().optional().catch(undefined),
   page: z.coerce.number().int().min(1).catch(1),
   pageSize: z.coerce
     .number()

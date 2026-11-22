@@ -35,8 +35,6 @@ vi.mock("@/lib/r2/upload", () => ({
   deleteExamFile: (...args: unknown[]) => deleteExamFile(...args),
 }));
 vi.mock("./queries", () => ({
-  getExams: vi.fn(),
-  getFieldExams: vi.fn(),
   searchExamTitles: (...args: unknown[]) => searchExamTitles(...args),
 }));
 vi.mock("./duplicate", () => ({
