@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
@@ -401,6 +402,9 @@ export async function getExamBySlug(slug: string): Promise<Exam | null> {
   const files = await getExamFiles(supabase, [data.id]);
   return toExam(data, files.get(data.id));
 }
+
+/** `getExamBySlug` memoisee par requete : partagee entre `generateMetadata`, la vue et l'image de partage, pour ne lire l'epreuve qu'une fois. */
+export const getExamCached = cache(getExamBySlug);
 
 /** Cle R2 du PDF d'une epreuve par son slug, pour la route de previsualisation/telechargement (#50). `null` si absente. */
 export async function getExamR2Key(slug: string): Promise<string | null> {

@@ -18,7 +18,7 @@ export async function GET(
   const r2Key = await getExamR2Key(slug);
   if (!r2Key || !(await examFileExists(r2Key))) {
     return NextResponse.redirect(
-      new URL(publicExamPath(slug), request.url),
+      new URL(publicExamPath(encodeURIComponent(slug)), request.url),
       307,
     );
   }

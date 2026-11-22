@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { examCote } from "@/components/exams/examCote";
-import { getExamCached } from "@/components/exams/detail/ExamDetailView";
+import { getExamCached } from "@/features/exams/queries";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
