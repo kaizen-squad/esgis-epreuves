@@ -37,6 +37,8 @@ export type ExamFilters = {
   session?: ExamSession;
   examType?: ExamType;
   academicYear?: string;
+  /** Depose par ce membre (R-15) : jamais lu depuis l'URL, seulement passe par le code serveur. */
+  createdBy?: string;
   page?: number;
   pageSize?: number;
 };
