@@ -2,6 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { describeDbError, examInsertErrorMessage } from "@/lib/supabase/errors";
 import { createClient } from "@/lib/supabase/server";
 import { r2UploadErrorMessage } from "@/lib/r2/errors";
 import { deleteExamFile, putExamFile } from "@/lib/r2/upload";
@@ -13,7 +14,7 @@ import {
   type ActionResult,
 } from "@/lib/action-result";
 import { checkExamDuplicate } from "./duplicate";
-import { getExams, getFieldExams } from "./queries";
+import { countExams, getExams, getFieldExams } from "./queries";
 import type { Exam } from "./types";
 import {
   examFileReplaceSchema,
@@ -125,8 +126,10 @@ export async function uploadExam(
     if (insertError.code === "23505") {
       return actionError("Ce fichier a deja ete depose.");
     }
-    console.error("uploadExam: insertion de l'epreuve", insertError);
-    return actionError("Impossible d'enregistrer l'epreuve.");
+    console.error(
+      `uploadExam: insertion de l'epreuve ${describeDbError(insertError)}`,
+    );
+    return actionError(examInsertErrorMessage(insertError));
   }
 
   try {
@@ -705,7 +708,9 @@ export async function uploadExamsBatch(
       .select("id")
       .single();
     if (insertError) {
-      console.error("uploadExamsBatch: insertion de l'epreuve", insertError);
+      console.error(
+        `uploadExamsBatch: insertion de l'epreuve ${describeDbError(insertError)}`,
+      );
       // Course entre deux depots du meme fichier (rare, le controle prealable ne l'elimine pas) :
       // distingue la collision sur `file_hash` (vraiment un doublon) de celle, bien plus rare,
       // sur `slug` (meme principe que `runSeed`, #21), pour que `summary.duplicates` reste fiable.
@@ -733,7 +738,7 @@ export async function uploadExamsBatch(
       entries.push({
         file: label,
         status: "error",
-        message: "Impossible d'enregistrer l'epreuve.",
+        message: examInsertErrorMessage(insertError),
       });
       continue;
     }
@@ -778,12 +783,10 @@ export async function getDomainExams(fieldId: string | null): Promise<Exam[]> {
 
 /**
  * Nombre d'epreuves correspondant au terme, affiche sous la barre de recherche avant de renvoyer
- * vers le catalogue : meme recherche libre que le catalogue (titre, matiere, filiere). Une seule
- * ligne demandee, le total vient du count exact. Un terme sans mot exploitable renvoie 0 sans requete.
+ * vers le catalogue : meme recherche libre que le catalogue (titre, matiere, filiere). Un terme sans mot exploitable renvoie 0 sans requete.
  */
 export async function countSearchResults(term: string): Promise<number> {
   if (searchTokens(term).length === 0) return 0;
 
-  const { total } = await getExams({ search: term, pageSize: 1 });
-  return total;
+  return countExams({ search: term });
 }

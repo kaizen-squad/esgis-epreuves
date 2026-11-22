@@ -1,29 +1,27 @@
-import Image from "next/image";
 import Link from "next/link";
 import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
+import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
 import ExamManageMenu from "./ExamManageMenu";
+import ExamThumbnail from "./ExamThumbnail";
 
 export interface ExamCardProps {
   /** Identifiant de l'epreuve, absent des donnees factices. */
   id?: string;
-  img_src: string;
+  /** Haut de la premiere page du fichier (`/api/exams/[slug]/preview`). */
+  preview_src: string;
   name: string;
   year: number;
   matter: string;
   class: string;
   type: string;
   slug?: string;
-  fileSize?: number;
+  /** Taille reelle du fichier, en octets. */
+  fileSize: number;
+  mimeType: string;
   /** Espace BDE : affiche le menu de gestion (modifier, remplacer, supprimer). */
   manageable?: boolean;
-}
-
-export function formatFileSize(bytes: number): string {
-  const megabytes = bytes / (1024 * 1024);
-  if (megabytes >= 1) return `${megabytes.toFixed(1)} Mo`;
-  return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
 }
 
 const ExamCard = (data: ExamCardProps) => {
@@ -32,23 +30,13 @@ const ExamCard = (data: ExamCardProps) => {
     ? examHref(data.manageable ? BDE_BASE_PATH : "", data.slug)
     : null;
   const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
-  const sizeLabel =
-    data.fileSize !== undefined ? formatFileSize(data.fileSize) : "1,6 Mo";
 
   return (
     <article className="group bg-background-primary flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
-      <div className="relative aspect-2/1 w-full shrink-0 overflow-hidden bg-gray-100">
-        <Image
-          src={data.img_src}
-          alt={data.name}
-          fill
-          loading="eager"
-          sizes="20rem"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+      <div className="relative aspect-2/1 w-full shrink-0 overflow-hidden border-b border-gray-200 bg-gray-100">
+        <ExamThumbnail src={data.preview_src} />
         <span className="text-text-default absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/85 px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm">
-          <FiFileText size={12} /> PDF
+          <FiFileText size={12} /> {formatFileType(data.mimeType)}
         </span>
       </div>
 
@@ -75,7 +63,7 @@ const ExamCard = (data: ExamCardProps) => {
               {data.year - 1}-{data.year}
             </span>
             <GoDotFill size={6} />
-            <span>{sizeLabel}</span>
+            <span>{formatFileSize(data.fileSize)}</span>
           </div>
           {data.manageable && data.id && data.slug ? (
             <ExamManageMenu id={data.id} slug={data.slug} name={data.name} />
@@ -98,13 +86,13 @@ const ExamCard = (data: ExamCardProps) => {
             </button>
           )}
           {downloadHref ? (
-            <Link
+            <a
               href={downloadHref}
               className="bg-background-secondary text-text-primary flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90"
             >
               <FiDownload size={16} />
               Télécharger
-            </Link>
+            </a>
           ) : (
             <button className="bg-background-secondary text-text-primary flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90">
               <FiDownload size={16} />

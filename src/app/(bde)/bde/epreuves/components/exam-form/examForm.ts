@@ -61,12 +61,6 @@ export function mergeFiles(current: File[], incoming: File[]): File[] {
   return [...current, ...added];
 }
 
-export function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} o`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
-}
-
 /** Titre propose par defaut pour un fichier : son nom sans extension, separateurs remplaces. */
 export function titleFromFileName(name: string): string {
   return name

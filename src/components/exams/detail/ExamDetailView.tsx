@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { FiArrowLeft, FiDownload, FiEdit2, FiRefreshCw } from "react-icons/fi";
-import { formatFileSize } from "@/components/exams/ExamCard";
 import {
   BDE_BASE_PATH,
   catalogueHref,
@@ -10,6 +9,7 @@ import {
   type SpaceBasePath,
 } from "@/components/layout/spaces";
 import { getExamBySlug, getExamR2Key } from "@/features/exams/queries";
+import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { examFileExists } from "@/lib/r2/exists";
 import ExamFilePreview from "./ExamFilePreview";
 import ShareExamButton from "./ShareExamButton";
@@ -50,7 +50,10 @@ export default async function ExamDetailView({
     { label: "Année académique", value: exam.academicYear },
     { label: "Session", value: exam.session },
     { label: "Type", value: exam.examType },
-    { label: "Format", value: `PDF · ${formatFileSize(exam.fileSize)}` },
+    {
+      label: "Format",
+      value: `${formatFileType(exam.mimeType)} · ${formatFileSize(exam.fileSize)}`,
+    },
     {
       label: "Ajoutée le",
       value: dateFormat.format(new Date(exam.createdAt)),

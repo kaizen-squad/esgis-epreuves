@@ -19,7 +19,12 @@ export type Exam = {
   subjectId: string;
   option: string | null;
   optionId: string | null;
+  /** Taille reelle du fichier, en octets. */
   fileSize: number;
+  /** Type MIME reel du fichier (ex. `application/pdf`), chaine vide si inconnu. */
+  mimeType: string;
+  /** Change quand le fichier est remplace : invalide l'apercu garde en cache par le navigateur. */
+  fileVersion: string;
   createdAt: string;
 };
 

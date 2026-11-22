@@ -25,7 +25,7 @@ const from = vi.fn(() => ({ insert, delete: del, select, update }));
 const putExamFile = vi.fn();
 const deleteExamFile = vi.fn();
 const checkExamDuplicate = vi.fn();
-const getExams = vi.fn();
+const countExams = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ from }),
@@ -35,7 +35,8 @@ vi.mock("@/lib/r2/upload", () => ({
   deleteExamFile: (...args: unknown[]) => deleteExamFile(...args),
 }));
 vi.mock("./queries", () => ({
-  getExams: (...args: unknown[]) => getExams(...args),
+  countExams: (...args: unknown[]) => countExams(...args),
+  getExams: vi.fn(),
   getFieldExams: vi.fn(),
 }));
 vi.mock("./duplicate", () => ({
@@ -943,7 +944,7 @@ describe("uploadExamsBatch", () => {
     if (!result.ok) return;
     expect(result.data.entries[0]).toMatchObject({
       status: "error",
-      message: "Impossible d'enregistrer l'epreuve.",
+      message: expect.stringContaining("compte BDE actif"),
     });
     expect(result.data.entries[1]).toMatchObject({ status: "imported" });
     expect(putExamFile).toHaveBeenCalledTimes(1);
@@ -1104,19 +1105,19 @@ describe("uploadExamsBatch", () => {
 
 describe("countSearchResults", () => {
   beforeEach(() => {
-    getExams.mockReset();
+    countExams.mockReset();
   });
 
   it("renvoie 0 sans requete pour un terme sans mot exploitable", async () => {
     expect(await countSearchResults("   ")).toBe(0);
     expect(await countSearchResults("-- !")).toBe(0);
-    expect(getExams).not.toHaveBeenCalled();
+    expect(countExams).not.toHaveBeenCalled();
   });
 
   it("renvoie le total de la recherche du catalogue", async () => {
-    getExams.mockResolvedValue({ exams: [], total: 12, page: 1, pageSize: 1 });
+    countExams.mockResolvedValue(12);
 
     expect(await countSearchResults("algo")).toBe(12);
-    expect(getExams).toHaveBeenCalledWith({ search: "algo", pageSize: 1 });
+    expect(countExams).toHaveBeenCalledWith({ search: "algo" });
   });
 });

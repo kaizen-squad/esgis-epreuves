@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import {
+  getAcademicYears,
   getFieldExams,
   getFieldLevelOptionNames,
 } from "@/features/exams/queries";
@@ -45,9 +46,10 @@ export default async function FieldExamsView({
   ]);
   if (!result) notFound();
 
-  const optionNames = level
-    ? await getFieldLevelOptionNames(result.field.id, level.id)
-    : [];
+  const [optionNames, academicYears] = await Promise.all([
+    level ? getFieldLevelOptionNames(result.field.id, level.id) : [],
+    getAcademicYears(result.field.id),
+  ]);
   const title = fieldPageTitle(
     result.field.name,
     level?.name ?? null,
@@ -90,6 +92,7 @@ export default async function FieldExamsView({
           subjects: subjects.filter(
             (subject) => subject.fieldId === result.field.id,
           ),
+          academicYears,
         }}
       />
       <CTACatalogue catalogueHref={spaceCatalogue} />
