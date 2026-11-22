@@ -13,6 +13,7 @@ import type {
   FieldExamsResult,
   FieldCategory,
   FieldLevelSummary,
+  SubjectCoverage,
 } from "./types";
 
 const EXAM_CATALOG_SELECT =
@@ -386,6 +387,62 @@ export async function getFieldLevelOptionNames(
   );
 
   return names.filter((name) => name !== null);
+}
+
+type SubjectCoverageRow = {
+  id: string;
+  name: string;
+  level_id: string;
+  levels: { name: string };
+};
+
+const SUBJECT_COVERAGE_REVALIDATE_SECONDS = 60;
+
+const getSubjectCoverageCached = unstable_cache(
+  async (fieldId: string): Promise<SubjectCoverage[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("subjects")
+      .select("id, name, level_id, levels!inner(name)")
+      .eq("field_id", fieldId)
+      .eq("is_active", true)
+      .eq("levels.is_active", true)
+      .order("name");
+
+    if (error) throw error;
+    const subjects = data as unknown as SubjectCoverageRow[];
+
+    return Promise.all(
+      subjects.map(async (subject) => {
+        const { count, error: countError } = await supabase
+          .from("exams")
+          .select("id", { count: "exact", head: true })
+          .eq("subject_id", subject.id);
+
+        if (countError) throw countError;
+
+        return {
+          subjectId: subject.id,
+          subjectName: subject.name,
+          levelId: subject.level_id,
+          levelName: subject.levels.name,
+          examCount: count ?? 0,
+        };
+      }),
+    );
+  },
+  ["subject-coverage"],
+  { revalidate: SUBJECT_COVERAGE_REVALIDATE_SECONDS, tags: ["exams"] },
+);
+
+/**
+ * Couverture du fonds (R-16) : pour chaque matiere active de cette filiere, son niveau et son
+ * nombre d'epreuves archivees (0 = lacune). Un comptage par matiere, lecture seule.
+ */
+export async function getSubjectCoverage(
+  fieldId: string,
+): Promise<SubjectCoverage[]> {
+  return getSubjectCoverageCached(fieldId);
 }
 
 /** Lecture d'une epreuve par son slug, pour la page detail. `null` si absente (notFound() cote page). */
