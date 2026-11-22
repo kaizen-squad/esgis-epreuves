@@ -98,7 +98,7 @@ function SearchForm({
         event.preventDefault();
         onSubmit();
       }}
-      className="bg-background-primary rounded-control flex border border-gray-300 py-1 pr-2 pl-4"
+      className="bg-background-primary rounded-control focus-ring-within flex border border-gray-300 py-1 pr-2 pl-4"
     >
       <input
         className="min-w-0 flex-1"

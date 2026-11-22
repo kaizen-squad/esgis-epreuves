@@ -17,10 +17,12 @@ export {
   FiFileText,
   FiLayers,
   FiLinkedin,
-  FiMenu,
   FiMoreVertical,
   FiRefreshCw,
   FiStar,
   FiX,
 } from "react-icons/fi";
 export { GoDotFill } from "react-icons/go";
+// Feather n'a pas d'icone WhatsApp ; meme exception de marque que FiLinkedin, mais prise dans
+// react-icons/fa faute d'equivalent Feather.
+export { FaWhatsapp } from "react-icons/fa";

@@ -37,7 +37,7 @@ const CatalogueFilter = ({
       </Drawer.Trigger>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
-        <Drawer.Content className="bg-background-primary fixed right-0 bottom-0 left-0 z-50 mt-24 flex h-[80dvh] flex-col rounded-t-[10px] outline-none">
+        <Drawer.Content className="bg-background-primary fixed right-0 bottom-0 left-0 z-50 mt-24 flex h-[80dvh] flex-col rounded-t-3xl outline-none">
           <Drawer.Title className="sr-only">Filtres</Drawer.Title>
           <FilterComponents
             onClose={() => setIsDrawerOpen(false)}

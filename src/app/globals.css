@@ -27,6 +27,22 @@
   --shadow-card: 0 1px 2px 0 rgb(17 22 36 / 0.06);
   --shadow-elevated: 0 12px 32px -8px rgb(17 22 36 / 0.18);
 
+  /*
+   * Feuilles du classeur rangees derriere la page courante : le meme papier blanc, assombri
+   * par la couverture marine a mesure qu'il s'enfonce dans la pile. Pas une nouvelle teinte,
+   * un melange des deux couleurs de la charte.
+   */
+  --color-sheet-1: color-mix(
+    in oklab,
+    var(--color-background-primary) 84%,
+    var(--color-background-secondary)
+  );
+  --color-sheet-2: color-mix(
+    in oklab,
+    var(--color-background-primary) 64%,
+    var(--color-background-secondary)
+  );
+
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -55,6 +71,24 @@
     box-shadow: 0 0 0 4px var(--color-background-accent);
   }
 
+  /*
+   * Meme anneau, mais sur le conteneur d'un controle compose (ex. barre de recherche input +
+   * bouton) plutot que sur l'input seul : celui-ci n'a ni bordure ni padding propres, l'anneau
+   * par defaut se collerait a sa boite etroite au lieu d'epouser la forme de la barre entiere.
+   */
+  .focus-ring-within {
+    outline: none;
+  }
+  .focus-ring-within:has(:focus-visible) {
+    outline: 2px solid #ffffff;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 4px var(--color-background-accent);
+  }
+  .focus-ring-within :focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -67,12 +101,225 @@
   }
 
   /*
-   * Grain papier tres discret, uniquement sur le fond de page (jamais sur les cartes ni la
-   * recherche, qui ont leur propre fond opaque). Bruit SVG genere une fois, repete en tuile.
+   * Grain papier tres discret, uniquement sur le fond de page : le `<body>` et la feuille du
+   * classeur (`.binder-sheet`), jamais sur les cartes ni la recherche, qui ont leur propre fond
+   * opaque. Bruit SVG genere une fois, repete en tuile.
    */
+  :root {
+    --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
   body {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-image: var(--paper-grain);
     background-repeat: repeat;
+  }
+}
+
+/*
+ * Classeur (DA Archives). La couverture marine encadre une feuille blanche (la page courante),
+ * posee devant deux feuilles rangees dont on voit la tranche depasser en haut. Chaque rubrique
+ * de la navigation est l'intercalaire d'une de ces feuilles : l'onglet actif est la languette
+ * de la feuille du dessus, il en sort par deux conges concaves ; les autres appartiennent aux
+ * feuilles du dessous, d'autant plus sombres qu'elles sont loin de l'onglet actif.
+ */
+@layer components {
+  .binder-sheet {
+    background-image: var(--paper-grain);
+    /* Ombre portee de la feuille du dessus, tranche 1, son ombre sur la tranche 2, tranche 2. */
+    box-shadow:
+      0 -1px 4px rgb(17 22 36 / 0.28),
+      0 -8px 0 -4px var(--color-sheet-1),
+      0 -8px 4px -4px rgb(17 22 36 / 0.45),
+      0 -16px 0 -8px var(--color-sheet-2);
+  }
+
+  .binder-tab {
+    --tab-paper: var(--color-background-primary);
+    --tab-fillet: 0.75rem;
+    position: relative;
+    isolation: isolate;
+    z-index: 3;
+    /* Seul effet : l'anneau de focus global epouse les coins hauts de l'onglet. */
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+
+  /* Corps de l'onglet : trapeze aux coins hauts arrondis, ancre sur sa base. */
+  .binder-tab::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 0.75rem 0.75rem 0 0;
+    background-color: var(--tab-paper);
+    box-shadow: 0 0 10px -3px rgb(17 22 36 / 0.45);
+    /* L'ombre s'arrete a la base : elle ne deborde jamais sur la feuille en dessous. */
+    clip-path: inset(-1rem -1rem 0 -1rem);
+    transform-origin: bottom;
+    transform: scaleY(1.08) perspective(4em) rotateX(6deg);
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /*
+   * Conges concaves de part et d'autre de la base : l'onglet "pousse" de la tranche de sa
+   * feuille au lieu d'y etre pose. Decales de 1.5px vers l'interieur pour rejoindre le flanc
+   * incline du trapeze sans laisser de jour.
+   */
+  .binder-tab::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: calc(1.5px - var(--tab-fillet));
+    right: calc(1.5px - var(--tab-fillet));
+    height: var(--tab-fillet);
+    z-index: -1;
+    background:
+      radial-gradient(
+          circle at 0 0,
+          transparent calc(var(--tab-fillet) - 0.5px),
+          var(--tab-paper) var(--tab-fillet)
+        )
+        left bottom / var(--tab-fillet) var(--tab-fillet) no-repeat,
+      radial-gradient(
+          circle at 100% 0,
+          transparent calc(var(--tab-fillet) - 0.5px),
+          var(--tab-paper) var(--tab-fillet)
+        )
+        right bottom / var(--tab-fillet) var(--tab-fillet) no-repeat;
+  }
+
+  .binder-tab[aria-current="page"]::before {
+    animation: binder-tab-pull 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /*
+   * Onglets des feuilles du dessous : leur base repose sur la tranche de leur propre feuille
+   * (1px au-dessus de la page pour la tranche 1, 4px de plus pour la tranche 2).
+   */
+  .binder-tab[data-depth="1"] {
+    --tab-paper: var(--color-sheet-1);
+    margin-bottom: 1px;
+    z-index: 2;
+  }
+  .binder-tab[data-depth="2"] {
+    --tab-paper: var(--color-sheet-2);
+    margin-bottom: 5px;
+    z-index: 1;
+  }
+
+  /* L'onglet qui a le focus passe devant ses voisins, pour que son anneau reste entier. */
+  .binder-tab:focus-visible {
+    z-index: 4;
+  }
+
+  /* Survol : on tire legerement l'intercalaire vers le haut pour jeter un oeil a sa feuille. */
+  .binder-tab:not([aria-current="page"]):hover::before {
+    transform: scaleY(1.2) perspective(4em) rotateX(6deg);
+  }
+
+  @keyframes binder-tab-pull {
+    from {
+      transform: scaleY(0.86) perspective(4em) rotateX(6deg);
+    }
+  }
+
+  /*
+   * Bas de la couverture (pied de page). Le titre du classeur y est frappe a froid, comme le
+   * titre d'un registre relie : lettres enfoncees dans la couverture (remplissage assombri),
+   * levre basse qui accroche la lumiere (reflet blanc decale vers le bas). Le point, lui, est
+   * frappe a chaud dans le rouge de la charte, comme la marque de la barre de navigation.
+   * Remplissage opaque : avec une encre translucide, les lettres resserrees laissaient voir
+   * leurs chevauchements.
+   */
+  .cover-stamp {
+    color: color-mix(in oklab, var(--color-background-secondary) 88%, #000);
+    text-shadow:
+      0 max(1px, 0.012em) 0 rgb(255 255 255 / 0.11),
+      0 calc(-1 * max(1px, 0.006em)) 0 rgb(0 0 0 / 0.3);
+  }
+  .cover-stamp-foil {
+    color: var(--color-background-accent);
+    text-shadow: none;
+  }
+
+  /* Porte-etiquette : logement creuse dans la couverture, ou glisse l'etiquette papier. */
+  .cover-slot {
+    background-color: rgb(0 0 0 / 0.14);
+    box-shadow:
+      inset 0 2px 4px rgb(0 0 0 / 0.4),
+      inset 0 -1px 0 rgb(255 255 255 / 0.08);
+  }
+
+  /*
+   * Cartes filiere : chaque couple niveau x filiere est un intercalaire du classeur, range dans
+   * le logement de sa filiere (`.filing-tray`, meme geste que `.cover-slot`, creuse cette fois
+   * dans la feuille blanche). Sa languette (`.binder-tab`, la meme que la navigation) porte le
+   * niveau ; comme dans un vrai jeu de cinq intercalaires, elle se decale d'un cran par niveau
+   * (`--tab-step`, 0 a 4), du bord gauche au bord droit.
+   */
+  .filing-tray {
+    background-color: color-mix(
+      in oklab,
+      var(--color-sheet-1) 45%,
+      transparent
+    );
+    box-shadow:
+      inset 0 2px 5px rgb(17 22 36 / 0.16),
+      inset 0 -1px 0 rgb(255 255 255 / 0.7);
+  }
+
+  .divider-card {
+    --tab-inset: calc(var(--radius-card) + 0.75rem);
+    --pile: 0 0 0 transparent;
+    box-shadow:
+      var(--pile),
+      0 0 10px -3px rgb(17 22 36 / 0.45);
+  }
+  /* L'anneau de focus global passe par `box-shadow` : il est remis devant la pile. */
+  .divider-card:focus-visible {
+    box-shadow:
+      0 0 0 4px var(--color-background-accent),
+      var(--pile),
+      0 0 10px -3px rgb(17 22 36 / 0.45);
+  }
+
+  /*
+   * Feuilles classees derriere l'intercalaire : leur tranche depasse sous la carte, une par
+   * fichier jusqu'a trois (`data-pile`), chacune plus etroite et plus sombre que la precedente,
+   * soulignee d'un filet. L'epaisseur suit le vrai nombre de fichiers, le texte le donne en clair.
+   */
+  .divider-card[data-pile="1"] {
+    --pile:
+      0 1px 0 rgb(17 22 36 / 0.16),
+      0 6px 0 -2px var(--color-background-primary),
+      0 7px 0 -2px rgb(17 22 36 / 0.22);
+  }
+  .divider-card[data-pile="2"] {
+    --pile:
+      0 1px 0 rgb(17 22 36 / 0.16),
+      0 6px 0 -2px var(--color-background-primary),
+      0 7px 0 -2px rgb(17 22 36 / 0.22), 0 12px 0 -4px var(--color-sheet-1),
+      0 13px 0 -4px rgb(17 22 36 / 0.22);
+  }
+  .divider-card[data-pile="3"] {
+    --pile:
+      0 1px 0 rgb(17 22 36 / 0.16),
+      0 6px 0 -2px var(--color-background-primary),
+      0 7px 0 -2px rgb(17 22 36 / 0.22), 0 12px 0 -4px var(--color-sheet-1),
+      0 13px 0 -4px rgb(17 22 36 / 0.22), 0 18px 0 -6px var(--color-sheet-2),
+      0 19px 0 -6px rgb(17 22 36 / 0.22);
+  }
+
+  /* Position de la languette : `--tab-step` quarts de la largeur utile, sans mordre les coins. */
+  .divider-tab {
+    left: calc(
+      var(--tab-inset) + (100% - 2 * var(--tab-inset)) * var(--tab-step) / 4
+    );
+    translate: calc(-100% * var(--tab-step) / 4) 0;
+  }
+
+  /* Survol ou focus de la carte : on tire l'intercalaire, comme un onglet de la navigation. */
+  .divider-card:hover .divider-tab::before,
+  .divider-card:focus-visible .divider-tab::before {
+    transform: scaleY(1.2) perspective(4em) rotateX(6deg);
   }
 }
 

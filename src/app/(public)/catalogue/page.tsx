@@ -1,7 +1,6 @@
 import React from "react";
 import CatalogueWelcomeSection from "./components/CatalogueWelcomeSection";
 import Research from "@/components/exams/Research";
-import ResultsResume from "@/components/home/ResultsResume";
 import CatalogueEpreuveSection from "@/components/catalogue/CatalogueEpreuveSection";
 import type { CatalogueSearchParams } from "@/components/exams/catalogueFilters";
 
@@ -25,9 +24,6 @@ const Catalogue = async ({
       </p>
 
       <CatalogueEpreuveSection searchParams={params} />
-      <div className="px-6">
-        <ResultsResume />
-      </div>
     </>
   );
 };

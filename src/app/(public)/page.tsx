@@ -6,6 +6,7 @@ import RecentlyAdded, {
   RecentlyAddedSkeleton,
 } from "@/components/exams/RecentlyAdded";
 import Research from "@/components/exams/Research";
+import ResultsResume from "@/components/home/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
 
 export default function Accueil() {
@@ -18,11 +19,14 @@ export default function Accueil() {
       </div>
       <div className="px-6">
         <Suspense fallback={<RecentlyAddedSkeleton />}>
-          <RecentlyAdded title="Nouveaux versements" />
+          <RecentlyAdded title="Récemment ajoutés" />
         </Suspense>
         <Suspense fallback={<FilieresSkeleton />}>
           <Filieres />
         </Suspense>
+      </div>
+      <div className="px-6">
+        <ResultsResume />
       </div>
     </>
   );
