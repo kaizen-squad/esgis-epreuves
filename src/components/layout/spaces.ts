@@ -21,3 +21,13 @@ export function examHref(basePath: SpaceBasePath, slug: string): string {
 export function publicExamPath(slug: string): string {
   return examHref("", slug);
 }
+
+/**
+ * Un lien de navigation est actif sur sa propre page et sur ses sous-pages (ex. `/filieres`
+ * reste actif sur `/filieres/[id]`), jamais par simple prefixe de chaine qui ferait correspondre
+ * `/f` a `/filieres`.
+ */
+export function isNavLinkActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
