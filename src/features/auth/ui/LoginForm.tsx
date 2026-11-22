@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { login } from "@/features/auth/actions";
 import type { ActionResult } from "@/lib/action-result";
@@ -10,6 +11,8 @@ export default function LoginForm() {
     ActionResult<void> | null,
     FormData
   >(login, null);
+  const [email, setEmail] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
 
   const fieldErrors =
     state && !state.ok && "fieldErrors" in state
@@ -17,8 +20,21 @@ export default function LoginForm() {
       : undefined;
   const formError = state && !state.ok ? state.error : null;
 
+  // Deplace le focus sur le premier champ en erreur apres un echec : le champ fautif s'il est
+  // identifie (email ou mot de passe invalide), sinon le mot de passe (identifiants incorrects,
+  // aucun champ en particulier a blamer). Depend de `state`, pas de `formError` : deux echecs de
+  // suite avec le meme message garderaient la meme chaine et ne redeclencheraient pas l'effet.
+  useEffect(() => {
+    if (!state || state.ok) return;
+    const target =
+      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
+      formRef.current?.querySelector<HTMLElement>("#password");
+    target?.focus();
+  }, [state]);
+
   return (
     <form
+      ref={formRef}
       action={formAction}
       className="mb-4 flex w-full flex-col gap-6 px-4 md:mb-10 md:gap-8"
       noValidate
@@ -33,16 +49,12 @@ export default function LoginForm() {
           type="email"
           autoComplete="email"
           required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
           aria-invalid={fieldErrors?.email ? true : undefined}
-          aria-describedby={fieldErrors?.email ? "email-error" : undefined}
           className="rounded-lg border px-3 py-2 outline-none"
           placeholder="Entrez votre email"
         />
-        {fieldErrors?.email?.length ? (
-          <p id="email-error" className="text-sm text-red-600">
-            {fieldErrors.email[0]}
-          </p>
-        ) : null}
       </div>
 
       <div className="flex flex-col gap-1">
@@ -56,17 +68,9 @@ export default function LoginForm() {
           autoComplete="current-password"
           required
           aria-invalid={fieldErrors?.password ? true : undefined}
-          aria-describedby={
-            fieldErrors?.password ? "password-error" : undefined
-          }
           className="rounded-lg border px-3 py-2"
           placeholder="Entrez votre mot de passe"
         />
-        {fieldErrors?.password?.length ? (
-          <p id="password-error" className="text-sm text-red-600">
-            {fieldErrors.password[0]}
-          </p>
-        ) : null}
         <p className="text-text-paragraph mb-0 text-sm">
           Mot de passe oublié ? Contactez l&apos;administrateur.
         </p>

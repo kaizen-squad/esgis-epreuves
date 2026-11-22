@@ -22,10 +22,12 @@ export async function login(
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return actionError(
-      "Identifiants invalides.",
-      z.flattenError(parsed.error).fieldErrors,
-    );
+    const fieldErrors = z.flattenError(parsed.error).fieldErrors;
+    const firstMessage =
+      fieldErrors.email?.[0] ??
+      fieldErrors.password?.[0] ??
+      "Identifiants invalides.";
+    return actionError(firstMessage, fieldErrors);
   }
 
   const supabase = await createClient();

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { IconType } from "react-icons";
-import { FiGrid, FiMenu, FiUserPlus, FiX } from "react-icons/fi";
+import { FiGrid, FiList, FiMenu, FiUserPlus, FiX } from "react-icons/fi";
 import LogoutButton from "@/components/layout/LogoutButton";
 
 type AdminLink = {
@@ -26,6 +26,12 @@ const ADMIN_LINKS: AdminLink[] = [
     href: "/admin/membres/ajouter",
     icon: FiUserPlus,
     isActive: (pathname) => pathname.startsWith("/admin/membres"),
+  },
+  {
+    name: "Référentiels",
+    href: "/admin/referentiels",
+    icon: FiList,
+    isActive: (pathname) => pathname.startsWith("/admin/referentiels"),
   },
 ];
 
@@ -97,7 +103,7 @@ export default function AdminSidebar() {
                     href={href}
                     onClick={() => setOpen(false)}
                     aria-current={active ? "page" : undefined}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? "bg-background-accent text-text-primary" : "text-text-default hover:bg-background-default"}`}
+                    className={`rounded-control flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${active ? "bg-background-accent text-text-primary" : "text-text-default hover:bg-background-default"}`}
                   >
                     <Icon size={18} />
                     {name}

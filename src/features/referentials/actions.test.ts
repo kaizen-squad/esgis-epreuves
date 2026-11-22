@@ -70,7 +70,7 @@ describe("createField", () => {
 
     expect(result).toEqual({
       ok: false,
-      error: "Cette filiere existe deja.",
+      error: "Cette filière existe déjà.",
     });
   });
 
@@ -121,7 +121,7 @@ describe("updateField", () => {
 
     const result = await updateField(FIELD_UUID, form({ name: "Gestion" }));
 
-    expect(result).toEqual({ ok: false, error: "Cette filiere existe deja." });
+    expect(result).toEqual({ ok: false, error: "Cette filière existe déjà." });
   });
 });
 
@@ -166,7 +166,7 @@ describe("setFieldActive", () => {
     // @ts-expect-error valeur forgee volontairement pour simuler un appel non type-safe
     const result = await setFieldActive(FIELD_UUID, "yes");
 
-    expect(result).toEqual({ ok: false, error: "Donnees invalides." });
+    expect(result).toEqual({ ok: false, error: "Données invalides." });
     expect(from).not.toHaveBeenCalled();
   });
 
@@ -189,7 +189,7 @@ describe("setFieldActive", () => {
 
     expect(result).toEqual({
       ok: false,
-      error: "Impossible de changer l'etat.",
+      error: "Impossible de changer l'état.",
     });
   });
 });

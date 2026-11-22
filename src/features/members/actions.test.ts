@@ -92,13 +92,16 @@ describe("createBdeMember", () => {
     expect(createUser).not.toHaveBeenCalled();
   });
 
-  it("signale une cle secrete manquante", async () => {
+  it("signale une configuration serveur manquante, sans nommer la variable", async () => {
     adminConfigured = false;
 
     const result = await createBdeMember(memberForm());
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("SUPABASE_SECRET_KEY");
+    if (!result.ok) {
+      expect(result.error).not.toContain("SUPABASE_SECRET_KEY");
+      expect(result.error).toContain("configuration");
+    }
   });
 
   it("cree le compte Auth confirme puis le profil BDE", async () => {

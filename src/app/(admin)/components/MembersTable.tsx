@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { FiEdit2 } from "react-icons/fi";
+import { setBdeMemberActive } from "@/features/members/actions";
 import type { BdeMember } from "@/features/members/types";
-import MemberStatusButton from "./MemberStatusButton";
+import ActiveToggleButton from "./ActiveToggleButton";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -131,14 +132,36 @@ export default function MembersTable({
                       <Link
                         href={`/admin/membres/${member.id}/modifier`}
                         aria-label={`Modifier ${name}`}
-                        className="text-text-default flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
+                        className="text-text-default rounded-control flex items-center gap-1.5 border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
                       >
                         <FiEdit2 size={13} /> Modifier
                       </Link>
-                      <MemberStatusButton
+                      <ActiveToggleButton
                         id={member.id}
                         name={name}
                         isActive={member.isActive}
+                        setActive={setBdeMemberActive}
+                        title={
+                          member.isActive
+                            ? "Désactiver ce membre ?"
+                            : "Réactiver ce membre ?"
+                        }
+                        description={
+                          member.isActive ? (
+                            <p className="mb-0">
+                              <strong>{name}</strong> ne pourra plus se
+                              connecter ni gérer les épreuves. Les épreuves déjà
+                              déposées restent en ligne. Vous pourrez réactiver
+                              ce compte à tout moment.
+                            </p>
+                          ) : (
+                            <p className="mb-0">
+                              <strong>{name}</strong> pourra de nouveau se
+                              connecter avec ses identifiants actuels et gérer
+                              les épreuves.
+                            </p>
+                          )
+                        }
                       />
                     </div>
                   </td>

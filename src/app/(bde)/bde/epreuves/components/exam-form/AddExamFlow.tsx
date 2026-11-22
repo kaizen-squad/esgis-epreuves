@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   startTransition,
   useActionState,
+  useEffect,
+  useRef,
   useState,
   type SubmitEvent,
 } from "react";
@@ -31,7 +33,7 @@ import {
 } from "./examForm";
 import AddExamResult from "./AddExamResult";
 import ExamFormSaving from "./ExamFormSaving";
-import ExamFormStepper, { type ExamFormStep } from "./ExamFormStepper";
+import type { ExamFormStep } from "./ExamFormStepper";
 import ExamCommonFields from "./ExamCommonFields";
 import ExamDropzone from "./ExamDropzone";
 import ExamFileCard from "./ExamFileCard";
@@ -83,6 +85,7 @@ export default function AddExamFlow({
   const [values, setValues] = useState<ExamCommonValues>(EMPTY_VALUES);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [dismissedId, setDismissedId] = useState<number | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
@@ -128,13 +131,6 @@ export default function AddExamFlow({
     : showResult
       ? "result"
       : "form";
-  const outcome =
-    state.status === "done"
-      ? state.result.ok &&
-        state.result.data.summary.imported === state.result.data.summary.total
-        ? "success"
-        : "failure"
-      : undefined;
 
   const addFiles = (incoming: File[]) => {
     setFiles((current) => {
@@ -155,6 +151,21 @@ export default function AddExamFlow({
 
   const removeEntry = (key: string) =>
     setFiles((current) => current.filter((entry) => entry.key !== key));
+
+  // Deplace le focus sur le premier champ en erreur apres un echec de validation, sans scroll
+  // supplementaire (le champ est deja dans le formulaire visible). Un `<fieldset>` (session,
+  // type) n'est pas focusable : on cible alors son premier bouton radio.
+  useEffect(() => {
+    if (state.status !== "invalid") return;
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>(
+      '[aria-invalid="true"]',
+    );
+    const target =
+      firstInvalid?.tagName === "FIELDSET"
+        ? firstInvalid.querySelector<HTMLElement>("input")
+        : firstInvalid;
+    target?.focus();
+  }, [state]);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -185,8 +196,6 @@ export default function AddExamFlow({
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6">
-      <ExamFormStepper current={step} outcome={outcome} />
-
       {step === "saving" ? (
         <ExamFormSaving
           title="Publication en cours…"
@@ -208,6 +217,7 @@ export default function AddExamFlow({
 
       {step === "form" ? (
         <form
+          ref={formRef}
           onSubmit={handleSubmit}
           noValidate
           className="flex flex-col gap-10"

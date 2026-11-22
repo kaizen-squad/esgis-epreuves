@@ -25,9 +25,9 @@ export function inputClass(error?: string) {
 }
 
 /**
- * Champs communs aux formulaires d'ajout et de modification d'une epreuve : filiere, niveau,
- * matiere (recherche), session et type. Changer de filiere ou de niveau vide la matiere devenue
- * incompatible ; choisir une matiere renseigne sa filiere et son niveau.
+ * Champs communs aux formulaires d'ajout et de modification d'une epreuve : matiere (recherche,
+ * en premier), filiere, niveau, session et type. Changer de filiere ou de niveau vide la matiere
+ * devenue incompatible ; choisir une matiere renseigne sa filiere et son niveau.
  */
 export default function ExamCommonFields({
   fields,
@@ -44,7 +44,7 @@ export default function ExamCommonFields({
   values: ExamCommonValues;
   errors: Partial<Record<ExamCommonField, string>>;
   onChange: (patch: Partial<ExamCommonValues>) => void;
-  /** Champ supplementaire affiche sous la matiere (ex. option, en modification). */
+  /** Champ supplementaire affiche sous filiere/niveau (ex. option, en modification). */
   afterSubject?: ReactNode;
 }) {
   const subjectFits = (fieldId: string, levelId: string) =>
@@ -80,6 +80,20 @@ export default function ExamCommonFields({
 
   return (
     <>
+      <SubjectSearch
+        subjects={subjects}
+        fields={fields}
+        levels={levels}
+        fieldId={values.fieldId}
+        levelId={values.levelId}
+        subjectId={values.subjectId}
+        onSelect={handleSubjectSelect}
+        error={errors.subjectId}
+      />
+      <p className="text-text-paragraph mb-0 text-sm">
+        Matière manquante ? Demandez son ajout à l&apos;administrateur.
+      </p>
+
       <div className="grid gap-5 md:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="fieldId" className="font-medium">
@@ -131,17 +145,6 @@ export default function ExamCommonFields({
           <FieldError name="levelId" error={errors.levelId} />
         </div>
       </div>
-
-      <SubjectSearch
-        subjects={subjects}
-        fields={fields}
-        levels={levels}
-        fieldId={values.fieldId}
-        levelId={values.levelId}
-        subjectId={values.subjectId}
-        onSelect={handleSubjectSelect}
-        error={errors.subjectId}
-      />
 
       {afterSubject}
 

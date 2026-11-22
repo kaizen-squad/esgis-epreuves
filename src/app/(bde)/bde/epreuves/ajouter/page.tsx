@@ -14,11 +14,23 @@ export default async function AjouterEpreuvePage() {
     getLevels(),
     getSubjects(),
   ]);
+  // `fields`/`levels` ne contiennent deja que les actifs : une matiere dont la filiere ou le
+  // niveau a ete desactive depuis l'admin ne doit pas rester proposee ici (le champ n'existe
+  // plus dans aucun des deux `<select>`).
+  const fieldIds = new Set(fields.map((f) => f.id));
+  const levelIds = new Set(levels.map((l) => l.id));
+  const availableSubjects = subjects.filter(
+    (s) => fieldIds.has(s.fieldId) && levelIds.has(s.levelId),
+  );
 
   return (
     <div>
       <ExamWelcomeSection title="Ajouter une Épreuve" />
-      <AddExamFlow fields={fields} levels={levels} subjects={subjects} />
+      <AddExamFlow
+        fields={fields}
+        levels={levels}
+        subjects={availableSubjects}
+      />
     </div>
   );
 }
