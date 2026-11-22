@@ -5,6 +5,7 @@ import {
   FiArrowLeft,
   FiDownload,
   FiEdit2,
+  FiLayers,
   FiRefreshCw,
 } from "@/components/icons";
 import {
@@ -17,6 +18,7 @@ import { getExamCached, getExamR2Key } from "@/features/exams/queries";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { examFileExists } from "@/lib/r2/exists";
 import Cote from "@/components/exams/Cote";
+import FavoriteButton from "@/components/classeur/FavoriteButton";
 import ExamFilePreview from "./ExamFilePreview";
 import ExamSuggestions from "./ExamSuggestions";
 import ShareExamButton from "./ShareExamButton";
@@ -130,6 +132,19 @@ export default async function ExamDetailView({
               path={publicExamPath(exam.slug)}
               title={exam.title}
             />
+            <FavoriteButton
+              snapshot={{
+                slug: exam.slug,
+                title: exam.title,
+                field: exam.field,
+                subject: exam.subject,
+                academicYear: exam.academicYear,
+                savedAt: new Date().toISOString(),
+              }}
+            />
+            <Link href="/classeur" className={MANAGE_LINK_CLASS}>
+              <FiLayers size={16} /> Classeur
+            </Link>
           </div>
 
           {basePath === BDE_BASE_PATH ? (
