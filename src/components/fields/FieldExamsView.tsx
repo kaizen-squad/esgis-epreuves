@@ -61,15 +61,13 @@ export default async function FieldExamsView({
     <>
       <div>
         <h1 className="head-title text-center">
-          Découvrez les
-          <br /> épreuves de la{" "}
+          Découvrez les épreuves de la{" "}
           <span className="text-red-600 uppercase underline">{title}</span>
         </h1>
         <p className="text-center">
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en
-          un instant.
-          <br />
-          Notre interface fluide simplifie vos révisions avant l&apos;examen.
+          un instant. Notre interface fluide simplifie vos révisions avant
+          l&apos;examen.
         </p>
         <Research catalogueHref={spaceCatalogue} />
       </div>

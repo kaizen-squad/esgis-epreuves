@@ -7,19 +7,15 @@ const BDEWelcomeSection = () => {
   return (
     <div className="mb-16 w-full text-center">
       <h1 className="sub-title">Bienvenue sur Alexandria</h1>
-      <h2 className="head-title">
-        Simplifiez le gestion <br className="hidden md:block" />
-        des Epreuves
-      </h2>
+      <h2 className="head-title">Simplifiez la gestion des épreuves</h2>
       <p className="text-text-default mb-7">
         Enrichissez notre banque d&apos;épreuves pour offrir aux étudiants un
-        outil de révision idéal et <br className="hidden md:block" />
-        maximiser leur réussite.
+        outil de révision idéal et maximiser leur réussite.
       </p>
 
       <Link
         href="/bde/epreuves/ajouter"
-        className="bg-background-accent text-text-primary mx-auto mb-10 flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-black px-4 py-2"
+        className="bg-background-accent text-text-primary border-background-secondary mx-auto mb-10 flex w-fit items-center gap-2 rounded-[var(--radius-control)] border px-4 py-2 transition-colors hover:opacity-90"
       >
         Ajouter une épreuve <FiArrowRight />
       </Link>
@@ -41,8 +37,7 @@ const BDEWelcomeSection = () => {
             sizes="(max-width: 768px) 100%, (max-width: 1200px): 100%"
           />
         </div>{" "}
-        simple et rapide de toutes <br className="hidden lg:block" /> les
-        annales pour aider{" "}
+        simple et rapide de toutes les annales pour aider{" "}
         <div className="relative my-auto hidden h-10 w-25 align-middle lg:inline-block">
           <Image
             src="/images/study.png"

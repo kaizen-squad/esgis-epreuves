@@ -7,8 +7,8 @@ const ExamWelcomeSection = ({ title }: { title: string }) => {
         <h1 className="head-title">{title}</h1>
         <p>
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en
-          un instant. <br />
-          Notre interface fluide simplifie vos révisions avant l&apos;examen.
+          un instant. Notre interface fluide simplifie vos révisions avant
+          l&apos;examen.
         </p>
         <ImageHandler
           image_url="/images/accueil_span_page.jpeg"

@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+/**
+ * Famille variable (axe de largeur `wdth` en plus du poids) : couvre nativement toutes les
+ * graisses utilisees par le site, contrairement a l'ancien Poppins charge avec une liste figee
+ * qui omettait les graisses reellement utilisees en CSS (200 jamais charge, 700 absent).
+ */
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "600", "800"],
+  axes: ["wdth"],
 });
 
 export const metadata: Metadata = {
@@ -16,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" className={`${poppins.className} h-full antialiased`}>
+    <html lang="fr" className={`${archivo.variable} h-full antialiased`}>
       <body
         suppressHydrationWarning
         className="bg-background-default flex min-h-full flex-col"

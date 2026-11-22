@@ -9,19 +9,15 @@ const WelcomeSection = () => {
   return (
     <div className="mb-16 w-full text-center">
       <h1 className="sub-title">Bienvenue sur Alexandria</h1>
-      <h2 className="head-title">
-        Tes révisions <br className="hidden md:block" />
-        commencent ici...
-      </h2>
+      <h2 className="head-title">Tes révisions commencent ici...</h2>
       <p className="text-text-default mb-7">
-        Boostez vos révisions grâce à nos annales et prenez en main votre avenir
-        académique en <br className="hidden md:block" />
-        réussissant tous vos examens.
+        Booste tes révisions grâce à nos annales et prends en main ton avenir
+        académique en réussissant tous tes examens.
       </p>
 
       <Link
         href="/catalogue"
-        className="bg-background-accent text-text-primary mx-auto mb-10 flex w-fit items-center gap-2 rounded-lg border border-black px-4 py-2"
+        className="bg-background-accent text-text-primary border-background-secondary mx-auto mb-10 flex w-fit items-center gap-2 rounded-[var(--radius-control)] border px-4 py-2 transition-colors hover:opacity-90"
       >
         Voir le Catalogue <FiArrowRight />
       </Link>
@@ -43,8 +39,7 @@ const WelcomeSection = () => {
             sizes="(max-width: 768px) 100%, (max-width: 1200px): 100%"
           />
         </div>{" "}
-        gratuits et accessibles même <br className="hidden lg:block" /> sans
-        compte pour préparer{" "}
+        gratuits et accessibles même sans compte pour préparer{" "}
         <div className="relative my-auto hidden h-10 w-25 align-middle lg:inline-block">
           <Image
             src="/images/study.png"
@@ -55,7 +50,7 @@ const WelcomeSection = () => {
             sizes="(max-width: 768px) 100%, (max-width: 1200px) 100%"
           />
         </div>{" "}
-        vos examens.
+        tes examens.
       </div>
     </div>
   );

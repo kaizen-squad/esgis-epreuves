@@ -14,6 +14,60 @@
   --color-text-secondary: #0f2155;
   --color-text-title: #0c0407;
   --color-text-paragraph: #4c4c4c;
+
+  /*
+   * Rayons et ombres : une seule echelle a 3 crans, deja observee par ExamCard avant ce
+   * ticket (cartes/`rounded-card`, controles/`rounded-control`, pastilles/`rounded-full`
+   * reste l'utilitaire Tailwind natif pour les formes pleinement rondes). Tout bouton ou
+   * pastille du site doit utiliser l'un de ces crans, jamais une valeur en dur.
+   */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+
+  --shadow-card: 0 1px 2px 0 rgb(17 22 36 / 0.06);
+  --shadow-elevated: 0 12px 32px -8px rgb(17 22 36 / 0.18);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  /* `<button>` n'a pas de curseur pointeur par defaut dans la plupart des navigateurs. */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Anneau de focus visible et coherent, pour tout element navigable au clavier. */
+  :focus-visible {
+    outline: 2px solid var(--color-background-accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /*
+   * Grain papier tres discret, uniquement sur le fond de page (jamais sur les cartes ni la
+   * recherche, qui ont leur propre fond opaque). Bruit SVG genere une fois, repete en tuile.
+   */
+  body {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
 }
 
 @layer components {
@@ -22,16 +76,10 @@
   }
 
   .head-title {
-    @apply text-text-secondary mb-6 text-3xl leading-10 font-semibold md:text-5xl md:leading-14 lg:text-7xl lg:leading-18;
+    @apply text-text-secondary mb-6 text-3xl leading-10 font-semibold text-balance md:text-5xl md:leading-14 lg:text-7xl lg:leading-18;
   }
 
   .section-title {
-    @apply text-text-secondary mb-1 text-3xl font-semibold;
-  }
-}
-
-@layer base {
-  p {
-    margin-bottom: 28px;
+    @apply text-text-secondary mb-1 text-3xl font-semibold text-balance;
   }
 }
