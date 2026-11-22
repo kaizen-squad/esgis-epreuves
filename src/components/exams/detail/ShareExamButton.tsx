@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FiCheck, FiShare2 } from "react-icons/fi";
+import { FiCheck, FiCopy, FiMessageCircle, FiShare2 } from "react-icons/fi";
 
 const COPIED_MS = 2500;
+
+const ACTION_BUTTON_CLASS =
+  "text-text-default flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-3 font-medium transition-colors hover:bg-gray-50";
 
 /** Copie dans le presse-papiers, avec repli pour un contexte non securise (http sur le reseau local). */
 async function copyText(text: string): Promise<boolean> {
@@ -24,29 +27,86 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-/** « Partager l'épreuve » : copie le lien direct vers sa page de consultation. */
-export default function ShareExamButton({ path }: { path: string }) {
+/**
+ * Partage de l'epreuve (R-10) : feuille de partage native sur mobile (`navigator.share`), sinon
+ * sur desktop un lien WhatsApp pre-rempli et la copie du lien, le canal reel des etudiants etant
+ * WhatsApp mobile. L'URL absolue et la disponibilite de `navigator.share` ne sont connues qu'au
+ * montage (cote client) : `shareUrl` reste `null` le temps de ce premier effet.
+ */
+export default function ShareExamButton({
+  path,
+  title,
+}: {
+  path: string;
+  title: string;
+}) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [canShare, setCanShare] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    // Detection cote client uniquement (URL absolue, capacite navigator.share) : ni l'une ni
+    // l'autre ne peuvent se resoudre pendant le rendu, cote serveur compris.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShareUrl(new URL(path, window.location.origin).href);
+    setCanShare(typeof navigator.share === "function");
+    return () => clearTimeout(timer.current);
+  }, [path]);
 
-  const handleClick = async () => {
-    const copied = await copyText(new URL(path, window.location.origin).href);
+  const handleNativeShare = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.share({ title, url: shareUrl });
+    } catch {
+      // Feuille de partage annulee ou fermee par l'utilisateur : rien a faire.
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!shareUrl) return;
+    const copied = await copyText(shareUrl);
     setStatus(copied ? "copied" : "failed");
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setStatus("idle"), COPIED_MS);
   };
 
-  return (
-    <div className="flex flex-col gap-1">
+  if (canShare) {
+    return (
       <button
         type="button"
-        onClick={handleClick}
-        className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-3 font-medium transition-colors ${status === "copied" ? "border-green-600 bg-green-50 text-green-700" : "text-text-default border-gray-300 hover:bg-gray-50"}`}
+        onClick={handleNativeShare}
+        disabled={!shareUrl}
+        className={ACTION_BUTTON_CLASS}
       >
-        {status === "copied" ? <FiCheck size={18} /> : <FiShare2 size={18} />}
-        {status === "copied" ? "Lien copié !" : "Partager l'épreuve"}
+        <FiShare2 size={18} /> Partager l&apos;épreuve
+      </button>
+    );
+  }
+
+  const whatsappHref = shareUrl
+    ? `https://wa.me/?text=${encodeURIComponent(`${title} ${shareUrl}`)}`
+    : undefined;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <a
+        href={whatsappHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-disabled={!whatsappHref}
+        className={`${ACTION_BUTTON_CLASS} ${!whatsappHref ? "pointer-events-none opacity-50" : ""}`}
+      >
+        <FiMessageCircle size={18} /> Partager sur WhatsApp
+      </a>
+      <button
+        type="button"
+        onClick={handleCopy}
+        disabled={!shareUrl}
+        className={`${ACTION_BUTTON_CLASS} ${status === "copied" ? "border-green-600 bg-green-50 text-green-700" : ""}`}
+      >
+        {status === "copied" ? <FiCheck size={18} /> : <FiCopy size={18} />}
+        {status === "copied" ? "Lien copié !" : "Copier le lien"}
       </button>
       <p
         role="status"
