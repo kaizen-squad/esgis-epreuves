@@ -7,7 +7,6 @@ import MatiereFilterWrapper from "@/components/catalogue/filter/matiere/MatiereF
 import NiveauCard from "@/components/catalogue/filter/niveau/NiveauCard";
 import TypeEvaluationFilterWrapper from "@/components/catalogue/filter/type_evaluation/TypeEvaluationFilterWrapper";
 import SessionFilterWrapper from "@/components/catalogue/filter/session/SessionFilterWrapper";
-import DateAjoutFilterWrapper from "@/components/catalogue/filter/data_ajout/DateAjoutFilterWrapper";
 
 interface FilterComponentsProps {
   onClose?: () => void;
@@ -39,12 +38,9 @@ const FilterComponents = ({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="px-4">
           <div className="flex items-center justify-between">
-            <div className="text-text-secondary mb-4 flex items-center gap-2 font-semibold">
-              <h3 className="text-xl">Filtres</h3>
-              <span className="rounded-full bg-[#0f2155]/10 px-4 py-2">
-                {filters.activeCount}
-              </span>
-            </div>
+            <h3 className="text-text-secondary mb-4 text-xl font-semibold">
+              Filtres
+            </h3>
             <button
               type="button"
               onClick={onClose}
@@ -95,7 +91,16 @@ const FilterComponents = ({
             />
           </HideFilterComponent>
           <HideFilterComponent label="Année académique">
-            <p>Année académique</p>
+            <div className="flex flex-wrap gap-2">
+              {options.academicYears.map((year) => (
+                <NiveauCard
+                  key={year}
+                  label={year}
+                  active={filters.get("academicYear") === year}
+                  onClick={() => filters.toggle("academicYear", year)}
+                />
+              ))}
+            </div>
           </HideFilterComponent>
           <HideFilterComponent label="Type d'évaluation">
             <TypeEvaluationFilterWrapper
@@ -108,9 +113,6 @@ const FilterComponents = ({
               current={filters.get("session")}
               onChange={(value) => filters.set("session", value)}
             />
-          </HideFilterComponent>
-          <HideFilterComponent label="Date d'ajout">
-            <DateAjoutFilterWrapper />
           </HideFilterComponent>
         </div>
       </div>

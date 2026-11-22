@@ -17,11 +17,11 @@ import type {
   Subject,
 } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
+import { formatFileSize } from "@/lib/file-format";
 import ExamCommonFields, { inputClass } from "./ExamCommonFields";
 import ExamFileCard from "./ExamFileCard";
 import {
   editExamFormSchema,
-  formatFileSize,
   toEditFieldErrors,
   toMetadataFormData,
   type EditExamErrors,
@@ -217,14 +217,14 @@ export default function EditExamFlow({
                   }
                   actions={
                     <div className="flex shrink-0 gap-1">
-                      <Link
+                      <a
                         href={`/api/exams/${exam.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={ACTION_LINK_CLASS}
                       >
                         <FiExternalLink size={14} /> Voir
-                      </Link>
+                      </a>
                       <Link
                         href={`/bde/epreuves/${exam.slug}/remplacer`}
                         className={ACTION_LINK_CLASS}

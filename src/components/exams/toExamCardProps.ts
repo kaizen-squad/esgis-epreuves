@@ -6,7 +6,7 @@ export function toExamCardProps(exam: Exam): ExamCardProps {
 
   return {
     id: exam.id,
-    img_src: "/images/study.png",
+    preview_src: `/api/exams/${exam.slug}/preview?v=${exam.fileVersion}`,
     name: exam.title,
     year: Number.parseInt(endYear, 10),
     matter: exam.subject,
@@ -14,5 +14,6 @@ export function toExamCardProps(exam: Exam): ExamCardProps {
     type: exam.examType,
     slug: exam.slug,
     fileSize: exam.fileSize,
+    mimeType: exam.mimeType,
   };
 }

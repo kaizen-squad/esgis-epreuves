@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getFieldById } from "@/features/referentials/queries";
+import { getExamFileInfo } from "@/lib/r2/metadata";
 import { examFiltersSchema, fixedFieldFilters } from "./schemas";
 import type {
   Exam,
@@ -21,7 +22,7 @@ const RANGE_NOT_SATISFIABLE = "PGRST103";
 
 const RECENT_EXAMS_LIMIT = 8;
 
-function toExam(row: {
+type CatalogRow = {
   id: string;
   title: string;
   slug: string;
@@ -38,7 +39,51 @@ function toExam(row: {
   subject_name: string;
   option_id: string | null;
   option_name: string | null;
-}): Exam {
+};
+
+type ExamFile = Pick<Exam, "fileSize" | "mimeType" | "fileVersion">;
+
+const FILE_VERSION_LENGTH = 12;
+
+/**
+ * Fichier de chaque epreuve, absent de la vue `exams_catalog` : taille et type lus sur le fichier
+ * depose (R2), a defaut ceux enregistres en base.
+ */
+async function getExamFiles(
+  supabase: SupabaseClient,
+  ids: string[],
+): Promise<Map<string, ExamFile>> {
+  if (ids.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from("exams")
+    .select("id, r2_key, file_hash, file_mime_type, file_size")
+    .in("id", ids);
+  if (error) throw error;
+
+  const keys = [...new Set(data.map((row) => row.r2_key as string))];
+  const infos = new Map(
+    await Promise.all(
+      keys.map(async (key) => [key, await getExamFileInfo(key)] as const),
+    ),
+  );
+
+  return new Map(
+    data.map((row) => {
+      const info = infos.get(row.r2_key);
+      return [
+        row.id as string,
+        {
+          fileSize: info?.size ?? row.file_size,
+          mimeType: info?.mimeType ?? row.file_mime_type,
+          fileVersion: row.file_hash.slice(-FILE_VERSION_LENGTH),
+        },
+      ];
+    }),
+  );
+}
+
+function toExam(row: CatalogRow, file: ExamFile | undefined): Exam {
   return {
     id: row.id,
     title: row.title,
@@ -54,15 +99,20 @@ function toExam(row: {
     subjectId: row.subject_id,
     option: row.option_name,
     optionId: row.option_id,
-    fileSize: row.file_size,
+    fileSize: file?.fileSize ?? row.file_size,
+    mimeType: file?.mimeType ?? "",
+    fileVersion: file?.fileVersion ?? "",
     createdAt: row.created_at,
   };
 }
 
-async function queryExams(
+type CatalogPage = Omit<ExamListResult, "exams"> & { rows: CatalogRow[] };
+
+/** Page du catalogue telle que lue en base, sans les informations de fichier. */
+async function queryCatalog(
   supabase: SupabaseClient,
   rawFilters: ExamFilters,
-): Promise<ExamListResult> {
+): Promise<CatalogPage> {
   const filters = examFiltersSchema.parse(rawFilters);
 
   let query = supabase
@@ -88,16 +138,28 @@ async function queryExams(
 
   if (error?.code === RANGE_NOT_SATISFIABLE) {
     // Page demandee au-dela du total (filtre qui reduit les resultats, page restee dans l'URL) : page 1 plutot qu'une erreur.
-    return queryExams(supabase, { ...rawFilters, page: 1 });
+    return queryCatalog(supabase, { ...rawFilters, page: 1 });
   }
   if (error) throw error;
 
   return {
-    exams: data.map(toExam),
+    rows: data,
     total: count ?? 0,
     page: filters.page,
     pageSize: filters.pageSize,
   };
+}
+
+async function queryExams(
+  supabase: SupabaseClient,
+  rawFilters: ExamFilters,
+): Promise<ExamListResult> {
+  const { rows, ...page } = await queryCatalog(supabase, rawFilters);
+  const files = await getExamFiles(
+    supabase,
+    rows.map((row) => row.id),
+  );
+  return { ...page, exams: rows.map((row) => toExam(row, files.get(row.id))) };
 }
 
 /** Recherche texte + filtres combinables sur le catalogue (#9), pagination par decalage. */
@@ -105,6 +167,55 @@ export async function getExams(
   rawFilters: ExamFilters,
 ): Promise<ExamListResult> {
   return queryExams(await createClient(), rawFilters);
+}
+
+/** Nombre d'epreuves correspondant aux filtres, sans lire les epreuves elles-memes. */
+export async function countExams(rawFilters: ExamFilters): Promise<number> {
+  const { total } = await queryCatalog(await createClient(), {
+    ...rawFilters,
+    page: 1,
+    pageSize: 1,
+  });
+  return total;
+}
+
+const ACADEMIC_YEARS_REVALIDATE_SECONDS = 60;
+
+const getAcademicYearsCached = unstable_cache(
+  async (fieldId: string | null): Promise<string[]> => {
+    const supabase = createPublicClient();
+    const years: string[] = [];
+
+    // Une requete par annee distincte (la plus recente sous la precedente) : PostgREST n'a pas de
+    // `distinct`, et lire toutes les lignes serait tronque par `max_rows`.
+    for (;;) {
+      let query = supabase
+        .from("exams")
+        .select("academic_year")
+        .order("academic_year", { ascending: false })
+        .limit(1);
+      if (fieldId) query = query.eq("field_id", fieldId);
+      const last = years.at(-1);
+      if (last) query = query.lt("academic_year", last);
+
+      const { data, error } = await query.maybeSingle();
+      if (error) throw error;
+      if (!data) return years;
+      years.push(data.academic_year);
+    }
+  },
+  ["exam-academic-years"],
+  { revalidate: ACADEMIC_YEARS_REVALIDATE_SECONDS, tags: ["exams"] },
+);
+
+/**
+ * Annees academiques ayant au moins une epreuve (d'une filiere si `fieldId`), de la plus recente a
+ * la plus ancienne : choix du filtre du catalogue, donc jamais une annee sans resultat.
+ */
+export async function getAcademicYears(
+  fieldId: string | null = null,
+): Promise<string[]> {
+  return getAcademicYearsCached(fieldId);
 }
 
 const RECENT_EXAMS_REVALIDATE_SECONDS = 60;
@@ -281,7 +392,10 @@ export async function getExamBySlug(slug: string): Promise<Exam | null> {
 
   if (error) throw error;
 
-  return data ? toExam(data) : null;
+  if (!data) return null;
+
+  const files = await getExamFiles(supabase, [data.id]);
+  return toExam(data, files.get(data.id));
 }
 
 /** Cle R2 du PDF d'une epreuve par son slug, pour la route de previsualisation/telechargement (#50). `null` si absente. */

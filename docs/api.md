@@ -184,6 +184,16 @@ Nombre maximal de fichiers par lot (`uploadExamsBatch`, #56) : 4. Choisi pour qu
 
 Point d'entrée unique du catalogue (recherche, filtres combinables, pagination). `rawFilters` est validé par `examFiltersSchema` (voir conventions : jamais de 500 sur un filtre mal formé). Retourne `ExamListResult` (`exams`, `total`, `page`, `pageSize`). Si la page demandée dépasse le total après filtrage (erreur PostgREST `PGRST103`), relance la même requête sur la page 1 plutôt que de propager l'erreur : l'écran ne doit jamais recevoir cette erreur-là pour une page hors bornes, et doit afficher le `page` du résultat (1 dans ce cas), pas celui de l'URL.
 
+Chaque `Exam` porte les informations réelles de son fichier : `fileSize` (octets) et `mimeType` lus sur R2 (`getExamFileInfo`, à défaut les valeurs en base), et `fileVersion` (fin du `file_hash`) pour versionner l'URL d'aperçu. Affichage : `formatFileSize` et `formatFileType` (`src/lib/file-format.ts`), jamais une valeur en dur.
+
+### `countExams(rawFilters: ExamFilters): Promise<number>`
+
+Total des épreuves correspondant aux filtres, sans lire leurs fichiers (`countSearchResults`).
+
+### `getAcademicYears(fieldId?: string | null): Promise<string[]>`
+
+Années académiques ayant au moins une épreuve (d'une filière si `fieldId`, qui doit être un uuid valide), de la plus récente à la plus ancienne, pour le filtre du catalogue. Mise en cache 60 s (tag `exams`).
+
 ### `getRecentExams(limit?: number): Promise<Exam[]>`
 
 Épreuves récentes pour l'accueil (8 par défaut) : même requête que `getExams` (via l'helper privé `queryExams`), avec une limite. `limit` est borné comme `pageSize` (1 à 50) : hors bornes ou non entier, il retombe sur 20. Mise en cache par `unstable_cache` (`revalidate: 60`, tag `exams`) avec le client public sans cookies (`src/lib/supabase/public.ts`), pour que l'accueil ne dépende pas des cookies et reste cacheable ; le tag `exams` est posé pour une invalidation explicite ultérieure (`revalidateTag("exams")` depuis les mutations). En cas d'erreur Supabase, l'exception remonte (aucun `ActionResult`), pour retomber sur `src/app/(public)/error.tsx`.
@@ -294,6 +304,24 @@ Génère une URL R2 présignée (valide 5 minutes, usage immédiat par la redire
 
 `HeadObject` sur R2 : une URL présignée se signe sans contacter R2, cette vérification est donc le seul moyen de savoir qu'un PDF est réellement présent. `false` sur un 404 ; toute autre erreur (identifiants ou endpoint R2 invalides, réseau) est journalisée puis traitée comme « indisponible », jamais levée. Utilisée par la route `/api/exams/[slug]` et la vue `ExamDetailView` (pages `/epreuves/[slug]` et `/bde/epreuves/[slug]`) (aperçu et bouton de téléchargement désactivés si absent).
 
+## `src/lib/r2/metadata.ts`
+
+### `getExamFileInfo(r2Key: string): Promise<{ size, mimeType } | null>`
+
+Taille et type réels du fichier (`HeadObject`, 2 s au plus, succès mis en cache 24 h par clé). `null` si R2 ne répond pas, si l'objet est absent ou si R2 n'est pas configuré : l'appelant retombe sur la base.
+
+## `src/lib/r2/download.ts`
+
+### `getExamFile(r2Key: string): Promise<Uint8Array>`
+
+Contenu d'un fichier déposé sur R2, pour le rendu de son aperçu. Lève une erreur si l'objet est absent.
+
+## `src/lib/pdf/preview.ts`
+
+### `renderPdfPreview(file: Uint8Array): Promise<Buffer>`
+
+Haut de la première page d'un PDF, en WebP 640 × 320 (pdf.js et `@napi-rs/canvas`). Lève une erreur sur un fichier illisible. Les polices et décodeurs de `pdfjs-dist` sont lus sur le disque : `outputFileTracingIncludes` (`next.config.ts`) les embarque au déploiement.
+
 ## `src/lib/r2/upload.ts`
 
 ### `putExamFile(r2Key: string, body: Buffer): Promise<void>`
@@ -309,6 +337,12 @@ Supprime un PDF d'épreuve sur R2 sous la clé fournie (`replaceExamFile` et `de
 ### `GET /api/exams/[slug]`
 
 Route publique (épreuves lisibles sans authentification, comme le catalogue) qui redirige (307) vers une URL R2 présignée. `?dl=1` pour un téléchargement (pièce jointe) ; sans ce paramètre, prévisualisation en ligne (utilisée dans l'iframe d'aperçu des pages `/epreuves/[slug]` et `/bde/epreuves/[slug]`). Répond `404` (texte brut) si le slug ne correspond à aucune épreuve ou si son PDF est absent de R2 (`examFileExists`), plutôt que de rediriger vers une erreur XML de Cloudflare.
+
+## `src/app/api/exams/[slug]/preview/route.ts`
+
+### `GET /api/exams/[slug]/preview?v=<fileVersion>`
+
+Image d'aperçu d'une carte, rendue une fois par clé R2 puis mise en cache (serveur et navigateur, 24 h). `v` change quand le fichier est remplacé. `404` si l'épreuve, son fichier ou un rendu lisible manque : la carte (`ExamThumbnail`) garde son icône.
 
 ## `src/lib/security-headers.ts`
 

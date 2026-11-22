@@ -15,11 +15,11 @@ import {
 import { MAX_BATCH_FILES } from "@/features/exams/schemas";
 import type { Field, Level, Subject } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
+import { formatFileSize } from "@/lib/file-format";
 import {
   MAX_FILE_SIZE_LABEL,
   addExamFormSchema,
   fileKey,
-  formatFileSize,
   mergeFiles,
   titleFromFileName,
   toBatchFormData,

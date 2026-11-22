@@ -1,4 +1,4 @@
-import { getExams } from "@/features/exams/queries";
+import { getAcademicYears, getExams } from "@/features/exams/queries";
 import {
   getFields,
   getLevels,
@@ -19,11 +19,12 @@ const CatalogueEpreuveSection = async ({
   /** Espace BDE : cartes avec menu de gestion. */
   manageable?: boolean;
 }) => {
-  const [result, fields, levels, subjects] = await Promise.all([
+  const [result, fields, levels, subjects, academicYears] = await Promise.all([
     getExams(toExamFilters(searchParams)),
     getFields(),
     getLevels(),
     getSubjects(),
+    getAcademicYears(),
   ]);
 
   return (
@@ -33,7 +34,7 @@ const CatalogueEpreuveSection = async ({
         total={result.total}
         page={result.page}
         pageSize={result.pageSize}
-        filterOptions={{ fields, levels, subjects }}
+        filterOptions={{ fields, levels, subjects, academicYears }}
         manageable={manageable}
       />
     </section>

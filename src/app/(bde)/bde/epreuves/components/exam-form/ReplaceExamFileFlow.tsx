@@ -11,11 +11,11 @@ import { FiArrowRight, FiExternalLink, FiX } from "react-icons/fi";
 import { replaceExamFile } from "@/features/exams/actions";
 import type { Exam } from "@/features/exams/types";
 import type { ActionResult } from "@/lib/action-result";
+import { formatFileSize } from "@/lib/file-format";
 import ExamDropzone from "./ExamDropzone";
 import ExamFileCard from "./ExamFileCard";
 import {
   MAX_FILE_SIZE_LABEL,
-  formatFileSize,
   replaceFileFormSchema,
   validateExamFile,
 } from "./examForm";
@@ -145,14 +145,14 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
                 name={exam.title}
                 detail={`${exam.subject} · ${exam.level} · ${exam.academicYear} · ${formatFileSize(exam.fileSize)}`}
                 actions={
-                  <Link
+                  <a
                     href={`/api/exams/${exam.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={ACTION_LINK_CLASS}
                   >
                     <FiExternalLink size={14} /> Voir
-                  </Link>
+                  </a>
                 }
               />
             </ul>

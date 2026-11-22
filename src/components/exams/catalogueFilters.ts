@@ -28,6 +28,8 @@ export type CatalogueFilterOptions = {
   fields: Field[] | null;
   levels: Level[];
   subjects: Subject[];
+  /** Annees ayant au moins une epreuve, de la plus recente a la plus ancienne. */
+  academicYears: string[];
 };
 
 /**
