@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   FiCalendar,
   FiDownload,
-  FiEye,
   FiFileText,
   GoDotFill,
 } from "@/components/icons";
@@ -44,16 +43,26 @@ const ExamCard = (data: ExamCardProps) => {
   const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
 
   return (
-    <article className="group bg-background-primary flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg">
-      <div className="relative aspect-2/1 w-full shrink-0 overflow-hidden border-b border-gray-200 bg-gray-100">
+    <article className="group bg-background-primary relative flex h-full w-full flex-row overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-lg md:flex-col md:hover:-translate-y-1">
+      {/* Toute la carte mene a la fiche ; les controles au-dessus (telechargement, menu BDE)
+          restent cliquables car places apres dans l'ordre d'empilement. */}
+      {previewHref ? (
+        <Link
+          href={previewHref}
+          aria-label={`Voir la fiche de ${data.name}`}
+          className="absolute inset-0 z-10"
+        />
+      ) : null}
+
+      <div className="relative z-0 aspect-square w-24 shrink-0 overflow-hidden border-r border-gray-200 bg-gray-100 md:aspect-2/1 md:w-full md:border-r-0 md:border-b">
         <ExamThumbnail src={data.preview_src} />
-        <span className="text-text-default absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/85 px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm">
+        <span className="text-text-default absolute top-1.5 right-1.5 flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm md:top-3 md:right-3 md:px-2.5 md:text-xs">
           <FiFileText size={12} /> {formatFileType(data.mimeType)}
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex items-center justify-between gap-2">
+      <div className="relative z-0 flex min-w-0 flex-1 flex-col gap-2 p-3 md:gap-3 md:p-4">
+        <div className="relative z-20 flex items-center justify-between gap-2">
           <Cote
             field={data.field}
             fieldId={data.fieldId}
@@ -71,11 +80,11 @@ const ExamCard = (data: ExamCardProps) => {
           </span>
         </div>
 
-        <h4 className="text-text-title line-clamp-2 min-h-[2lh] text-base leading-snug font-semibold">
+        <h4 className="text-text-title line-clamp-2 text-sm leading-snug font-semibold md:min-h-[2lh] md:text-base">
           {data.name}
         </h4>
 
-        <div className="text-text-paragraph mt-auto flex items-center justify-between text-xs">
+        <div className="text-text-paragraph mt-auto flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <FiCalendar size={12} />
@@ -84,26 +93,23 @@ const ExamCard = (data: ExamCardProps) => {
             <GoDotFill size={6} />
             <span>{formatFileSize(data.fileSize)}</span>
           </div>
-          {data.manageable && data.id && data.slug ? (
-            <ExamManageMenu id={data.id} slug={data.slug} name={data.name} />
-          ) : null}
+          <div className="relative z-20 flex items-center gap-1">
+            {downloadHref ? (
+              <a
+                href={downloadHref}
+                aria-label={`Télécharger ${data.name}`}
+                className="text-text-default hover:bg-background-default flex cursor-pointer items-center justify-center rounded-full p-1.5 transition-colors md:hidden"
+              >
+                <FiDownload size={16} />
+              </a>
+            ) : null}
+            {data.manageable && data.id && data.slug ? (
+              <ExamManageMenu id={data.id} slug={data.slug} name={data.name} />
+            ) : null}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
-          {previewHref ? (
-            <Link
-              href={previewHref}
-              className="text-text-default flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
-            >
-              <FiEye size={16} />
-              Visualiser
-            </Link>
-          ) : (
-            <button className="text-text-default flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:bg-gray-50">
-              <FiEye size={16} />
-              Visualiser
-            </button>
-          )}
+        <div className="relative z-20 hidden items-center gap-2 border-t border-gray-100 pt-3 md:flex">
           {downloadHref ? (
             <a
               href={downloadHref}
