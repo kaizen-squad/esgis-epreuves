@@ -26,10 +26,10 @@ const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
       <nav className="lg:grid lg:grid-cols-[1fr_auto_1fr]">
         <div className="flex items-center justify-between">
           <Link
-            className="text-text-title justify-self-start text-2xl font-extrabold"
+            className="text-text-title justify-self-start text-2xl font-extrabold tracking-tight"
             href={homeHref}
           >
-            Alexandria.
+            Alexandria<span className="text-background-accent">.</span>
           </Link>
 
           <button

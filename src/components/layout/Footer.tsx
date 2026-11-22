@@ -11,9 +11,12 @@ const Footer = ({ links }: FooterProps) => {
     <footer className="bg-background-secondary rounded-t-4xl px-4 py-8 lg:px-10">
       <div className="flex flex-col justify-between lg:flex-row">
         <div className="mb-14">
-          <h1 className="text-text-primary mb-5 text-xl font-semibold">
-            Alexandria.
+          <h1 className="text-text-primary mb-2 text-xl font-semibold tracking-tight">
+            Alexandria<span className="text-background-accent">.</span>
           </h1>
+          <p className="text-text-primary/70 mb-5 text-sm">
+            Une initiative du BDE ESGIS.
+          </p>
           <div className="bg-background-primary flex gap-4 rounded-full px-3 py-1">
             <input
               className="min-w-0 flex-1 outline-none"
