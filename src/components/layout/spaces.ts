@@ -12,6 +12,11 @@ export function catalogueHref(basePath: SpaceBasePath): string {
   return `${basePath}/catalogue`;
 }
 
+/** Liste des filieres de l'espace (`/filieres` ou `/bde/filieres`). */
+export function filieresHref(basePath: SpaceBasePath): string {
+  return `${basePath}/filieres`;
+}
+
 /** Page de consultation d'une epreuve dans l'espace. */
 export function examHref(basePath: SpaceBasePath, slug: string): string {
   return `${basePath}/epreuves/${slug}`;

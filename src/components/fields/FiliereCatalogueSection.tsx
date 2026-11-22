@@ -1,9 +1,11 @@
 import type { ExamCardProps } from "@/components/exams/ExamCard";
 import CatalogueEpreuves from "@/components/catalogue/CatalogueEpreuve";
-import DomainSelectFilter from "@/components/exams/DomainSelectFilter";
+import FieldLevelTabs from "@/components/fields/FieldLevelTabs";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
+import type { Level } from "@/features/referentials/types";
 
 type FiliereCatalogueSectionProps = {
+  levels: Level[];
   exams: ExamCardProps[];
   total: number;
   page: number;
@@ -14,6 +16,7 @@ type FiliereCatalogueSectionProps = {
 };
 
 const FiliereCatalogueSection = ({
+  levels,
   exams,
   total,
   page,
@@ -23,7 +26,7 @@ const FiliereCatalogueSection = ({
 }: FiliereCatalogueSectionProps) => {
   return (
     <section className="mx-auto mb-20 w-full max-w-7xl px-4 lg:px-6">
-      <DomainSelectFilter />
+      <FieldLevelTabs levels={levels} />
       <CatalogueEpreuves
         data={exams}
         total={total}

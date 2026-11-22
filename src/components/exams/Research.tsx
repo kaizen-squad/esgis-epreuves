@@ -27,9 +27,15 @@ type ResearchProps = {
 
 const DEFAULT_CATALOGUE_HREF = "/catalogue";
 
-function catalogueSearchHref(basePath: string, query: string): string {
+/** Ajoute `search` aux filtres deja presents dans `catalogueHref` (ex. `?fieldId=...`), sans les perdre. */
+function catalogueSearchHref(catalogueHref: string, query: string): string {
   const term = query.trim();
-  return term ? `${basePath}?search=${encodeURIComponent(term)}` : basePath;
+  if (!term) return catalogueHref;
+
+  const [path, existingQuery] = catalogueHref.split("?");
+  const params = new URLSearchParams(existingQuery);
+  params.set("search", term);
+  return `${path}?${params.toString()}`;
 }
 
 /** `catalogueHref` ("/catalogue" ou "/bde/catalogue") -> espace, pour construire le lien de chaque epreuve trouvee. */
