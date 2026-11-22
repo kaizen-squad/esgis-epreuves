@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { FiEdit2 } from "react-icons/fi";
+import { setBdeMemberActive } from "@/features/members/actions";
 import type { BdeMember } from "@/features/members/types";
-import MemberStatusButton from "./MemberStatusButton";
+import ActiveToggleButton from "./ActiveToggleButton";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -135,10 +138,32 @@ export default function MembersTable({
                       >
                         <FiEdit2 size={13} /> Modifier
                       </Link>
-                      <MemberStatusButton
+                      <ActiveToggleButton
                         id={member.id}
                         name={name}
                         isActive={member.isActive}
+                        setActive={setBdeMemberActive}
+                        title={(active) =>
+                          active
+                            ? "Désactiver ce membre ?"
+                            : "Réactiver ce membre ?"
+                        }
+                        description={(active) =>
+                          active ? (
+                            <p className="mb-0">
+                              <strong>{name}</strong> ne pourra plus se
+                              connecter ni gérer les épreuves. Les épreuves déjà
+                              déposées restent en ligne. Vous pourrez réactiver
+                              ce compte à tout moment.
+                            </p>
+                          ) : (
+                            <p className="mb-0">
+                              <strong>{name}</strong> pourra de nouveau se
+                              connecter avec ses identifiants actuels et gérer
+                              les épreuves.
+                            </p>
+                          )
+                        }
                       />
                     </div>
                   </td>

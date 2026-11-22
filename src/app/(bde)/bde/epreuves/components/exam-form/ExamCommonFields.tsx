@@ -91,14 +91,7 @@ export default function ExamCommonFields({
         error={errors.subjectId}
       />
       <p className="text-text-paragraph mb-0 text-sm">
-        Matière manquante ?{" "}
-        <a
-          href="/admin/referentiels/matieres"
-          className="text-background-accent underline"
-        >
-          Demandez son ajout à l&apos;administrateur
-        </a>
-        .
+        Matière manquante ? Demandez son ajout à l&apos;administrateur.
       </p>
 
       <div className="grid gap-5 md:grid-cols-2">

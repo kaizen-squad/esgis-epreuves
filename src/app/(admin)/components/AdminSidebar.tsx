@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { IconType } from "react-icons";
-import { FiGrid, FiMenu, FiUserPlus, FiX } from "react-icons/fi";
+import { FiGrid, FiList, FiMenu, FiUserPlus, FiX } from "react-icons/fi";
 import LogoutButton from "@/components/layout/LogoutButton";
 
 type AdminLink = {
@@ -26,6 +26,12 @@ const ADMIN_LINKS: AdminLink[] = [
     href: "/admin/membres/ajouter",
     icon: FiUserPlus,
     isActive: (pathname) => pathname.startsWith("/admin/membres"),
+  },
+  {
+    name: "Référentiels",
+    href: "/admin/referentiels",
+    icon: FiList,
+    isActive: (pathname) => pathname.startsWith("/admin/referentiels"),
   },
 ];
 
