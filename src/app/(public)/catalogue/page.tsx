@@ -21,10 +21,8 @@ const Catalogue = async ({
       <CatalogueWelcomeSection />
       <Research live initialQuery={initialQuery} />
       <p className="text-text-default text-center">
-        Choisissez votre domaine d&apos;activité pour retrouver les annales de
-        votre spécialité.
-        <br />
-        Accédez directement aux examens qui comptent pour votre année.
+        Choisis ton domaine d&apos;activité pour retrouver les annales de ta
+        spécialité. Accède directement aux examens qui comptent pour ton année.
       </p>
 
       <CatalogueEpreuveSection searchParams={params} />

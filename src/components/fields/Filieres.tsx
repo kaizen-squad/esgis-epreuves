@@ -23,8 +23,7 @@ export default async function Filieres({
     return (
       <div className="mx-auto mb-16 max-w-7xl">
         <h3 className="section-title text-center">
-          Selectionnez votre <br />
-          filière
+          Sélectionnez votre filière
         </h3>
         <p className="text-text-paragraph">
           Aucune filière n&apos;a encore été ajoutée.
@@ -35,10 +34,7 @@ export default async function Filieres({
 
   return (
     <div className="mx-auto mb-30 max-w-7xl">
-      <h3 className="section-title text-center">
-        Selectionnez votre <br />
-        filière
-      </h3>
+      <h3 className="section-title text-center">Sélectionnez votre filière</h3>
       <div className="mb-6 grid grid-cols-1 grid-rows-3 gap-4 md:grid-cols-2 md:grid-rows-2 lg:grid-cols-3">
         {summaries.map((summary, index) => (
           <FiliereCard

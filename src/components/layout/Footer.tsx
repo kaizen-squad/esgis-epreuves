@@ -37,7 +37,7 @@ const Footer = ({ links }: FooterProps) => {
             {links.map((link) => (
               <Link
                 key={link.name}
-                className="text-text-primary text-lg"
+                className="text-text-primary text-lg transition-opacity hover:opacity-75"
                 href={link.link}
               >
                 {link.name}
