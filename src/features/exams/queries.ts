@@ -169,14 +169,18 @@ export async function getExams(
   return queryExams(await createClient(), rawFilters);
 }
 
-/** Nombre d'epreuves correspondant aux filtres, sans lire les epreuves elles-memes. */
-export async function countExams(rawFilters: ExamFilters): Promise<number> {
-  const { total } = await queryCatalog(await createClient(), {
-    ...rawFilters,
-    page: 1,
-    pageSize: 1,
-  });
-  return total;
+/**
+ * Titres (et total) correspondant aux filtres, sans lire les fichiers R2 : contrairement a
+ * `getExams`, ne sert pas a afficher des cartes completes (apercu de recherche, #119).
+ */
+export async function searchExamTitles(
+  rawFilters: ExamFilters,
+): Promise<{ total: number; exams: Pick<Exam, "title" | "slug">[] }> {
+  const { rows, total } = await queryCatalog(await createClient(), rawFilters);
+  return {
+    total,
+    exams: rows.map((row) => ({ title: row.title, slug: row.slug })),
+  };
 }
 
 const ACADEMIC_YEARS_REVALIDATE_SECONDS = 60;

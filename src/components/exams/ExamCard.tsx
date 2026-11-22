@@ -1,6 +1,11 @@
 import Link from "next/link";
-import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
-import { GoDotFill } from "react-icons/go";
+import {
+  FiCalendar,
+  FiDownload,
+  FiEye,
+  FiFileText,
+  GoDotFill,
+} from "@/components/icons";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
 import Cote from "./Cote";
@@ -18,6 +23,8 @@ export interface ExamCardProps {
   subjectId: string;
   class: string;
   levelId: string;
+  /** Absente des niveaux de tronc commun (L1/L2). */
+  option: string | null;
   field: string;
   fieldId: string;
   academicYear: string;
@@ -52,11 +59,12 @@ const ExamCard = (data: ExamCardProps) => {
             fieldId={data.fieldId}
             level={data.class}
             levelId={data.levelId}
+            option={data.option}
             subject={data.matter}
             subjectId={data.subjectId}
             academicYear={data.academicYear}
             basePath={basePath}
-            className="text-text-paragraph min-w-0 flex-wrap text-xs font-medium tracking-wide [&_li]:truncate"
+            className="text-text-paragraph min-w-0 flex-wrap text-xs font-medium tracking-wide"
           />
           <span className="text-background-accent shrink-0 rounded-full border border-current px-2 py-0.5 text-xs font-medium">
             {data.type}

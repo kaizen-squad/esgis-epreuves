@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useId, useState, type ReactNode } from "react";
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiMenu, FiX } from "@/components/icons";
 import { isNavLinkActive } from "./spaces";
 
 export type NavLink = {
@@ -48,8 +48,8 @@ const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
             onClick={() => setIsOpen((open) => !open)}
             aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
             aria-expanded={isOpen}
-            aria-controls={mobilePanelId}
-            className="bg-background-accent rounded-[var(--radius-control)] p-2 lg:hidden"
+            aria-controls={isOpen ? mobilePanelId : undefined}
+            className="bg-background-accent rounded-control p-2 lg:hidden"
           >
             {isOpen ? (
               <FiX size={24} color="#fff" aria-hidden="true" />
@@ -70,8 +70,8 @@ const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
                 aria-current={isActive ? "page" : undefined}
                 className={
                   isActive
-                    ? "bg-background-primary text-text-default rounded-t-[var(--radius-control)] px-4 py-3 text-sm font-semibold"
-                    : "text-text-primary/70 hover:text-text-primary rounded-t-[var(--radius-control)] px-4 py-3 text-sm font-medium transition-colors"
+                    ? "bg-background-primary text-text-default rounded-t-control px-4 py-3 text-sm font-semibold"
+                    : "text-text-primary/70 hover:text-text-primary rounded-t-control px-4 py-3 text-sm font-medium transition-colors"
                 }
               >
                 {link.name}
@@ -81,7 +81,7 @@ const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
         </div>
 
         {endSlot ? (
-          <div className="bg-background-primary mb-3 hidden items-center justify-end justify-self-end rounded-[var(--radius-control)] p-1 lg:flex">
+          <div className="bg-background-primary rounded-control mb-3 hidden items-center justify-end justify-self-end p-1 lg:flex">
             {endSlot}
           </div>
         ) : null}
@@ -91,7 +91,10 @@ const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
       {isOpen ? (
         <div
           id={mobilePanelId}
-          className="bg-background-primary flex flex-col rounded-t-[var(--radius-card)] py-4 lg:hidden"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setIsOpen(false);
+          }}
+          className="bg-background-primary rounded-t-card flex flex-col py-4 lg:hidden"
         >
           {links.map((link) => {
             const isActive = isNavLinkActive(pathname, link.link);

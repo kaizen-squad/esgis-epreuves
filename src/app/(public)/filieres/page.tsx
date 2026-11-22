@@ -8,7 +8,7 @@ const Filieres = () => {
   return (
     <>
       <div className="text-center">
-        <h1 className="head-title">Filtrez selon votre filière</h1>
+        <h1 className="head-title">Filtre selon ta filière</h1>
         <p className="mb-6">
           Recherche rapidement un sujet spécifique et télécharge le fichier en
           un instant. Notre interface fluide simplifie tes révisions avant
