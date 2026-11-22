@@ -25,7 +25,7 @@ const from = vi.fn(() => ({ insert, delete: del, select, update }));
 const putExamFile = vi.fn();
 const deleteExamFile = vi.fn();
 const checkExamDuplicate = vi.fn();
-const countExams = vi.fn();
+const getExams = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ from }),
@@ -35,8 +35,7 @@ vi.mock("@/lib/r2/upload", () => ({
   deleteExamFile: (...args: unknown[]) => deleteExamFile(...args),
 }));
 vi.mock("./queries", () => ({
-  countExams: (...args: unknown[]) => countExams(...args),
-  getExams: vi.fn(),
+  getExams: (...args: unknown[]) => getExams(...args),
   getFieldExams: vi.fn(),
 }));
 vi.mock("./duplicate", () => ({
@@ -49,7 +48,7 @@ const {
   replaceExamFile,
   deleteExam,
   uploadExamsBatch,
-  countSearchResults,
+  searchExamPreview,
 } = await import("./actions");
 const { MAX_BATCH_FILES } = await import("./schemas");
 
@@ -1103,21 +1102,33 @@ describe("uploadExamsBatch", () => {
   });
 });
 
-describe("countSearchResults", () => {
+describe("searchExamPreview", () => {
   beforeEach(() => {
-    countExams.mockReset();
+    getExams.mockReset();
   });
 
-  it("renvoie 0 sans requete pour un terme sans mot exploitable", async () => {
-    expect(await countSearchResults("   ")).toBe(0);
-    expect(await countSearchResults("-- !")).toBe(0);
-    expect(countExams).not.toHaveBeenCalled();
+  it("renvoie un resultat vide sans requete pour un terme sans mot exploitable", async () => {
+    expect(await searchExamPreview("   ")).toEqual({ total: 0, exams: [] });
+    expect(await searchExamPreview("-- !")).toEqual({ total: 0, exams: [] });
+    expect(getExams).not.toHaveBeenCalled();
   });
 
-  it("renvoie le total de la recherche du catalogue", async () => {
-    countExams.mockResolvedValue(12);
+  it("renvoie le total et les titres trouves, limites a 5", async () => {
+    getExams.mockResolvedValue({
+      total: 12,
+      exams: [
+        { title: "Algorithmique S1", slug: "algo-s1" },
+        { title: "Algorithmique S2", slug: "algo-s2" },
+      ],
+    });
 
-    expect(await countSearchResults("algo")).toBe(12);
-    expect(countExams).toHaveBeenCalledWith({ search: "algo" });
+    expect(await searchExamPreview("algo")).toEqual({
+      total: 12,
+      exams: [
+        { title: "Algorithmique S1", slug: "algo-s1" },
+        { title: "Algorithmique S2", slug: "algo-s2" },
+      ],
+    });
+    expect(getExams).toHaveBeenCalledWith({ search: "algo", pageSize: 5 });
   });
 });

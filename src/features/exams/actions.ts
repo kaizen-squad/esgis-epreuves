@@ -14,7 +14,7 @@ import {
   type ActionResult,
 } from "@/lib/action-result";
 import { checkExamDuplicate } from "./duplicate";
-import { countExams, getExams, getFieldExams } from "./queries";
+import { getExams, getFieldExams } from "./queries";
 import type { Exam } from "./types";
 import {
   examFileReplaceSchema,
@@ -781,12 +781,25 @@ export async function getDomainExams(fieldId: string | null): Promise<Exam[]> {
   return result.exams;
 }
 
-/**
- * Nombre d'epreuves correspondant au terme, affiche sous la barre de recherche avant de renvoyer
- * vers le catalogue : meme recherche libre que le catalogue (titre, matiere, filiere). Un terme sans mot exploitable renvoie 0 sans requete.
- */
-export async function countSearchResults(term: string): Promise<number> {
-  if (searchTokens(term).length === 0) return 0;
+const SEARCH_PREVIEW_LIMIT = 5;
 
-  return countExams({ search: term });
+/**
+ * Apercu de la recherche libre affiche sous la barre de recherche avant de renvoyer vers le
+ * catalogue (#119) : le total et jusqu'a SEARCH_PREVIEW_LIMIT titres trouves, meme recherche
+ * libre que le catalogue (titre, matiere, filiere). Un terme sans mot exploitable renvoie un
+ * resultat vide sans requete.
+ */
+export async function searchExamPreview(
+  term: string,
+): Promise<{ total: number; exams: Pick<Exam, "title" | "slug">[] }> {
+  if (searchTokens(term).length === 0) return { total: 0, exams: [] };
+
+  const result = await getExams({
+    search: term,
+    pageSize: SEARCH_PREVIEW_LIMIT,
+  });
+  return {
+    total: result.total,
+    exams: result.exams.map((exam) => ({ title: exam.title, slug: exam.slug })),
+  };
 }
