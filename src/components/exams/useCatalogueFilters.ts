@@ -51,7 +51,14 @@ export function useCatalogueFilters() {
   const toggle = (key: CatalogueFilterKey, value: string) =>
     set(key, get(key) === value ? null : value);
 
+  /** Retire tous les filtres (recherche comprise), sans toucher au reste de l'URL. */
+  const reset = () => {
+    startTransition(() => {
+      router.replace(pathname, { scroll: false });
+    });
+  };
+
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
 
-  return { get, set, toggle, goToPage, page, isPending };
+  return { get, set, toggle, goToPage, reset, page, isPending };
 }

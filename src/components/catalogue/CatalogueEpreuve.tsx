@@ -2,6 +2,7 @@
 
 import ExamCard, { ExamCardProps } from "@/components/exams/ExamCard";
 import CatalogueFilter from "@/components/catalogue/CatalogueFilter";
+import ActiveFilters from "@/components/catalogue/filter/ActiveFilters";
 import { FiFilter } from "react-icons/fi";
 import { useRef, useState } from "react";
 import CataloguePagination from "@/components/catalogue/CataloguePagination";
@@ -81,10 +82,25 @@ const CatalogueEpreuves = ({
           aria-busy={filters.isPending}
           className={`transition-opacity ${filters.isPending ? "opacity-50" : ""}`}
         >
+          <ActiveFilters options={filterOptions} filters={filters} />
           {data.length === 0 ? (
-            <p className="text-text-paragraph text-center">
-              Aucune épreuve ne correspond à ces filtres.
-            </p>
+            <div className="text-text-paragraph text-center">
+              {filters.get("search") ? (
+                <p>
+                  Aucune épreuve ne correspond à «&nbsp;
+                  {filters.get("search")}&nbsp;».
+                </p>
+              ) : (
+                <p>Aucune épreuve ne correspond à ces filtres.</p>
+              )}
+              <button
+                type="button"
+                onClick={filters.reset}
+                className="text-text-default mt-2 cursor-pointer font-medium hover:underline"
+              >
+                Réinitialiser les filtres
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(min(17rem,100%),1fr))] gap-6">
               {data.map((epreuve) => (
