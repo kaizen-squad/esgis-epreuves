@@ -19,7 +19,8 @@ const Slider = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="relative mx-auto w-full">
       <div
-        className="flex snap-x snap-mandatory gap-4 overflow-x-hidden py-4"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto py-4 [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: "none" }}
         ref={containerRef}
       >
         {children}
