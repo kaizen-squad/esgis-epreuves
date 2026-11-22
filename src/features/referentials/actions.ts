@@ -86,7 +86,7 @@ async function setReferentialActive(
 ): Promise<ActionResult<null>> {
   if (!ID_SCHEMA.safeParse(id).success) return actionError("Introuvable.");
   if (!IS_ACTIVE_SCHEMA.safeParse(isActive).success) {
-    return actionError("Donnees invalides.");
+    return actionError("Données invalides.");
   }
 
   const supabase = await createClient();
@@ -97,7 +97,7 @@ async function setReferentialActive(
     .select("id");
   if (error) {
     console.error(`${label}: changement d'etat`, error);
-    return actionError("Impossible de changer l'etat.");
+    return actionError("Impossible de changer l'état.");
   }
   if (!data || data.length === 0) return actionError("Introuvable.");
   return actionOk(null);
@@ -109,14 +109,14 @@ export async function createField(
   const parsed = fieldSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
     return actionError(
-      "Donnees invalides.",
+      "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
   return insertReferential(
     "createField",
     "fields",
-    "Cette filiere existe deja.",
+    "Cette filière existe déjà.",
     parsed.data,
   );
 }
@@ -128,7 +128,7 @@ export async function updateField(
   const parsed = fieldSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
     return actionError(
-      "Donnees invalides.",
+      "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
@@ -136,7 +136,7 @@ export async function updateField(
     "updateField",
     "fields",
     id,
-    "Cette filiere existe deja.",
+    "Cette filière existe déjà.",
     parsed.data,
   );
 }
@@ -154,14 +154,14 @@ export async function createLevel(
   const parsed = levelSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
     return actionError(
-      "Donnees invalides.",
+      "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
   return insertReferential(
     "createLevel",
     "levels",
-    "Ce niveau existe deja.",
+    "Ce niveau existe déjà.",
     parsed.data,
   );
 }
@@ -173,7 +173,7 @@ export async function updateLevel(
   const parsed = levelSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
     return actionError(
-      "Donnees invalides.",
+      "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
@@ -181,7 +181,7 @@ export async function updateLevel(
     "updateLevel",
     "levels",
     id,
-    "Ce niveau existe deja.",
+    "Ce niveau existe déjà.",
     parsed.data,
   );
 }
@@ -203,7 +203,7 @@ export async function createSubject(
   });
   if (!parsed.success) {
     return actionError(
-      "Donnees invalides.",
+      "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
@@ -211,7 +211,7 @@ export async function createSubject(
   return insertReferential(
     "createSubject",
     "subjects",
-    "Cette matiere existe deja pour cette filiere et ce niveau.",
+    "Cette matière existe déjà pour cette filière et ce niveau.",
     { field_id: fieldId, level_id: levelId, name },
   );
 }
@@ -225,7 +225,7 @@ export async function updateSubject(
   });
   if (!parsed.success) {
     return actionError(
-      "Donnees invalides.",
+      "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
@@ -233,7 +233,7 @@ export async function updateSubject(
     "updateSubject",
     "subjects",
     id,
-    "Cette matiere existe deja pour cette filiere et ce niveau.",
+    "Cette matière existe déjà pour cette filière et ce niveau.",
     parsed.data,
   );
 }
@@ -254,7 +254,7 @@ export async function createOption(
   });
   if (!parsed.success) {
     return actionError(
-      "Donnees invalides.",
+      "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
@@ -262,7 +262,7 @@ export async function createOption(
   return insertReferential(
     "createOption",
     "options",
-    "Cette option existe deja pour cette filiere.",
+    "Cette option existe déjà pour cette filière.",
     { field_id: fieldId, name },
   );
 }
@@ -276,7 +276,7 @@ export async function updateOption(
   });
   if (!parsed.success) {
     return actionError(
-      "Donnees invalides.",
+      "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
@@ -284,7 +284,7 @@ export async function updateOption(
     "updateOption",
     "options",
     id,
-    "Cette option existe deja pour cette filiere.",
+    "Cette option existe déjà pour cette filière.",
     parsed.data,
   );
 }

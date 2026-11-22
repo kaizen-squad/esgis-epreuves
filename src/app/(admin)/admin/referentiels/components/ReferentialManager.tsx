@@ -23,7 +23,7 @@ import type { Field, Level } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 
 const INPUT_CLASS =
-  "w-full rounded-lg border px-3 py-2 outline-none focus:border-background-accent";
+  "w-full rounded-control border px-3 py-2 outline-none focus:border-background-accent";
 
 function inputClass(error?: string) {
   return `${INPUT_CLASS} ${error ? "border-red-400" : "border-gray-300"}`;
@@ -31,11 +31,48 @@ function inputClass(error?: string) {
 
 type Kind = "field" | "level" | "subject" | "option";
 
-const LABELS: Record<Kind, { singular: string; article: string }> = {
-  field: { singular: "filière", article: "cette filière" },
-  level: { singular: "niveau", article: "ce niveau" },
-  subject: { singular: "matière", article: "cette matière" },
-  option: { singular: "option", article: "cette option" },
+type Label = {
+  /** "une filière" */
+  indefinite: string;
+  /** "cette filière" */
+  demonstrative: string;
+  /** "Aucune filière" */
+  empty: string;
+  /** "Active" ou "Actif" */
+  activeBadge: string;
+  /** "Désactivée" ou "Désactivé" */
+  inactiveBadge: string;
+};
+
+const LABELS: Record<Kind, Label> = {
+  field: {
+    indefinite: "une filière",
+    demonstrative: "cette filière",
+    empty: "Aucune filière",
+    activeBadge: "Active",
+    inactiveBadge: "Désactivée",
+  },
+  level: {
+    indefinite: "un niveau",
+    demonstrative: "ce niveau",
+    empty: "Aucun niveau",
+    activeBadge: "Actif",
+    inactiveBadge: "Désactivé",
+  },
+  subject: {
+    indefinite: "une matière",
+    demonstrative: "cette matière",
+    empty: "Aucune matière",
+    activeBadge: "Active",
+    inactiveBadge: "Désactivée",
+  },
+  option: {
+    indefinite: "une option",
+    demonstrative: "cette option",
+    empty: "Aucune option",
+    activeBadge: "Active",
+    inactiveBadge: "Désactivée",
+  },
 };
 
 export type ReferentialItem = {
@@ -78,7 +115,7 @@ export default function ReferentialManager({
   create: (formData: FormData) => Promise<ActionResult<{ id: string }>>;
   update: (id: string, formData: FormData) => Promise<ActionResult<null>>;
   setActive: (id: string, isActive: boolean) => Promise<ActionResult<unknown>>;
-  /** Ancre HTML pour le lien "matière manquante" depuis le formulaire BDE d'ajout d'épreuve. */
+  /** Ancre HTML pour ouvrir directement sur ce formulaire (ex. lien marque-page de l'admin). */
   anchorId?: string;
 }) {
   const router = useRouter();
@@ -155,7 +192,7 @@ export default function ReferentialManager({
         className="bg-background-primary rounded-card shadow-card flex flex-col gap-4 border border-gray-200 p-5"
       >
         <h2 className="text-text-secondary mb-0 text-lg font-semibold">
-          Ajouter une {label.singular}
+          Ajouter {label.indefinite}
         </h2>
 
         {failure ? (
@@ -285,7 +322,7 @@ export default function ReferentialManager({
                   colSpan={2 + (needsField ? 1 : 0) + (needsLevel ? 1 : 0) + 1}
                   className="text-text-paragraph px-5 py-10 text-center"
                 >
-                  Aucune {label.singular} pour l&apos;instant.
+                  {label.empty} pour l&apos;instant.
                 </td>
               </tr>
             ) : (
@@ -312,7 +349,7 @@ export default function ReferentialManager({
                           aria-hidden
                           className="size-1.5 rounded-full bg-green-600"
                         />
-                        Active
+                        {label.activeBadge}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
@@ -320,7 +357,7 @@ export default function ReferentialManager({
                           aria-hidden
                           className="size-1.5 rounded-full bg-gray-500"
                         />
-                        Désactivée
+                        {label.inactiveBadge}
                       </span>
                     )}
                   </td>
@@ -331,18 +368,18 @@ export default function ReferentialManager({
                         name={item.name}
                         isActive={item.isActive}
                         setActive={setActive}
-                        title={(active) =>
-                          active
-                            ? `Désactiver ${label.article} ?`
-                            : `Réactiver ${label.article} ?`
+                        title={
+                          item.isActive
+                            ? `Désactiver ${label.demonstrative} ?`
+                            : `Réactiver ${label.demonstrative} ?`
                         }
-                        description={(active) => (
+                        description={
                           <p className="mb-0">
-                            {active
-                              ? `Désactiver ${label.article} la retire des listes publiques (menu, filtres, formulaire de dépôt). Les épreuves déjà déposées qui la référencent ne sont pas affectées.`
-                              : `Réactiver ${label.article} la remet dans les listes publiques.`}
+                            {item.isActive
+                              ? `Désactiver ${label.demonstrative} la retire des listes publiques (menu, filtres, formulaire de dépôt). Les épreuves déjà déposées qui la référencent ne sont pas affectées.`
+                              : `Réactiver ${label.demonstrative} la remet dans les listes publiques.`}
                           </p>
-                        )}
+                        }
                       />
                     </div>
                   </td>
@@ -370,11 +407,13 @@ function RenameCell({
   const [value, setValue] = useState(item.name);
   const [error, setError] = useState<string | null>(null);
   const [pending, startRenameTransition] = useTransition();
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const cancel = () => {
     setEditing(false);
     setValue(item.name);
     setError(null);
+    triggerRef.current?.focus();
   };
 
   const save = () => {
@@ -401,6 +440,7 @@ function RenameCell({
       }
       setEditing(false);
       setError(null);
+      triggerRef.current?.focus();
       router.refresh();
     });
   };
@@ -408,14 +448,16 @@ function RenameCell({
   if (!editing) {
     return (
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setEditing(true)}
+        aria-label={`Renommer ${item.name}`}
         className={`group flex items-center gap-2 text-left font-medium ${item.isActive ? "text-text-default" : "text-gray-500"}`}
       >
         {item.name}
         <FiEdit2
           size={13}
-          className="text-text-paragraph opacity-0 transition-opacity group-hover:opacity-100"
+          className="text-text-paragraph opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
         />
       </button>
     );

@@ -13,8 +13,7 @@ import { requireAdminSession } from "../../../lib/requireAdminSession";
 import ReferentialManager from "../components/ReferentialManager";
 import ReferentialTabs from "../components/ReferentialTabs";
 
-/** Lien "matière manquante ?" du formulaire BDE d'ajout d'épreuve : ouvre directement sur le
- * formulaire de création, via l'ancre `#ajouter`. */
+/** `#ajouter` ouvre directement sur le formulaire de création, pour un lien marque-page. */
 export default async function MatieresPage() {
   await requireAdminSession();
   const [subjects, fields, levels] = await Promise.all([

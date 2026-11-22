@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { FiEdit2 } from "react-icons/fi";
 import { setBdeMemberActive } from "@/features/members/actions";
@@ -143,13 +141,13 @@ export default function MembersTable({
                         name={name}
                         isActive={member.isActive}
                         setActive={setBdeMemberActive}
-                        title={(active) =>
-                          active
+                        title={
+                          member.isActive
                             ? "Désactiver ce membre ?"
                             : "Réactiver ce membre ?"
                         }
-                        description={(active) =>
-                          active ? (
+                        description={
+                          member.isActive ? (
                             <p className="mb-0">
                               <strong>{name}</strong> ne pourra plus se
                               connecter ni gérer les épreuves. Les épreuves déjà

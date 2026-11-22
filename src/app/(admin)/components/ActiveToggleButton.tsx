@@ -24,8 +24,10 @@ export default function ActiveToggleButton({
   name: string;
   isActive: boolean;
   setActive: (id: string, isActive: boolean) => Promise<ActionResult<unknown>>;
-  title: (active: boolean) => string;
-  description: (active: boolean) => ReactNode;
+  /** Titre et description de la confirmation pour l'etat courant (`isActive`) : calcules par
+   * l'appelant, jamais des fonctions, pour rester transmissibles depuis un composant serveur. */
+  title: string;
+  description: ReactNode;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -76,8 +78,8 @@ export default function ActiveToggleButton({
 
       <ConfirmDialog
         open={open}
-        title={title(isActive)}
-        description={description(isActive)}
+        title={title}
+        description={description}
         confirmLabel={label}
         tone={isActive ? "danger" : "default"}
         pending={pending}

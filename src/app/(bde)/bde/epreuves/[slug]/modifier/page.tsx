@@ -24,6 +24,17 @@ export default async function ModifierEpreuvePage({
   ]);
   if (!exam) notFound();
 
+  // `fields`/`levels` ne contiennent deja que les actifs : une matiere dont la filiere ou le
+  // niveau a ete desactive depuis l'admin ne doit plus etre proposee pour un nouveau choix,
+  // mais la matiere actuelle de l'epreuve reste visible meme si elle n'est plus proposable.
+  const fieldIds = new Set(fields.map((f) => f.id));
+  const levelIds = new Set(levels.map((l) => l.id));
+  const availableSubjects = subjects.filter(
+    (s) =>
+      s.id === exam.subjectId ||
+      (fieldIds.has(s.fieldId) && levelIds.has(s.levelId)),
+  );
+
   return (
     <div>
       <ExamWelcomeSection title="Modifier une Épreuve" />
@@ -31,7 +42,7 @@ export default async function ModifierEpreuvePage({
         exam={exam}
         fields={fields}
         levels={levels}
-        subjects={subjects}
+        subjects={availableSubjects}
         options={options}
       />
     </div>
