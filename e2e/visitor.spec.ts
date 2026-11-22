@@ -25,7 +25,8 @@ test("un visiteur recherche une epreuve, l'ouvre et telecharge son fichier", asy
   const card = page.locator("article", { hasText: SEARCHABLE_EXAM_TITLE });
   await expect(card).toBeVisible();
   await card.scrollIntoViewIfNeeded();
-  const link = card.getByRole("link", { name: "Visualiser" });
+  // Toute la carte mene a la fiche (R-09) : plus de lien "Visualiser" distinct.
+  const link = card.getByRole("link", { name: `Voir la fiche de` });
   await link.click();
 
   await expect(
