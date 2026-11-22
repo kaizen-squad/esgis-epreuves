@@ -17,19 +17,6 @@ const Footer = ({ links }: FooterProps) => {
           <p className="text-text-primary/70 mb-5 text-sm">
             Une initiative du BDE ESGIS.
           </p>
-          <div className="bg-background-primary flex gap-4 rounded-full px-3 py-1">
-            <input
-              className="min-w-0 flex-1 outline-none"
-              type="search"
-              placeholder="Rechercher une épreuve"
-            />
-            <button
-              className="bg-background-accent text-text-primary min-w-0 cursor-pointer rounded-full p-2"
-              type="submit"
-            >
-              Rechercher
-            </button>
-          </div>
         </div>
 
         <div className="mb-8">

@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FiArrowRight } from "react-icons/fi";
-import { countSearchResults } from "@/features/exams/actions";
+import { searchExamPreview } from "@/features/exams/actions";
 import { searchTokens } from "@/features/exams/schemas";
 import { useCatalogueFilters } from "@/components/exams/useCatalogueFilters";
+import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
 
 const DEBOUNCE_MS = 300;
 /** Aligne sur MAX_SEARCH_LENGTH d'examFiltersSchema : au-dela, le serveur ignorerait le terme. */
@@ -29,6 +30,13 @@ const DEFAULT_CATALOGUE_HREF = "/catalogue";
 function catalogueSearchHref(basePath: string, query: string): string {
   const term = query.trim();
   return term ? `${basePath}?search=${encodeURIComponent(term)}` : basePath;
+}
+
+/** `catalogueHref` ("/catalogue" ou "/bde/catalogue") -> espace, pour construire le lien de chaque epreuve trouvee. */
+function spaceFromCatalogueHref(
+  catalogueHref: string,
+): "" | typeof BDE_BASE_PATH {
+  return catalogueHref.startsWith(BDE_BASE_PATH) ? BDE_BASE_PATH : "";
 }
 
 /** Appelle `callback` apres DEBOUNCE_MS sans nouvel appel ; `cancel` annule l'appel en attente. */
@@ -58,17 +66,27 @@ type SearchFormProps = {
   onChange: (value: string) => void;
   onSubmit: () => void;
   onFocus?: () => void;
+  /** Page ciblee par une soumission native (sans JS) ; la page courante par defaut. */
+  action?: string;
 };
 
-function SearchForm({ query, onChange, onSubmit, onFocus }: SearchFormProps) {
+function SearchForm({
+  query,
+  onChange,
+  onSubmit,
+  onFocus,
+  action,
+}: SearchFormProps) {
   return (
     <form
       role="search"
+      method="get"
+      action={action}
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit();
       }}
-      className="bg-background-primary flex border border-gray-300 py-1 pr-2 pl-4"
+      className="bg-background-primary flex rounded-[var(--radius-control)] border border-gray-300 py-1 pr-2 pl-4"
     >
       <input
         className="min-w-0 flex-1 outline-none"
@@ -84,7 +102,7 @@ function SearchForm({ query, onChange, onSubmit, onFocus }: SearchFormProps) {
       />
       <button
         type="submit"
-        className="bg-background-accent text-text-primary flex h-full min-w-0 cursor-pointer items-center gap-3 p-2"
+        className="bg-background-accent text-text-primary flex h-full min-w-0 items-center gap-3 rounded-[var(--radius-control)] p-2"
       >
         Rechercher
         <FiArrowRight />
@@ -126,28 +144,32 @@ function LiveResearch({ initialQuery = "" }: { initialQuery?: string }) {
   );
 }
 
-type CountState =
+type PreviewExam = { title: string; slug: string };
+
+type PreviewState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "done"; total: number }
+  | { status: "done"; total: number; exams: PreviewExam[] }
   | { status: "error" };
 
-/** Hors catalogue : nombre de resultats sous le champ, avec un lien vers le catalogue filtre. */
+/** Hors catalogue : titres trouves (3 a 5) sous le champ, avec un lien vers le catalogue filtre. */
 function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [count, setCount] = useState<CountState>({ status: "idle" });
+  const [preview, setPreview] = useState<PreviewState>({ status: "idle" });
   const [isOpen, setIsOpen] = useState(false);
   /** Numero de la derniere requete : une reponse plus ancienne arrivee en retard est ignoree. */
   const requestRef = useRef(0);
+  const basePath = spaceFromCatalogueHref(catalogueHref);
 
   const debounced = useDebounced(async (value: string) => {
     const requestId = requestRef.current;
     try {
-      const total = await countSearchResults(value);
-      if (requestId === requestRef.current) setCount({ status: "done", total });
+      const result = await searchExamPreview(value);
+      if (requestId === requestRef.current)
+        setPreview({ status: "done", ...result });
     } catch {
-      if (requestId === requestRef.current) setCount({ status: "error" });
+      if (requestId === requestRef.current) setPreview({ status: "error" });
     }
   });
 
@@ -157,16 +179,16 @@ function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
 
     if (searchTokens(value).length === 0) {
       debounced.cancel();
-      setCount({ status: "idle" });
+      setPreview({ status: "idle" });
       return;
     }
 
-    setCount({ status: "loading" });
+    setPreview({ status: "loading" });
     setIsOpen(true);
     debounced.schedule(value);
   };
 
-  const showPanel = isOpen && count.status !== "idle";
+  const showPanel = isOpen && preview.status !== "idle";
 
   return (
     <ResearchShell>
@@ -182,6 +204,7 @@ function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
       >
         <SearchForm
           query={query}
+          action={catalogueHref}
           onChange={handleChange}
           onFocus={() => setIsOpen(true)}
           onSubmit={() => {
@@ -192,39 +215,54 @@ function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
 
         {showPanel && (
           <div
-            className="bg-background-primary absolute inset-x-0 top-full z-20 mt-1 border border-gray-300 text-left text-sm shadow-lg"
+            className="bg-background-primary absolute inset-x-0 top-full z-20 mt-1 rounded-[var(--radius-control)] border border-gray-300 text-left text-sm shadow-[var(--shadow-elevated)]"
             aria-live="polite"
           >
-            {count.status === "loading" && (
+            {preview.status === "loading" && (
               <p className="text-text-paragraph px-4 py-3">
                 Recherche en cours...
               </p>
             )}
 
-            {count.status === "error" && (
+            {preview.status === "error" && (
               <p className="text-text-paragraph px-4 py-3" role="alert">
                 Impossible de lancer la recherche.
               </p>
             )}
 
-            {count.status === "done" &&
-              (count.total === 0 ? (
+            {preview.status === "done" &&
+              (preview.total === 0 ? (
                 <p className="text-text-paragraph px-4 py-3">
                   Aucune épreuve ne correspond à votre recherche.
                 </p>
               ) : (
-                <Link
-                  href={catalogueSearchHref(catalogueHref, query)}
-                  onClick={() => setIsOpen(false)}
-                  className="text-text-default flex items-center justify-between gap-3 px-4 py-3 font-medium hover:bg-gray-100"
-                >
-                  <span className="truncate">
-                    Voir {count.total === 1 ? "le" : `les ${count.total}`}{" "}
-                    résultat{count.total > 1 ? "s" : ""} pour «&nbsp;
-                    {query.trim()}&nbsp;»
-                  </span>
-                  <FiArrowRight className="shrink-0" />
-                </Link>
+                <>
+                  <ul>
+                    {preview.exams.map((exam) => (
+                      <li key={exam.slug}>
+                        <Link
+                          href={examHref(basePath, exam.slug)}
+                          onClick={() => setIsOpen(false)}
+                          className="text-text-default block truncate px-4 py-2.5 font-medium hover:bg-gray-100"
+                        >
+                          {exam.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={catalogueSearchHref(catalogueHref, query)}
+                    onClick={() => setIsOpen(false)}
+                    className="text-text-default flex items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 font-medium hover:bg-gray-100"
+                  >
+                    <span className="truncate">
+                      Voir {preview.total === 1 ? "le" : `les ${preview.total}`}{" "}
+                      résultat{preview.total > 1 ? "s" : ""} pour «&nbsp;
+                      {query.trim()}&nbsp;»
+                    </span>
+                    <FiArrowRight className="shrink-0" />
+                  </Link>
+                </>
               ))}
           </div>
         )}
