@@ -9,7 +9,7 @@ import { memberCreateSchema, memberUpdateSchema, toFullName } from "./schemas";
 
 const FORBIDDEN = "Action réservée à l'administrateur.";
 const NOT_CONFIGURED =
-  "La création de comptes n'est pas configurée sur le serveur (clé SUPABASE_SECRET_KEY manquante).";
+  "Action indisponible : configuration du serveur incomplète. Contactez le support technique.";
 const EMAIL_TAKEN = "Un compte utilise déjà cet email.";
 
 /**

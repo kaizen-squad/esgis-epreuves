@@ -103,7 +103,7 @@ export default function AdminSidebar() {
                     href={href}
                     onClick={() => setOpen(false)}
                     aria-current={active ? "page" : undefined}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? "bg-background-accent text-text-primary" : "text-text-default hover:bg-background-default"}`}
+                    className={`rounded-control flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${active ? "bg-background-accent text-text-primary" : "text-text-default hover:bg-background-default"}`}
                   >
                     <Icon size={18} />
                     {name}

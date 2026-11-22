@@ -134,7 +134,7 @@ export default function MembersTable({
                       <Link
                         href={`/admin/membres/${member.id}/modifier`}
                         aria-label={`Modifier ${name}`}
-                        className="text-text-default flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
+                        className="text-text-default rounded-control flex items-center gap-1.5 border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
                       >
                         <FiEdit2 size={13} /> Modifier
                       </Link>

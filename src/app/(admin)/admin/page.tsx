@@ -47,12 +47,14 @@ export default async function AdminDashboardPage({
           value={activeCount}
           hint="Comptes autorisés à déposer des épreuves"
           icon={FiUserCheck}
+          tone="positive"
         />
         <KpiCard
           label="Membres désactivés"
           value={inactiveCount}
           hint="Comptes bloqués, réactivables à tout moment"
           icon={FiUserX}
+          tone="negative"
         />
       </section>
 
