@@ -6,16 +6,19 @@
  * avec son contexte (ex. le meme pictogramme satellite recycle sur deux cartes distinctes).
  */
 export {
+  FiArrowLeft,
   FiArrowRight,
   FiCalendar,
   FiCompass,
   FiDownload,
+  FiEdit2,
   FiEye,
   FiFileText,
   FiLayers,
   FiLinkedin,
   FiMenu,
   FiMoreVertical,
+  FiRefreshCw,
   FiX,
 } from "react-icons/fi";
 export { GoDotFill } from "react-icons/go";

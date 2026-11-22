@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+export const alt = "Alexandria, une initiative du BDE ESGIS";
 
 /**
  * Image de partage par defaut (convention de fichier Next), heritee par toute page qui n'en

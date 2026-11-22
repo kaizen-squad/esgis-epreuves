@@ -1,4 +1,4 @@
-import { FiArrowRight } from "react-icons/fi";
+import { FiArrowRight } from "@/components/icons";
 import FiliereCard from "@/components/fields/FiliereCard";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -18,13 +18,13 @@ export default async function Filieres({
   // Rendu a la requete, pas au build : la CI build sans variables Supabase (meme raison que RecentlyAdded).
   await connection();
   const summaries = (await getFieldLevelSummaries()).slice(0, HOME_CARDS_LIMIT);
+  const title =
+    basePath === "" ? "Sélectionne ta filière" : "Sélectionnez votre filière";
 
   if (summaries.length === 0) {
     return (
       <div className="mx-auto mb-16 max-w-7xl">
-        <h3 className="section-title text-center">
-          Sélectionnez votre filière
-        </h3>
+        <h3 className="section-title text-center">{title}</h3>
         <p className="text-text-paragraph">
           Aucune filière n&apos;a encore été ajoutée.
         </p>
@@ -34,7 +34,7 @@ export default async function Filieres({
 
   return (
     <div className="mx-auto mb-30 max-w-7xl">
-      <h3 className="section-title text-center">Sélectionnez votre filière</h3>
+      <h3 className="section-title text-center">{title}</h3>
       <div className="mb-6 grid grid-cols-1 grid-rows-3 gap-4 md:grid-cols-2 md:grid-rows-2 lg:grid-cols-3">
         {summaries.map((summary, index) => (
           <FiliereCard
