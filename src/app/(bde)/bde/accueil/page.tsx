@@ -33,7 +33,7 @@ const BDEAccueil = async () => {
         <Suspense fallback={<FilieresSkeleton />}>
           <Filieres basePath={BDE_BASE_PATH} />
         </Suspense>
-        <ResultsResume />
+        <ResultsResume basePath={BDE_BASE_PATH} />
         <CTACatalogue catalogueHref={BDE_CATALOGUE_HREF} />
       </div>
     </>

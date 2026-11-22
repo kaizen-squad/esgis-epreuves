@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FiArrowRight } from "react-icons/fi";
+import { FiArrowRight } from "@/components/icons";
 import ImageHandler from "@/components/ui/ImageHandler";
 import Link from "next/link";
 

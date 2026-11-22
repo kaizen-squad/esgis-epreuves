@@ -233,7 +233,8 @@ function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
             {preview.status === "done" &&
               (preview.total === 0 ? (
                 <p className="text-text-paragraph px-4 py-3">
-                  Aucune épreuve ne correspond à votre recherche.
+                  Aucune épreuve ne correspond à{" "}
+                  {basePath === "" ? "ta" : "votre"} recherche.
                 </p>
               ) : (
                 <>

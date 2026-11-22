@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { FiArrowLeft, FiDownload, FiEdit2, FiRefreshCw } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiDownload,
+  FiEdit2,
+  FiRefreshCw,
+} from "@/components/icons";
 import {
   BDE_BASE_PATH,
   catalogueHref,

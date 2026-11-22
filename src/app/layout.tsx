@@ -14,6 +14,9 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://esgis-epreuves.vercel.app",
+  ),
   title: "Alexandria",
   description:
     "Consultez et téléchargez les épreuves d'examens et devoirs de l'ESGIS.",

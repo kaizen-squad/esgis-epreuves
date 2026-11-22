@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FiMoreVertical } from "react-icons/fi";
+import { FiMoreVertical } from "@/components/icons";
 
 type MenuItemProps = {
   name: React.ReactNode;

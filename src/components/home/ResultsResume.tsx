@@ -1,8 +1,15 @@
 import { FiCompass, FiLayers } from "@/components/icons";
 import ResumeCard from "@/components/home/ResumeCard";
+import type { SpaceBasePath } from "@/components/layout/spaces";
 import Image from "next/image";
 
-const ResultsResume = () => {
+/**
+ * Tutoiement cote public, vouvoiement cote BDE (lexique fixe par R-02) : partage entre les deux
+ * espaces, le registre suit `basePath` plutot qu'un texte fige.
+ */
+const ResultsResume = ({ basePath = "" }: { basePath?: SpaceBasePath }) => {
+  const isPublic = basePath === "";
+
   return (
     <div className="mx-auto mb-20 flex w-fit flex-col items-center gap-10 lg:flex-row lg:gap-20">
       <div className="lg:flex lg:flex-col lg:justify-between">
@@ -11,21 +18,39 @@ const ResultsResume = () => {
             Progrès constants, réussite garantie
           </h2>
           <p className="text-text-default mb-8 w-2/3 text-sm font-light lg:text-base xl:text-lg">
-            La plateforme réunit tous vos sujets d&apos;examen pour vous
-            entraîner facilement et booster vos notes. Des annales de qualité
-            vous ouvrent la voie vers des diplômes réussis.
+            {isPublic ? (
+              <>
+                La plateforme réunit tous tes sujets d&apos;examen pour
+                t&apos;entraîner facilement et booster tes notes. Des annales de
+                qualité t&apos;ouvrent la voie vers des diplômes réussis.
+              </>
+            ) : (
+              <>
+                La plateforme réunit tous vos sujets d&apos;examen pour vous
+                entraîner facilement et booster vos notes. Des annales de
+                qualité vous ouvrent la voie vers des diplômes réussis.
+              </>
+            )}
           </p>
         </div>
         <div className="flex flex-col gap-6 lg:flex-row">
           <ResumeCard
             icon={<FiLayers size={20} />}
             title="Ressources exhaustives"
-            text="Accédez à notre sélection de sujets et ressources clés pour réussir vos examens."
+            text={
+              isPublic
+                ? "Accède à notre sélection de sujets et ressources clés pour réussir tes examens."
+                : "Accédez à notre sélection de sujets et ressources clés pour réussir vos examens."
+            }
           />
           <ResumeCard
             icon={<FiCompass size={20} />}
             title="Un parcours adapté"
-            text="Notre espace propose des épreuves, adaptées à votre parcours."
+            text={
+              isPublic
+                ? "Notre espace propose des épreuves, adaptées à ton parcours."
+                : "Notre espace propose des épreuves, adaptées à votre parcours."
+            }
           />
         </div>
       </div>

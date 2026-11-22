@@ -43,10 +43,16 @@
     cursor: not-allowed;
   }
 
-  /* Anneau de focus visible et coherent, pour tout element navigable au clavier. */
+  /*
+   * Anneau de focus a deux tons : un anneau blanc colle a l'element, suivi d'un anneau rouge
+   * juste derriere. Un seul ton rouge n'atteint le contraste 3:1 requis que sur fond clair
+   * (le rouge sur le bandeau sombre de la nav/du footer tombe a ~2,9:1) ; la combinaison reste
+   * visible quel que soit le fond, clair ou sombre.
+   */
   :focus-visible {
-    outline: 2px solid var(--color-background-accent);
-    outline-offset: 2px;
+    outline: 2px solid #ffffff;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 4px var(--color-background-accent);
   }
 
   @media (prefers-reduced-motion: reduce) {
