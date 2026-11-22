@@ -3,6 +3,7 @@ import { FiCalendar, FiDownload, FiEye, FiFileText } from "react-icons/fi";
 import { GoDotFill } from "react-icons/go";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
+import Cote from "./Cote";
 import ExamManageMenu from "./ExamManageMenu";
 import ExamThumbnail from "./ExamThumbnail";
 
@@ -14,7 +15,12 @@ export interface ExamCardProps {
   name: string;
   year: number;
   matter: string;
+  subjectId: string;
   class: string;
+  levelId: string;
+  field: string;
+  fieldId: string;
+  academicYear: string;
   type: string;
   slug?: string;
   /** Taille reelle du fichier, en octets. */
@@ -26,9 +32,8 @@ export interface ExamCardProps {
 
 const ExamCard = (data: ExamCardProps) => {
   // Espace BDE (cartes gerables) : la page de l'epreuve reste dans l'espace BDE.
-  const previewHref = data.slug
-    ? examHref(data.manageable ? BDE_BASE_PATH : "", data.slug)
-    : null;
+  const basePath = data.manageable ? BDE_BASE_PATH : "";
+  const previewHref = data.slug ? examHref(basePath, data.slug) : null;
   const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
 
   return (
@@ -42,11 +47,17 @@ const ExamCard = (data: ExamCardProps) => {
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-text-paragraph flex min-w-0 items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
-            <span className="shrink-0">{data.class}</span>
-            <GoDotFill size={6} className="shrink-0" />
-            <span className="truncate">{data.matter}</span>
-          </div>
+          <Cote
+            field={data.field}
+            fieldId={data.fieldId}
+            level={data.class}
+            levelId={data.levelId}
+            subject={data.matter}
+            subjectId={data.subjectId}
+            academicYear={data.academicYear}
+            basePath={basePath}
+            className="text-text-paragraph min-w-0 flex-wrap text-xs font-medium tracking-wide [&_li]:truncate"
+          />
           <span className="text-background-accent shrink-0 rounded-full border border-current px-2 py-0.5 text-xs font-medium">
             {data.type}
           </span>
