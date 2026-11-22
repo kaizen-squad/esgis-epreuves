@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FavoriteSnapshot } from "./types";
 
 const favorite: FavoriteSnapshot = {
@@ -38,12 +38,30 @@ describe("classeur store", () => {
     vi.stubGlobal("localStorage", storage);
   });
 
+  // Toujours restaure l'horloge reelle, meme si une assertion echoue dans un test qui l'a figee.
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("persiste un favori apres rechargement", async () => {
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
     const store = await freshStore();
     store.toggleFavorite(favorite);
 
     const reloaded = await freshStore();
     expect(reloaded.getSnapshot().favorites[favorite.slug]).toEqual(favorite);
+    vi.useRealTimers();
+  });
+
+  it("horodate le favori au moment du clic, pas celui fourni par l'appelant", async () => {
+    vi.setSystemTime(new Date("2026-05-01T12:00:00.000Z"));
+    const store = await freshStore();
+    store.toggleFavorite({ ...favorite, savedAt: "2000-01-01T00:00:00.000Z" });
+
+    expect(store.getSnapshot().favorites[favorite.slug]?.savedAt).toBe(
+      "2026-05-01T12:00:00.000Z",
+    );
+    vi.useRealTimers();
   });
 
   it("retire un favori deja present", async () => {
@@ -101,21 +119,46 @@ describe("classeur store", () => {
   });
 
   it("une version inconnue retombe sur l'etat vide", async () => {
+    // Autrement valide (meme `pinnedField`) : seule la version doit faire echouer le schema.
     storage.setItem(
       "esgis-epreuves:classeur",
-      JSON.stringify({ version: 99, favorites: {}, lastVisits: {} }),
+      JSON.stringify({
+        version: 99,
+        favorites: { [favorite.slug]: favorite },
+        pinnedField: null,
+        lastVisits: {},
+      }),
     );
     const store = await freshStore();
     expect(store.getSnapshot().favorites).toEqual({});
   });
 
-  it("une erreur localStorage ne fait pas planter l'ecriture", async () => {
+  it("une erreur a l'ecriture ne fait pas planter, et garde l'etat en memoire", async () => {
     const store = await freshStore();
     vi.spyOn(storage, "setItem").mockImplementation(() => {
       throw new Error("quota depasse");
     });
 
     expect(() => store.toggleFavorite(favorite)).not.toThrow();
+    // Le favori reste visible en memoire meme si la lecture suivante retombe sur le disque
+    // (toujours vide, puisque l'ecriture a echoue) : sans le correctif, il disparaitrait.
+    expect(store.getSnapshot().favorites[favorite.slug]).toMatchObject({
+      slug: favorite.slug,
+    });
+  });
+
+  it("un stockage dont la simple lecture leve une exception ne fait pas planter", async () => {
+    vi.stubGlobal("window", {
+      get localStorage(): never {
+        throw new DOMException("bloque", "SecurityError");
+      },
+      dispatchEvent: vi.fn(),
+      addEventListener: vi.fn(),
+    });
+    const store = await freshStore();
+
+    expect(() => store.getSnapshot()).not.toThrow();
+    expect(store.getSnapshot().favorites).toEqual({});
   });
 
   it("un evenement storage d'un autre onglet notifie les abonnes", async () => {

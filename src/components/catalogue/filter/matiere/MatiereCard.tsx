@@ -1,16 +1,17 @@
 interface MatiereCardProps {
+  name: string;
   label: string;
   checked: boolean;
   onChange: () => void;
 }
 
-const MatiereCard = ({ label, checked, onChange }: MatiereCardProps) => {
+const MatiereCard = ({ name, label, checked, onChange }: MatiereCardProps) => {
   return (
     <div className="mb-4">
       <label className="flex cursor-pointer items-center gap-4">
         <input
           type="radio"
-          name="matiere"
+          name={name}
           checked={checked}
           onChange={onChange}
           onClick={checked ? onChange : undefined}

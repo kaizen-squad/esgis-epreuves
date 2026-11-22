@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { getSubjectCoverage } from "@/features/exams/queries";
 
-/** Groupe la couverture par niveau, dans l'ordre ou elle revient (matieres triees par nom). */
+/** Groupe la couverture par niveau (trie par nom de niveau, puis de matiere dans chaque groupe). */
 function groupByLevel(
   coverage: Awaited<ReturnType<typeof getSubjectCoverage>>,
 ) {
@@ -16,7 +17,9 @@ function groupByLevel(
     level.subjects.push(entry);
     levels.set(entry.levelId, level);
   }
-  return [...levels.values()];
+  return [...levels.values()].sort((a, b) =>
+    a.levelName.localeCompare(b.levelName),
+  );
 }
 
 /**
@@ -26,20 +29,28 @@ function groupByLevel(
 export default async function FieldCoverageMatrix({
   fieldId,
   fieldName,
+  /** Vue d'ensemble (toutes filieres) : lien vers la matrice de cette filiere seule. Absent sur sa propre page. */
+  href,
 }: {
   fieldId: string;
   fieldName: string;
+  href?: string;
 }) {
   const coverage = await getSubjectCoverage(fieldId);
   const levels = groupByLevel(coverage);
   const gaps = coverage.filter((entry) => entry.examCount === 0).length;
+  const heading = href ? (
+    <Link href={href} className="hover:underline">
+      {fieldName}
+    </Link>
+  ) : (
+    fieldName
+  );
 
   if (coverage.length === 0) {
     return (
       <div className="mb-10">
-        <h3 className="text-text-secondary text-xl font-semibold">
-          {fieldName}
-        </h3>
+        <h3 className="text-text-secondary text-xl font-semibold">{heading}</h3>
         <p className="text-text-paragraph text-sm">
           Aucune matière active pour cette filière.
         </p>
@@ -50,9 +61,7 @@ export default async function FieldCoverageMatrix({
   return (
     <div className="mb-10">
       <div className="mb-3 flex items-center justify-between gap-4">
-        <h3 className="text-text-secondary text-xl font-semibold">
-          {fieldName}
-        </h3>
+        <h3 className="text-text-secondary text-xl font-semibold">{heading}</h3>
         <p className="text-text-paragraph text-sm">
           {gaps === 0
             ? "Fonds complet"

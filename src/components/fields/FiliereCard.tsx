@@ -12,12 +12,14 @@ interface FiliereProps {
 
 const FiliereCard = ({
   data: { label, examCount, href },
-  className,
+  // "flex" (ou son equivalent responsive) vient toujours d'ici, jamais aussi du gabarit ci-dessous :
+  // deux classes d'affichage sans prefixe sur le meme element se disputeraient la cascade.
+  className = "flex",
 }: FiliereProps) => {
   return (
     <Link
       href={href}
-      className={`${className ?? ""} bg-background-primary flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-5 shadow-sm transition-colors hover:border-gray-300`}
+      className={`${className} bg-background-primary items-center justify-between gap-4 rounded-xl border border-gray-200 p-5 shadow-sm transition-colors hover:border-gray-300`}
     >
       <div className="min-w-0">
         <p className="text-text-secondary truncate text-lg font-semibold uppercase">

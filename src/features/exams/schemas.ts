@@ -82,7 +82,10 @@ export const examFiltersSchema = z.object({
     .regex(/^\d{4}-\d{4}$/)
     .optional()
     .catch(undefined),
-  createdBy: z.uuid().optional().catch(undefined),
+  // Filtre de proprietaire (acces aux donnees d'un membre) : jamais de .catch(undefined) ici,
+  // un createdBy invalide doit faire echouer la requete, pas faire sauter le filtre et renvoyer
+  // les epreuves de tout le monde.
+  createdBy: z.uuid().optional(),
   page: z.coerce.number().int().min(1).catch(1),
   pageSize: z.coerce
     .number()

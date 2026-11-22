@@ -773,12 +773,19 @@ const SEARCH_PREVIEW_LIMIT = 5;
  * Apercu de la recherche libre affiche sous la barre de recherche avant de renvoyer vers le
  * catalogue (#119) : le total et jusqu'a SEARCH_PREVIEW_LIMIT titres trouves, meme recherche
  * libre que le catalogue (titre, matiere, filiere). Un terme sans mot exploitable renvoie un
- * resultat vide sans requete.
+ * resultat vide sans requete. `fieldId` restreint l'apercu a cette filiere (page filiere, R-14) :
+ * sans lui, il porterait sur tout le catalogue alors que le lien "Voir les N resultats" renvoie
+ * vers un catalogue deja filtre.
  */
 export async function searchExamPreview(
   term: string,
+  fieldId?: string,
 ): Promise<{ total: number; exams: Pick<Exam, "title" | "slug">[] }> {
   if (searchTokens(term).length === 0) return { total: 0, exams: [] };
 
-  return searchExamTitles({ search: term, pageSize: SEARCH_PREVIEW_LIMIT });
+  return searchExamTitles({
+    search: term,
+    fieldId,
+    pageSize: SEARCH_PREVIEW_LIMIT,
+  });
 }
