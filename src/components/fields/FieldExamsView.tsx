@@ -15,7 +15,6 @@ import {
 } from "@/components/exams/catalogueFilters";
 import Research from "@/components/exams/Research";
 import { toExamCardProps } from "@/components/exams/toExamCardProps";
-import PinFieldButton from "@/components/classeur/PinFieldButton";
 import FieldBreadcrumb from "@/components/fields/FieldBreadcrumb";
 import { fieldPageTitle } from "@/components/fields/fieldLabel";
 import FiliereCatalogueSection from "@/components/fields/FiliereCatalogueSection";
@@ -64,11 +63,6 @@ export default async function FieldExamsView({
     <>
       <div>
         <FieldBreadcrumb fieldName={result.field.name} basePath={basePath} />
-        {basePath === "" ? (
-          <PinFieldButton
-            field={{ id: result.field.id, name: result.field.name }}
-          />
-        ) : null}
         <h1 className="head-title text-center">Épreuves : {title}</h1>
         <p className="mb-6 text-center">
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en

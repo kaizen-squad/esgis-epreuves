@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import MaFiliereLink from "@/components/classeur/MaFiliereLink";
 import Filieres from "@/components/fields/Filieres";
 import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
 import RecentlyAdded, {
@@ -14,9 +13,6 @@ export default function Accueil() {
     <>
       <WelcomeSection />
       <Research />
-      <div className="mb-8 px-6 text-center">
-        <MaFiliereLink />
-      </div>
       <div className="px-6">
         <Suspense fallback={<RecentlyAddedSkeleton />}>
           <RecentlyAdded title="Récemment ajoutés" />
