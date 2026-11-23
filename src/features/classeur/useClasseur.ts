@@ -1,21 +1,14 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import {
-  getServerSnapshot,
-  getSnapshot,
-  pinField,
-  recordVisit,
-  subscribe,
-  toggleFavorite,
-} from "./store";
+import { getServerSnapshot, getSnapshot, pinField, subscribe } from "./store";
 
 /**
- * Classeur local au navigateur (R-11) : favoris, filiere epinglee, dernieres visites. Le premier
- * rendu client reprend l'etat vide du serveur (pas de mismatch d'hydratation) ; l'etat reel
- * arrive au rendu suivant, via `useSyncExternalStore`.
+ * Filiere epinglee ("Ma filiere", R-11), stockee localement au navigateur. Le premier rendu
+ * client reprend l'etat vide du serveur (pas de mismatch d'hydratation) ; l'etat reel arrive au
+ * rendu suivant, via `useSyncExternalStore`.
  */
 export function useClasseur() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  return { state, toggleFavorite, pinField, recordVisit };
+  return { state, pinField };
 }
