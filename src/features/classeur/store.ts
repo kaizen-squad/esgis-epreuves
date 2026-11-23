@@ -1,13 +1,11 @@
 import { classeurStateSchema } from "./schemas";
-import type { ClasseurState, FavoriteSnapshot, PinnedField } from "./types";
+import type { ClasseurState, PinnedField } from "./types";
 
 const STORAGE_KEY = "esgis-epreuves:classeur";
 
 export const EMPTY_STATE: ClasseurState = {
   version: 1,
-  favorites: {},
   pinnedField: null,
-  lastVisits: {},
 };
 
 let cachedRaw: string | null = null;
@@ -100,35 +98,8 @@ if (
   window.addEventListener("storage", notifyStorageEvent);
 }
 
-/**
- * Bascule le favori. `savedAt` est horodate ici, au moment reel du clic : la page qui fournit
- * `snapshot` est rendue avant que l'utilisateur ne clique, un horodatage pris a ce moment-la
- * resterait celui du rendu de la page, pas celui de la mise en favori.
- */
-export function toggleFavorite(snapshot: FavoriteSnapshot) {
-  const current = getSnapshot();
-  const favorites = { ...current.favorites };
-  if (favorites[snapshot.slug]) delete favorites[snapshot.slug];
-  else
-    favorites[snapshot.slug] = {
-      ...snapshot,
-      savedAt: new Date().toISOString(),
-    };
-  write({ ...current, favorites });
-  notify();
-}
-
 export function pinField(field: PinnedField | null) {
   const current = getSnapshot();
   write({ ...current, pinnedField: field });
-  notify();
-}
-
-export function recordVisit(slug: string) {
-  const current = getSnapshot();
-  write({
-    ...current,
-    lastVisits: { ...current.lastVisits, [slug]: new Date().toISOString() },
-  });
   notify();
 }
