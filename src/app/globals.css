@@ -251,9 +251,9 @@
   /*
    * Cartes filiere : chaque couple niveau x filiere est un intercalaire du classeur, range dans
    * le logement de sa filiere (`.filing-tray`, meme geste que `.cover-slot`, creuse cette fois
-   * dans la feuille blanche). Sa languette (`.binder-tab`, la meme que la navigation) porte le
-   * niveau ; comme dans un vrai jeu de cinq intercalaires, elle se decale d'un cran par niveau
-   * (`--tab-step`, 0 a 4), du bord gauche au bord droit.
+   * dans la feuille blanche). Le niveau est imprime sur son bord renforce (`.divider-edge`) et
+   * non sur une languette : posees cote a cote dans une grille, des languettes decalees d'un cran
+   * par niveau donnaient a chaque carte une silhouette differente, sans pile pour les justifier.
    */
   .filing-tray {
     background-color: color-mix(
@@ -267,7 +267,6 @@
   }
 
   .divider-card {
-    --tab-inset: calc(var(--radius-card) + 0.75rem);
     --pile: 0 0 0 transparent;
     box-shadow:
       var(--pile),
@@ -308,18 +307,36 @@
       0 19px 0 -6px rgb(17 22 36 / 0.22);
   }
 
-  /* Position de la languette : `--tab-step` quarts de la largeur utile, sans mordre les coins. */
-  .divider-tab {
-    left: calc(
-      var(--tab-inset) + (100% - 2 * var(--tab-inset)) * var(--tab-step) / 4
+  /*
+   * L'intercalaire lui-meme, en carton teinte : cinq tons (`--tab-step`, 0 a 4), du plus clair au
+   * plus sombre, comme les onglets de la navigation s'assombrissent avec la profondeur. Le rang se
+   * lit ainsi sans que la silhouette de la carte change d'un niveau a l'autre.
+   */
+  .divider-edge {
+    /* Plancher a 10% : en dessous, le premier ton se confond avec le fond du logement. */
+    --edge-ink: calc(10% + 6% * var(--tab-step));
+    background-color: color-mix(
+      in oklab,
+      var(--color-background-primary),
+      var(--color-background-secondary) var(--edge-ink)
     );
-    translate: calc(-100% * var(--tab-step) / 4) 0;
+    transition: background-color 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Survol ou focus de la carte : on tire l'intercalaire, comme un onglet de la navigation. */
-  .divider-card:hover .divider-tab::before,
-  .divider-card:focus-visible .divider-tab::before {
-    transform: scaleY(1.2) perspective(4em) rotateX(6deg);
+  /*
+   * Feuille classee devant l'intercalaire : elle le couvre sauf sur son bord gauche, ou le niveau
+   * reste lisible, et y jette la meme ombre que les onglets de la navigation sur leurs voisins.
+   */
+  .divider-sheet {
+    box-shadow:
+      -1px 0 0 rgb(17 22 36 / 0.06),
+      -7px 0 10px -6px rgb(17 22 36 / 0.45);
+  }
+
+  /* Survol ou focus : l'intercalaire fonce d'un ton, comme un onglet de la navigation qu'on tire. */
+  .divider-card:hover,
+  .divider-card:focus-visible {
+    --edge-ink: calc(15% + 6% * var(--tab-step));
   }
 }
 

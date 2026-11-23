@@ -12,7 +12,7 @@ export default function FiliereCategoriesSkeleton() {
               {Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={index}
-                  className={`${index > 0 ? "hidden md:block" : "block"} rounded-card mt-10 h-19 animate-pulse bg-gray-200`}
+                  className={`${index > 0 ? "hidden md:block" : "block"} rounded-card h-20 animate-pulse bg-gray-200`}
                 />
               ))}
             </div>
