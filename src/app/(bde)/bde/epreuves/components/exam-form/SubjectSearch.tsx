@@ -43,6 +43,8 @@ export default function SubjectSearch({
   // Prerempli avec la matiere deja choisie (formulaire de modification).
   const [query, setQuery] = useState(selected?.name ?? "");
   const [open, setOpen] = useState(false);
+  // Suggestion mise en avant au clavier (#173) : -1 tant qu'aucune n'est active.
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   const fieldName = new Map(fields.map((field) => [field.id, field.name]));
   const levelName = new Map(levels.map((level) => [level.id, level.name]));
@@ -70,11 +72,29 @@ export default function SubjectSearch({
     : "Rechercher une matière";
 
   const inputValue = selected && !open ? selected.name : query;
+  // Clampee sur la liste courante : une liste qui se reduit (filtrage) ne doit pas laisser
+  // l'index actif pointer hors bornes.
+  const activeOption =
+    activeIndex >= 0 && activeIndex < suggestions.length
+      ? suggestions[activeIndex]
+      : undefined;
+  const optionId = (subject: Subject) => `${listId}-${subject.id}`;
 
   const choose = (subject: Subject) => {
     onSelect(subject);
     setQuery(subject.name);
     setOpen(false);
+    setActiveIndex(-1);
+  };
+
+  const moveActive = (delta: number) => {
+    if (suggestions.length === 0) return;
+    setActiveIndex((current) => {
+      const next = current + delta;
+      if (next < 0) return suggestions.length - 1;
+      if (next >= suggestions.length) return 0;
+      return next;
+    });
   };
 
   return (
@@ -93,6 +113,9 @@ export default function SubjectSearch({
             aria-expanded={open}
             aria-controls={listId}
             aria-autocomplete="list"
+            aria-activedescendant={
+              open && activeOption ? optionId(activeOption) : undefined
+            }
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "subjectId-error" : "subject-hint"}
             autoComplete="off"
@@ -100,15 +123,29 @@ export default function SubjectSearch({
             onChange={(event) => {
               setQuery(event.target.value);
               setOpen(true);
+              setActiveIndex(-1);
               if (subjectId) onSelect(null);
             }}
             onFocus={() => setOpen(true)}
             onBlur={() => setOpen(false)}
             onKeyDown={(event) => {
               if (event.key === "Escape") setOpen(false);
-              if (event.key === "Enter" && open && suggestions[0]) {
+              if (event.key === "ArrowDown") {
                 event.preventDefault();
-                choose(suggestions[0]);
+                setOpen(true);
+                moveActive(1);
+              }
+              if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setOpen(true);
+                moveActive(-1);
+              }
+              if (event.key === "Enter" && open) {
+                event.preventDefault();
+                // Valide la suggestion mise en avant par les flèches, pas forcement la première
+                // (#173) ; sans navigation prealable, retombe sur la premiere comme avant.
+                const target = activeOption ?? suggestions[0];
+                if (target) choose(target);
               }
             }}
             placeholder={placeholder}
@@ -135,9 +172,10 @@ export default function SubjectSearch({
                 Aucune matière ne correspond à « {query} ».
               </li>
             ) : (
-              suggestions.map((subject) => (
+              suggestions.map((subject, index) => (
                 <li
                   key={subject.id}
+                  id={optionId(subject)}
                   role="option"
                   aria-selected={subject.id === subjectId}
                   // mousedown plutot que click : passe avant le blur qui ferme la liste.
@@ -145,7 +183,8 @@ export default function SubjectSearch({
                     event.preventDefault();
                     choose(subject);
                   }}
-                  className="hover:bg-background-default flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm aria-selected:font-semibold"
+                  onMouseEnter={() => setActiveIndex(index)}
+                  className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm aria-selected:font-semibold ${index === activeIndex ? "bg-background-default" : "hover:bg-background-default"}`}
                 >
                   <span className="truncate">{subject.name}</span>
                   <span className="text-text-paragraph shrink-0 text-xs font-normal">
