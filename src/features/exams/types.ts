@@ -26,6 +26,8 @@ export type Exam = {
   /** Change quand le fichier est remplace : invalide l'apercu garde en cache par le navigateur. */
   fileVersion: string;
   createdAt: string;
+  /** Id du depositaire (#176) : son nom se lit a part via `getExamDepositorName`. */
+  createdBy: string;
 };
 
 export type ExamFilters = {

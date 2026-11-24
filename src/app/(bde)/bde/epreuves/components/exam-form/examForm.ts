@@ -40,7 +40,7 @@ export function validateExamFile(file: File): string | null {
   if (file.size === 0) return "Le fichier est vide.";
   if (file.type !== ACCEPTED_FILE_TYPES) return "Le fichier doit être un PDF.";
   if (file.size > MAX_FILE_SIZE_BYTES)
-    return `Le fichier dépasse la limite de ${MAX_FILE_SIZE_LABEL}.`;
+    return `Le fichier dépasse la limite de ${MAX_FILE_SIZE_LABEL}. Compressez-le (un outil de compression PDF en ligne suffit) puis réessayez.`;
   return null;
 }
 
@@ -109,6 +109,8 @@ export type ExamCommonValues = Record<ExamCommonField, string>;
  * `uploadExamsBatch` : titre et annee academique par fichier, le reste commun au lot.
  */
 export const addExamFormSchema = commonExamSchema.extend({
+  // Facultative : une option appartient a une filiere, comme en modification (#172).
+  optionId: z.union([z.literal(""), z.uuid("Option invalide.")]),
   files: z
     .array(examFileEntrySchema)
     .min(1, "Ajoutez au moins un fichier.")
@@ -122,7 +124,9 @@ export type AddExamFormValues = z.output<typeof addExamFormSchema>;
 type SharedField = ExamCommonField;
 type FileEntryField = "file" | "title" | "academicYear";
 
-export type AddExamErrors = Partial<Record<SharedField | "files", string>>;
+export type AddExamErrors = Partial<
+  Record<SharedField | "files" | "optionId", string>
+>;
 /** Erreurs par fichier, indexees par la position du fichier dans le lot. */
 export type AddExamFileErrors = Record<
   number,
@@ -160,8 +164,8 @@ const SHARED_BATCH_FIELDS = [
 
 /**
  * `FormData` au format de `uploadExamsBatch` : un `files` par fichier et, pour chaque metadonnee,
- * autant de valeurs que de fichiers (alignees par index). `optionId` vaut une chaine vide : le
- * formulaire ne propose pas d'option.
+ * autant de valeurs que de fichiers (alignees par index). `optionId` est commun au lot (#172),
+ * chaine vide si aucune option choisie.
  */
 export function toBatchFormData(values: AddExamFormValues): FormData {
   const formData = new FormData();
@@ -172,7 +176,7 @@ export function toBatchFormData(values: AddExamFormValues): FormData {
     for (const name of SHARED_BATCH_FIELDS) {
       formData.append(name, values[name]);
     }
-    formData.append("optionId", "");
+    formData.append("optionId", values.optionId);
   }
   return formData;
 }

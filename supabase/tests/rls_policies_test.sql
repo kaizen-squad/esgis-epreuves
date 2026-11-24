@@ -1,5 +1,5 @@
 begin;
-select plan(37);
+select plan(40);
 
 -- Tables et RLS forcee
 select has_table('public', 'profiles', 'profiles existe');
@@ -22,9 +22,9 @@ insert into auth.users (id) values
   ('11111111-1111-4111-8111-111111111111'),
   ('22222222-2222-4222-8222-222222222222');
 
-insert into public.profiles (id, email, role) values
-  ('11111111-1111-4111-8111-111111111111', 'bde@esgis.test', 'BDE'),
-  ('22222222-2222-4222-8222-222222222222', 'admin@esgis.test', 'ADMIN');
+insert into public.profiles (id, email, role, full_name) values
+  ('11111111-1111-4111-8111-111111111111', 'bde@esgis.test', 'BDE', 'BDE RLS Test'),
+  ('22222222-2222-4222-8222-222222222222', 'admin@esgis.test', 'ADMIN', 'Admin RLS Test');
 
 insert into public.fields (id, name) values ('33333333-3333-4333-8333-333333333333', 'Filiere RLS Test');
 insert into public.levels (id, name) values ('44444444-4444-4444-8444-444444444444', 'Niveau RLS Test');
@@ -54,6 +54,11 @@ select is(
   has_function_privilege('anon', 'public.current_profile_status()', 'execute'),
   false,
   'anon ne peut pas appeler current_profile_status (#164)'
+);
+select is(
+  has_function_privilege('anon', 'public.profile_display_name(uuid)', 'execute'),
+  false,
+  'anon ne peut pas appeler profile_display_name (#176)'
 );
 reset role;
 
@@ -98,6 +103,14 @@ select results_eq(
   $$ select role, is_active from public.current_profile_status() $$,
   $$ values ('BDE'::text, true) $$,
   'current_profile_status renvoie le role et le statut du compte BDE connecte'
+);
+
+-- profile_display_name (#176) : un BDE actif peut lire le nom d'un collegue (profiles reste
+-- autrement illisible, voir plus haut), jamais plus (email, role).
+select results_eq(
+  $$ select public.profile_display_name('22222222-2222-4222-8222-222222222222') $$,
+  $$ values ('Admin RLS Test'::text) $$,
+  'profile_display_name renvoie le nom d''un autre profil pour un BDE actif'
 );
 
 -- ADMIN authentifie : peut ecrire les referentiels et profiles, pas les epreuves
@@ -246,6 +259,14 @@ with modifiees as (
 select is(
   (select count(*) from modifiees)::int, 0,
   'BDE desactive ne peut plus modifier une epreuve'
+);
+
+-- profile_display_name (#176) : un jeton de session encore valide pour un compte desactive ne
+-- doit pas pouvoir resoudre le nom de qui que ce soit (meme fenetre que les autres ecritures).
+select is(
+  (select public.profile_display_name('22222222-2222-4222-8222-222222222222')),
+  null,
+  'profile_display_name renvoie null pour un compte desactive'
 );
 
 -- Reglages du site (numero WhatsApp du BDE) : une seule ligne, lue par tous, modifiee par le BDE.

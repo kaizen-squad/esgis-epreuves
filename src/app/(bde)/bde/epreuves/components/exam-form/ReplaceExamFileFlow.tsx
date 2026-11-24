@@ -1,17 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import {
   startTransition,
   useActionState,
+  useEffect,
+  useRef,
   useState,
   type SubmitEvent,
 } from "react";
 import { FiArrowRight, FiExternalLink, FiX } from "react-icons/fi";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { replaceExamFile } from "@/features/exams/actions";
 import type { Exam } from "@/features/exams/types";
 import type { ActionResult } from "@/lib/action-result";
 import { formatFileSize } from "@/lib/file-format";
+import CancelAction from "./CancelAction";
 import ExamDropzone from "./ExamDropzone";
 import ExamFileCard from "./ExamFileCard";
 import {
@@ -20,7 +23,7 @@ import {
   validateExamFile,
 } from "./examForm";
 import ExamFormSaving from "./ExamFormSaving";
-import ExamFormStepper, { type ExamFormStep } from "./ExamFormStepper";
+import type { ExamFormStep } from "./ExamFormStepper";
 import ExamPreviewLink from "./ExamPreviewLink";
 import ExamUpdateResult from "./ExamUpdateResult";
 
@@ -40,6 +43,8 @@ const ACTION_LINK_CLASS =
 export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
   const [file, setFile] = useState<File | null>(null);
   const [dismissedId, setDismissedId] = useState<number | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
@@ -77,19 +82,37 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
     : showResult
       ? "result"
       : "form";
-  const outcome =
-    state.status === "done"
-      ? state.result.ok
-        ? "success"
-        : "failure"
-      : undefined;
 
-  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  // Deplace le focus sur la zone de depot (seul champ en erreur possible) apres un fichier
+  // invalide (#171, meme pattern que AddExamFlow).
+  useEffect(() => {
+    if (state.status !== "invalid") return;
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?.focus();
+  }, [state]);
+
+  const submitReplace = () => {
     const formData = new FormData();
     // Le fichier vit dans l'etat React (choix ou glisser-deposer), pas dans l'input fichier.
     if (file) formData.append("file", file);
     startTransition(() => dispatch(formData));
+  };
+
+  // Remplacement destructif et irreversible (#171) : une confirmation s'intercale avant l'envoi,
+  // avec le nom et la taille du nouveau fichier pour que la personne sache ce qu'elle valide.
+  // Pas de confirmation pour un fichier deja invalide (#171, revue de code apres coup) : la
+  // soumission echouerait de toute facon cote validation, inutile de prevenir d'un remplacement
+  // qui ne va pas avoir lieu.
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!file || validateExamFile(file)) return submitReplace();
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmReplace = () => {
+    setConfirmOpen(false);
+    submitReplace();
   };
 
   const handleRetry = () => {
@@ -101,8 +124,6 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6">
-      <ExamFormStepper current={step} outcome={outcome} />
-
       {step === "saving" ? (
         <ExamFormSaving
           title="Remplacement en cours…"
@@ -122,13 +143,14 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
               remplacé. Ses données sont inchangées.
             </>
           )}
-          againLabel="Remplacer à nouveau"
+          againLabel="Choisir un autre fichier"
           onRetry={handleRetry}
         />
       ) : null}
 
       {step === "form" ? (
         <form
+          ref={formRef}
           onSubmit={handleSubmit}
           noValidate
           className="flex flex-col gap-10"
@@ -190,12 +212,10 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
           </section>
 
           <div className="ml-auto flex items-center gap-4">
-            <Link
-              href="/bde/catalogue"
-              className="text-text-paragraph px-2 py-2 hover:underline"
-            >
-              Annuler
-            </Link>
+            <CancelAction
+              href={`/bde/epreuves/${exam.slug}`}
+              isDirty={file !== null}
+            />
             <button
               type="submit"
               disabled={pending}
@@ -206,6 +226,24 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
           </div>
         </form>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Remplacer le fichier ?"
+        description={
+          file ? (
+            <p>
+              Le fichier actuel de <strong>{exam.title}</strong> sera remplacé
+              par <strong>{file.name}</strong> ({formatFileSize(file.size)}).
+              Cette action est irréversible.
+            </p>
+          ) : null
+        }
+        confirmLabel="Remplacer"
+        tone="danger"
+        onConfirm={handleConfirmReplace}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

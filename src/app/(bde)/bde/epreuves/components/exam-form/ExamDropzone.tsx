@@ -68,36 +68,38 @@ export default function ExamDropzone({
         tabIndex={-1}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${errorName}-error` : undefined}
-        className={`flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors ${dragging ? "border-background-accent bg-red-50" : error ? "border-red-400" : "bg-background-default border-gray-300"}`}
+        className={`flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors ${dragging ? "border-blue-400 bg-blue-50" : error ? "border-red-400" : "bg-background-default border-gray-300"}`}
       >
-        <FiCloud size={28} className="text-background-accent" />
-        <span>
-          {multiple
-            ? "Glissez vos fichiers ici ou "
-            : "Glissez votre fichier ici ou "}
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={openPicker}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openPicker();
-              }
-            }}
-            className="text-background-accent cursor-pointer font-semibold underline"
-          >
-            Importez
+        {/* Toute l'invite (pas seulement le mot "Importez") est un vrai bouton, entierement
+            cliquable et focusable (#172) ; l'etat invalide reste porte par le conteneur (role
+            implicite d'un bouton non compatible avec aria-invalid). */}
+        <button
+          type="button"
+          onClick={openPicker}
+          className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg outline-none focus-visible:underline"
+        >
+          <FiCloud size={28} className="text-background-accent" />
+          <span>
+            {/* Le glisser-deposer n'existe pas au toucher : l'invite correspondante est masquee
+                sur mobile, seule l'action "Importez" y reste pertinente (#172). */}
+            <span className="hidden sm:inline">
+              {multiple
+                ? "Glissez vos fichiers ici ou "
+                : "Glissez votre fichier ici ou "}
+            </span>
+            <span className="text-background-accent font-semibold underline">
+              {multiple ? "Importez vos fichiers" : "Importez votre fichier"}
+            </span>
           </span>
-        </span>
-        <span className="text-text-paragraph text-sm">{hint}</span>
+          <span className="text-text-paragraph text-sm">{hint}</span>
+        </button>
+        <FieldError name={errorName} error={error} />
 
         {children}
       </div>
       <p className="text-text-paragraph mb-0 text-sm">
         Seul le format PDF est supporté.
       </p>
-      <FieldError name={errorName} error={error} />
       <input
         ref={inputRef}
         type="file"

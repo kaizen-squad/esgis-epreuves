@@ -13,10 +13,15 @@ import {
   publicExamPath,
   type SpaceBasePath,
 } from "@/components/layout/spaces";
-import { getExamCached, getExamR2Key } from "@/features/exams/queries";
+import {
+  getExamCached,
+  getExamDepositorName,
+  getExamR2Key,
+} from "@/features/exams/queries";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { examFileExists } from "@/lib/r2/exists";
 import Cote from "@/components/exams/Cote";
+import ExamDeleteButton from "@/components/exams/ExamDeleteButton";
 import ExamFilePreview from "./ExamFilePreview";
 import ExamSuggestions from "./ExamSuggestions";
 import ShareExamButton from "./ShareExamButton";
@@ -25,8 +30,11 @@ export { getExamCached };
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
 
+// Pas de couleur de texte ici : deux classes `text-*` dans la meme chaine, Modifier/Remplacer
+// (defaut) et Supprimer (accent) l'avaient deja, dependent de l'ordre du feuille de style genere,
+// pas de l'ordre dans la chaine (revue de code, #176, apres coup).
 const MANAGE_LINK_CLASS =
-  "text-text-default flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100";
+  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100";
 
 /**
  * Page de consultation d'une epreuve, partagee par l'espace public (`/epreuves/[slug]`) et
@@ -51,6 +59,11 @@ export default async function ExamDetailView({
   const available = r2Key
     ? await examFileExists(r2Key, { strict: basePath === "" })
     : false;
+  // Depositaire lu a part, seulement cote BDE (#176) : jamais via un client anonyme (#157).
+  const depositorName =
+    basePath === BDE_BASE_PATH
+      ? await getExamDepositorName(exam.createdBy)
+      : null;
 
   const details = [
     { label: "Filière", value: exam.field },
@@ -68,6 +81,9 @@ export default async function ExamDetailView({
       label: "Ajoutée le",
       value: dateFormat.format(new Date(exam.createdAt)),
     },
+    ...(basePath === BDE_BASE_PATH
+      ? [{ label: "Déposée par", value: depositorName ?? "Inconnu" }]
+      : []),
   ];
 
   return (
@@ -146,16 +162,22 @@ export default async function ExamDetailView({
               </h2>
               <Link
                 href={`/bde/epreuves/${exam.slug}/modifier`}
-                className={MANAGE_LINK_CLASS}
+                className={`${MANAGE_LINK_CLASS} text-text-default`}
               >
                 <FiEdit2 size={16} /> Modifier les données
               </Link>
               <Link
                 href={`/bde/epreuves/${exam.slug}/remplacer`}
-                className={MANAGE_LINK_CLASS}
+                className={`${MANAGE_LINK_CLASS} text-text-default`}
               >
                 <FiRefreshCw size={16} /> Remplacer le fichier
               </Link>
+              <ExamDeleteButton
+                id={exam.id}
+                name={exam.title}
+                className={`${MANAGE_LINK_CLASS} text-background-accent cursor-pointer`}
+                redirectTo={catalogueHref(basePath)}
+              />
             </div>
           ) : null}
 

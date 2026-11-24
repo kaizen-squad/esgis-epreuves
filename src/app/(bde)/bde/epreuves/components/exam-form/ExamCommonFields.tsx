@@ -78,6 +78,12 @@ export default function ExamCommonFields({
         : { subjectId: "" },
     );
 
+  // Choisir une matiere renseigne deja filiere et niveau : quand la matiere elle-meme est
+  // manquante, inutile de signaler separement filiere/niveau comme en erreur (#172, evite 3
+  // messages redondants sur un envoi vide alors qu'une seule action les resout tous).
+  const fieldError = errors.subjectId ? undefined : errors.fieldId;
+  const levelError = errors.subjectId ? undefined : errors.levelId;
+
   return (
     <>
       <SubjectSearch
@@ -91,10 +97,18 @@ export default function ExamCommonFields({
         error={errors.subjectId}
       />
       <p className="text-text-paragraph mb-0 text-sm">
-        Matière manquante ? Demandez son ajout à l&apos;administrateur.
+        Matière manquante ?{" "}
+        <a
+          href="mailto:contact@kaizen.bj?subject=Mati%C3%A8re%20manquante%20sur%20Alexandria"
+          className="font-medium underline"
+        >
+          Demandez son ajout à l&apos;administrateur.
+        </a>
       </p>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      {/* lg plutot que md : un nom de filiere long (ex. "Telecommunications et Reseaux") se
+          coupait dans un select trop etroit dès que les deux colonnes apparaissaient (#171). */}
+      <div className="grid gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="fieldId" className="font-medium">
             Filière *
@@ -104,9 +118,9 @@ export default function ExamCommonFields({
             name="fieldId"
             value={values.fieldId}
             onChange={(event) => handleFieldChange(event.target.value)}
-            aria-invalid={errors.fieldId ? true : undefined}
-            aria-describedby={errors.fieldId ? "fieldId-error" : undefined}
-            className={inputClass(errors.fieldId)}
+            aria-invalid={fieldError ? true : undefined}
+            aria-describedby={fieldError ? "fieldId-error" : undefined}
+            className={inputClass(fieldError)}
           >
             <option value="" disabled>
               Choisir une filière
@@ -117,7 +131,7 @@ export default function ExamCommonFields({
               </option>
             ))}
           </select>
-          <FieldError name="fieldId" error={errors.fieldId} />
+          <FieldError name="fieldId" error={fieldError} />
         </div>
 
         <div className="flex flex-col gap-1">
@@ -129,9 +143,9 @@ export default function ExamCommonFields({
             name="levelId"
             value={values.levelId}
             onChange={(event) => handleLevelChange(event.target.value)}
-            aria-invalid={errors.levelId ? true : undefined}
-            aria-describedby={errors.levelId ? "levelId-error" : undefined}
-            className={inputClass(errors.levelId)}
+            aria-invalid={levelError ? true : undefined}
+            aria-describedby={levelError ? "levelId-error" : undefined}
+            className={inputClass(levelError)}
           >
             <option value="" disabled>
               Choisir un niveau
@@ -142,7 +156,7 @@ export default function ExamCommonFields({
               </option>
             ))}
           </select>
-          <FieldError name="levelId" error={errors.levelId} />
+          <FieldError name="levelId" error={levelError} />
         </div>
       </div>
 

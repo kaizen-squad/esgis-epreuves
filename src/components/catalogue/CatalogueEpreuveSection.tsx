@@ -14,13 +14,19 @@ import {
 const CatalogueEpreuveSection = async ({
   searchParams,
   manageable = false,
+  forcedCreatedBy,
 }: {
   searchParams: CatalogueSearchParams;
   /** Espace BDE : cartes avec menu de gestion. */
   manageable?: boolean;
+  /**
+   * Deposant impose cote serveur, jamais lu depuis `searchParams` (#174, "Mes versements") :
+   * contrairement aux autres filtres, celui-ci ne doit jamais dependre de l'URL.
+   */
+  forcedCreatedBy?: string;
 }) => {
   const [result, fields, levels, subjects, academicYears] = await Promise.all([
-    getExams(toExamFilters(searchParams)),
+    getExams({ ...toExamFilters(searchParams), createdBy: forcedCreatedBy }),
     getFields(),
     getLevels(),
     getSubjects(),
