@@ -9,6 +9,9 @@ import Faq from "@/components/home/Faq";
 import ResultsResume from "@/components/home/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
 
+/** Pas de searchParams/cookies/headers ici : rendu statique avec la meme fenetre que le cache de donnees (#157). */
+export const revalidate = 60;
+
 export default function Accueil() {
   return (
     <>
