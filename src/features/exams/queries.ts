@@ -167,11 +167,15 @@ async function queryExams(
   return { ...page, exams: rows.map((row) => toExam(row, files.get(row.id))) };
 }
 
-/** Recherche texte + filtres combinables sur le catalogue (#9), pagination par decalage. */
+/**
+ * Recherche texte + filtres combinables sur le catalogue (#9), pagination par decalage. Lecture
+ * publique (RLS identique anon/authenticated) : client public, pas de cookies() (#157, pour que
+ * les pages qui en dependent restent prerendables en statique/ISR).
+ */
 export async function getExams(
   rawFilters: ExamFilters,
 ): Promise<ExamListResult> {
-  return queryExams(await createClient(), rawFilters);
+  return queryExams(createPublicClient(), rawFilters);
 }
 
 /**
@@ -181,7 +185,7 @@ export async function getExams(
 export async function searchExamTitles(
   rawFilters: ExamFilters,
 ): Promise<{ total: number; exams: Pick<Exam, "title" | "slug">[] }> {
-  const { rows, total } = await queryCatalog(await createClient(), rawFilters);
+  const { rows, total } = await queryCatalog(createPublicClient(), rawFilters);
   return {
     total,
     exams: rows.map((row) => ({ title: row.title, slug: row.slug })),
@@ -492,9 +496,12 @@ export async function getSubjectCoverage(
   return getSubjectCoverageCached(fieldId);
 }
 
-/** Lecture d'une epreuve par son slug, pour la page detail. `null` si absente (notFound() cote page). */
+/**
+ * Lecture d'une epreuve par son slug, pour la page detail. `null` si absente (notFound() cote
+ * page). Lecture publique : client public, pas de cookies() (#157).
+ */
 export async function getExamBySlug(slug: string): Promise<Exam | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("exams_catalog")
     .select(EXAM_CATALOG_SELECT)
@@ -512,9 +519,12 @@ export async function getExamBySlug(slug: string): Promise<Exam | null> {
 /** `getExamBySlug` memoisee par requete : partagee entre `generateMetadata`, la vue et l'image de partage, pour ne lire l'epreuve qu'une fois. */
 export const getExamCached = cache(getExamBySlug);
 
-/** Cle R2 du PDF d'une epreuve par son slug, pour la route de previsualisation/telechargement (#50). `null` si absente. */
+/**
+ * Cle R2 du PDF d'une epreuve par son slug, pour la route de previsualisation/telechargement
+ * (#50). `null` si absente. Lecture publique : client public, pas de cookies() (#157).
+ */
 export async function getExamR2Key(slug: string): Promise<string | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("exams")
     .select("r2_key")
