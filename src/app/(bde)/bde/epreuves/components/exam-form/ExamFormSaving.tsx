@@ -10,12 +10,14 @@ export default function ExamFormSaving({
   title: string;
   description: string;
   /**
-   * Noms des fichiers du lot en cours d'envoi (#172) : chacun a sa propre ligne, faute d'une
-   * vraie progression en octets que l'action serveur ne remonte pas.
+   * Fichiers du lot en cours d'envoi (#172) : chacun a sa propre ligne, faute d'une vraie
+   * progression en octets que l'action serveur ne remonte pas. `key` est la cle stable du fichier
+   * (voir `fileKey`), jamais son nom seul : deux fichiers homonymes dans le lot produiraient sinon
+   * des cles React dupliquees (revue de code, #172, apres coup).
    * ponytail: indication par fichier, pas un pourcentage reel ; a revoir si l'upload passe par
    * une URL presignee avec suivi XHR.
    */
-  entries?: string[];
+  entries?: { key: string; name: string }[];
 }) {
   // "Ne quittez pas cette page" (texte ci-dessous) n'etait protege par rien (#171) : un vrai
   // `beforeunload` empeche une fermeture/rechargement accidentel pendant l'enregistrement.
@@ -38,16 +40,16 @@ export default function ExamFormSaving({
       </p>
       {entries && entries.length > 1 ? (
         <ul className="mt-2 flex w-full max-w-sm flex-col gap-1.5 text-left">
-          {entries.map((name) => (
+          {entries.map((entry) => (
             <li
-              key={name}
+              key={entry.key}
               className="bg-background-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
             >
               <CgSpinner
                 className="text-background-accent shrink-0 animate-spin"
                 size={14}
               />
-              <span className="truncate">{name}</span>
+              <span className="truncate">{entry.name}</span>
             </li>
           ))}
         </ul>

@@ -30,8 +30,11 @@ export { getExamCached };
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
 
+// Pas de couleur de texte ici : deux classes `text-*` dans la meme chaine, Modifier/Remplacer
+// (defaut) et Supprimer (accent) l'avaient deja, dependent de l'ordre du feuille de style genere,
+// pas de l'ordre dans la chaine (revue de code, #176, apres coup).
 const MANAGE_LINK_CLASS =
-  "text-text-default flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100";
+  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100";
 
 /**
  * Page de consultation d'une epreuve, partagee par l'espace public (`/epreuves/[slug]`) et
@@ -159,13 +162,13 @@ export default async function ExamDetailView({
               </h2>
               <Link
                 href={`/bde/epreuves/${exam.slug}/modifier`}
-                className={MANAGE_LINK_CLASS}
+                className={`${MANAGE_LINK_CLASS} text-text-default`}
               >
                 <FiEdit2 size={16} /> Modifier les données
               </Link>
               <Link
                 href={`/bde/epreuves/${exam.slug}/remplacer`}
-                className={MANAGE_LINK_CLASS}
+                className={`${MANAGE_LINK_CLASS} text-text-default`}
               >
                 <FiRefreshCw size={16} /> Remplacer le fichier
               </Link>
@@ -173,6 +176,7 @@ export default async function ExamDetailView({
                 id={exam.id}
                 name={exam.title}
                 className={`${MANAGE_LINK_CLASS} text-background-accent cursor-pointer`}
+                redirectTo={catalogueHref(basePath)}
               />
             </div>
           ) : null}

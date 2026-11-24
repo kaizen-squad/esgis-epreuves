@@ -503,15 +503,22 @@ export async function getSubjectCoverage(
  * (#174) : le poste de travail BDE doit montrer cette tache concrete sur son accueil.
  */
 export async function getTotalSubjectGapCount(): Promise<number> {
-  const fields = await getFields();
-  const coverages = await Promise.all(
-    fields.map((field) => getSubjectCoverage(field.id)),
-  );
-  return coverages.reduce(
-    (total, coverage) =>
-      total + coverage.filter((entry) => entry.examCount === 0).length,
-    0,
-  );
+  try {
+    const fields = await getFields();
+    const coverages = await Promise.all(
+      fields.map((field) => getSubjectCoverage(field.id)),
+    );
+    return coverages.reduce(
+      (total, coverage) =>
+        total + coverage.filter((entry) => entry.examCount === 0).length,
+      0,
+    );
+  } catch (error) {
+    // Une panne ici ne doit jamais faire planter l'accueil BDE, la premiere page apres connexion
+    // (revue de code, #174, apres coup) : au pire la tache ne s'affiche pas.
+    console.error("getTotalSubjectGapCount", error);
+    return 0;
+  }
 }
 
 /**

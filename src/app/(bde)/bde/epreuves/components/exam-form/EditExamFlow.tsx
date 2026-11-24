@@ -89,8 +89,13 @@ export default function EditExamFlow({
   const [values, setValues] = useState<EditValues>(() => initialValues(exam));
   const [dismissedId, setDismissedId] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const isDirty =
-    JSON.stringify(values) !== JSON.stringify(initialValues(exam));
+  // Reference d'`isDirty`, mise a jour apres un enregistrement reussi (`handleRetry`) : sans ca,
+  // elle restait sur les valeurs d'origine de `exam` (fige au premier rendu), si bien qu'Annuler
+  // apres un succes redemandait toujours une confirmation (revue de code, #171, apres coup).
+  const [baseline, setBaseline] = useState<EditValues>(() =>
+    initialValues(exam),
+  );
+  const isDirty = JSON.stringify(values) !== JSON.stringify(baseline);
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
@@ -176,7 +181,9 @@ export default function EditExamFlow({
   };
 
   const handleRetry = () => {
-    if (state.status === "done") setDismissedId(state.id);
+    if (state.status !== "done") return;
+    setDismissedId(state.id);
+    if (state.result.ok) setBaseline(values);
   };
 
   return (

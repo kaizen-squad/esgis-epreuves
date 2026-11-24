@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import { searchTokens } from "@/features/exams/schemas";
 import type { Field, Level, Subject } from "@/features/referentials/types";
@@ -79,6 +79,17 @@ export default function SubjectSearch({
       ? suggestions[activeIndex]
       : undefined;
   const optionId = (subject: Subject) => `${listId}-${subject.id}`;
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // La suggestion active sort parfois de la zone visible (8 suggestions peuvent deborder
+  // `max-h-72`) : la garder visible en naviguant au clavier (#173, revue de code apres coup).
+  useEffect(() => {
+    if (!open || !activeOption) return;
+    // `optionId(activeOption)` inline : une fonction redefinie a chaque rendu casserait les deps.
+    listRef.current
+      ?.querySelector(`#${CSS.escape(`${listId}-${activeOption.id}`)}`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [open, activeOption, listId]);
 
   const choose = (subject: Subject) => {
     onSelect(subject);
@@ -157,6 +168,7 @@ export default function SubjectSearch({
 
         {open ? (
           <ul
+            ref={listRef}
             id={listId}
             role="listbox"
             className="bg-background-primary absolute z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 py-1 shadow-lg"
@@ -177,14 +189,17 @@ export default function SubjectSearch({
                   key={subject.id}
                   id={optionId(subject)}
                   role="option"
-                  aria-selected={subject.id === subjectId}
+                  // `aria-selected` marque l'option active au clavier (pattern combobox ARIA),
+                  // pas forcement la matiere deja choisie (revue de code, #173, apres coup) :
+                  // cette derniere garde juste un style distinct ci-dessous.
+                  aria-selected={index === activeIndex}
                   // mousedown plutot que click : passe avant le blur qui ferme la liste.
                   onMouseDown={(event) => {
                     event.preventDefault();
                     choose(subject);
                   }}
                   onMouseEnter={() => setActiveIndex(index)}
-                  className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm aria-selected:font-semibold ${index === activeIndex ? "bg-background-default" : "hover:bg-background-default"}`}
+                  className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm ${subject.id === subjectId ? "font-semibold" : ""} ${index === activeIndex ? "bg-background-default" : "hover:bg-background-default"}`}
                 >
                   <span className="truncate">{subject.name}</span>
                   <span className="text-text-paragraph shrink-0 text-xs font-normal">

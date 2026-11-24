@@ -83,7 +83,7 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
       ? "result"
       : "form";
 
-  // Deplace le focus sur le bouton de depot (seul champ en erreur possible) apres un fichier
+  // Deplace le focus sur la zone de depot (seul champ en erreur possible) apres un fichier
   // invalide (#171, meme pattern que AddExamFlow).
   useEffect(() => {
     if (state.status !== "invalid") return;
@@ -101,9 +101,12 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
 
   // Remplacement destructif et irreversible (#171) : une confirmation s'intercale avant l'envoi,
   // avec le nom et la taille du nouveau fichier pour que la personne sache ce qu'elle valide.
+  // Pas de confirmation pour un fichier deja invalide (#171, revue de code apres coup) : la
+  // soumission echouerait de toute facon cote validation, inutile de prevenir d'un remplacement
+  // qui ne va pas avoir lieu.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!file) return submitReplace();
+    if (!file || validateExamFile(file)) return submitReplace();
     setConfirmOpen(true);
   };
 

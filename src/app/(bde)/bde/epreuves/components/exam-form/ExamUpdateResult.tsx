@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { FiCheckCircle, FiXCircle } from "react-icons/fi";
 import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
 import type { ActionResult } from "@/lib/action-result";
@@ -30,8 +30,10 @@ export default function ExamUpdateResult({
 }) {
   const Icon = result.ok ? FiCheckCircle : FiXCircle;
 
-  // Focus sur le resultat a l'arrivee sur cette etape (#171, meme raison qu'AddExamResult).
+  // Focus sur le resultat a l'arrivee sur cette etape (#171, meme raison qu'AddExamResult,
+  // y compris le choix d'`aria-labelledby` plutot qu'un role live en plus du focus).
   const containerRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
   useEffect(() => {
     containerRef.current?.focus();
   }, []);
@@ -40,18 +42,16 @@ export default function ExamUpdateResult({
     <div
       ref={containerRef}
       tabIndex={-1}
+      aria-labelledby={titleId}
       className="flex flex-col items-center gap-4 text-center outline-none"
     >
-      {/* Seul ce resumé est annoncé par le lecteur d'écran (#171), pas le detail ni les actions. */}
-      <div
-        role={result.ok ? "status" : "alert"}
-        className="flex flex-col items-center gap-4"
-      >
+      <div className="flex flex-col items-center gap-4">
         <Icon
           className={result.ok ? "text-green-600" : "text-red-600"}
           size={56}
+          aria-hidden="true"
         />
-        <h3 className="text-text-secondary text-2xl font-semibold">
+        <h3 id={titleId} className="text-text-secondary text-2xl font-semibold">
           {result.ok ? successTitle : failureTitle}
         </h3>
         <p className="text-text-paragraph mb-0 max-w-lg">

@@ -164,8 +164,8 @@ const SHARED_BATCH_FIELDS = [
 
 /**
  * `FormData` au format de `uploadExamsBatch` : un `files` par fichier et, pour chaque metadonnee,
- * autant de valeurs que de fichiers (alignees par index). `optionId` vaut une chaine vide : le
- * formulaire ne propose pas d'option.
+ * autant de valeurs que de fichiers (alignees par index). `optionId` est commun au lot (#172),
+ * chaine vide si aucune option choisie.
  */
 export function toBatchFormData(values: AddExamFormValues): FormData {
   const formData = new FormData();

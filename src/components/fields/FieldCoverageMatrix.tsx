@@ -93,9 +93,11 @@ export default async function FieldCoverageMatrix({
                   : `/bde/catalogue?subjectId=${subject.subjectId}`;
                 return (
                   <li key={subject.subjectId}>
+                    {/* Pas de `title` : le texte du lien porte deja le nom complet (la
+                        troncature est seulement visuelle, via `truncate`), un `title`
+                        identique se serait fait lire deux fois par un lecteur d'ecran. */}
                     <Link
                       href={href}
-                      title={subject.subjectName}
                       className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-sm hover:underline ${
                         isGap ? "bg-blue-50 text-blue-700" : "text-text-default"
                       }`}

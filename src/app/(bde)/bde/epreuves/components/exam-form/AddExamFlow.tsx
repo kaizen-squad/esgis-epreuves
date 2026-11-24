@@ -100,9 +100,13 @@ export default function AddExamFlow({
   /** Lacune du fonds ouverte depuis la matrice de couverture (#174) : matiere preremplie. */
   initialSubject?: { fieldId: string; levelId: string; subjectId: string };
 }) {
-  const [values, setValues] = useState<AddValues>(() =>
+  // Memorisee une fois (jamais recalculee au gre des props) : sert de reference a `isDirty`, pour
+  // qu'un lien de lacune pre-rempli (#174) ne declenche pas une confirmation d'abandon avant meme
+  // la moindre saisie (revue de code, #171, apres coup).
+  const [initialValuesState] = useState<AddValues>(() =>
     initialSubject ? { ...EMPTY_VALUES, ...initialSubject } : EMPTY_VALUES,
   );
+  const [values, setValues] = useState<AddValues>(initialValuesState);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [bulkYear, setBulkYear] = useState("");
   const [dismissedId, setDismissedId] = useState<number | null>(null);
@@ -148,7 +152,8 @@ export default function AddExamFlow({
   const errors = state.status === "invalid" ? state.errors : {};
   const fileErrors = state.status === "invalid" ? state.fileErrors : {};
   const isDirty =
-    files.length > 0 || Object.values(values).some((value) => value !== "");
+    files.length > 0 ||
+    JSON.stringify(values) !== JSON.stringify(initialValuesState);
   const showResult = state.status === "done" && state.id !== dismissedId;
   const step: ExamFormStep = pending
     ? "saving"
@@ -246,7 +251,10 @@ export default function AddExamFlow({
               ? `Vos ${files.length} fichiers sont vérifiés puis enregistrés.`
               : "Votre fichier est vérifié puis enregistré."
           }
-          entries={files.map((entry) => entry.file.name)}
+          entries={files.map((entry) => ({
+            key: entry.key,
+            name: entry.file.name,
+          }))}
         />
       ) : null}
 

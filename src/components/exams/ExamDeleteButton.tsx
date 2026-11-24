@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { FiTrash } from "react-icons/fi";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useDeleteExamConfirm } from "./useDeleteExamConfirm";
@@ -12,11 +13,18 @@ export default function ExamDeleteButton({
   id,
   name,
   className,
+  redirectTo,
 }: {
   id: string;
   name: string;
   className: string;
+  /**
+   * Page de la fiche elle-meme : un succes ne peut pas se contenter d'un `router.refresh()` (la
+   * fiche n'existe plus, 404 au lieu de confirmer la suppression). On redirige plutot ici.
+   */
+  redirectTo: string;
 }) {
+  const router = useRouter();
   const {
     confirmOpen,
     error,
@@ -24,7 +32,7 @@ export default function ExamDeleteButton({
     openConfirm,
     handleConfirm,
     closeConfirm,
-  } = useDeleteExamConfirm(id);
+  } = useDeleteExamConfirm(id, () => router.replace(redirectTo));
 
   return (
     <>
