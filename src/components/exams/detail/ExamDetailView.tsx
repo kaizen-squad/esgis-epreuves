@@ -17,6 +17,7 @@ import { getExamCached, getExamR2Key } from "@/features/exams/queries";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { examFileExists } from "@/lib/r2/exists";
 import Cote from "@/components/exams/Cote";
+import ExamDeleteButton from "@/components/exams/ExamDeleteButton";
 import ExamFilePreview from "./ExamFilePreview";
 import ExamSuggestions from "./ExamSuggestions";
 import ShareExamButton from "./ShareExamButton";
@@ -68,6 +69,10 @@ export default async function ExamDetailView({
       label: "Ajoutée le",
       value: dateFormat.format(new Date(exam.createdAt)),
     },
+    // Depositaire visible uniquement cote BDE (#176) : jamais serialise au rendu public.
+    ...(basePath === BDE_BASE_PATH
+      ? [{ label: "Déposée par", value: exam.depositorName ?? "Inconnu" }]
+      : []),
   ];
 
   return (
@@ -156,6 +161,11 @@ export default async function ExamDetailView({
               >
                 <FiRefreshCw size={16} /> Remplacer le fichier
               </Link>
+              <ExamDeleteButton
+                id={exam.id}
+                name={exam.title}
+                className={`${MANAGE_LINK_CLASS} text-background-accent cursor-pointer`}
+              />
             </div>
           ) : null}
 

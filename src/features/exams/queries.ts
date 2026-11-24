@@ -19,7 +19,7 @@ import type {
 } from "./types";
 
 const EXAM_CATALOG_SELECT =
-  "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, level_id, level_name, subject_id, subject_name, option_id, option_name";
+  "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, level_id, level_name, subject_id, subject_name, option_id, option_name, created_by_name";
 
 /** PostgREST : decalage hors bornes avec un count exact (page trop loin apres un filtre qui reduit le total). */
 const RANGE_NOT_SATISFIABLE = "PGRST103";
@@ -43,6 +43,7 @@ type CatalogRow = {
   subject_name: string;
   option_id: string | null;
   option_name: string | null;
+  created_by_name: string | null;
 };
 
 type ExamFile = Pick<Exam, "fileSize" | "mimeType" | "fileVersion">;
@@ -107,6 +108,7 @@ function toExam(row: CatalogRow, file: ExamFile | undefined): Exam {
     mimeType: file?.mimeType ?? "",
     fileVersion: file?.fileVersion ?? "",
     createdAt: row.created_at,
+    depositorName: row.created_by_name,
   };
 }
 

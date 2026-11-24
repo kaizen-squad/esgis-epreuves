@@ -26,6 +26,8 @@ export type Exam = {
   /** Change quand le fichier est remplace : invalide l'apercu garde en cache par le navigateur. */
   fileVersion: string;
   createdAt: string;
+  /** Nom du depositaire (#176), `null` si le compte n'existe plus ou n'a pas de nom enregistre. */
+  depositorName: string | null;
 };
 
 export type ExamFilters = {

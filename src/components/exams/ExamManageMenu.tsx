@@ -1,11 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { FiFileText, FiRotateCcw, FiTrash } from "react-icons/fi";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Menu, { MenuItem } from "@/components/ui/Menu";
-import { deleteExam } from "@/features/exams/actions";
+import { useDeleteExamConfirm } from "./useDeleteExamConfirm";
 
 type ExamManageMenuProps = {
   id: string;
@@ -24,28 +22,14 @@ export default function ExamManageMenu({
   slug,
   name,
 }: ExamManageMenuProps) {
-  const router = useRouter();
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isDeleting, startDelete] = useTransition();
-
-  const openConfirm = () => {
-    setError(null);
-    setConfirmOpen(true);
-  };
-
-  const handleConfirm = () => {
-    setError(null);
-    startDelete(async () => {
-      const result = await deleteExam(id);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      setConfirmOpen(false);
-      router.refresh();
-    });
-  };
+  const {
+    confirmOpen,
+    error,
+    isDeleting,
+    openConfirm,
+    handleConfirm,
+    closeConfirm,
+  } = useDeleteExamConfirm(id);
 
   return (
     <>
@@ -92,7 +76,7 @@ export default function ExamManageMenu({
         pending={isDeleting}
         error={error}
         onConfirm={handleConfirm}
-        onCancel={() => setConfirmOpen(false)}
+        onCancel={closeConfirm}
       />
     </>
   );
