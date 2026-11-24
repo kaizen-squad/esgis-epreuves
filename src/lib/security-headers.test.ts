@@ -61,4 +61,20 @@ describe("buildContentSecurityPolicy", () => {
 
     warn.mockRestore();
   });
+
+  it("autorise le stockage local (R2_ENDPOINT) en frame-src, en developpement seulement", () => {
+    const dev = buildContentSecurityPolicy({
+      r2AccountId: "local",
+      isDev: true,
+      localStorageOrigin: "http://127.0.0.1:54321",
+    });
+    const prod = buildContentSecurityPolicy({
+      r2AccountId: "7d2a1f161c4f7c19940ccf3e85965188",
+      isDev: false,
+      localStorageOrigin: "http://127.0.0.1:54321",
+    });
+
+    expect(dev).toContain("http://127.0.0.1:54321");
+    expect(prod).not.toContain("127.0.0.1");
+  });
 });
