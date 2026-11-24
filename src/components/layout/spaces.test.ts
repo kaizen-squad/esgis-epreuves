@@ -7,6 +7,10 @@ describe("isNavLinkActive", () => {
     expect(isNavLinkActive("/catalogue", "/")).toBe(false);
   });
 
+  it("l'accueil reste actif quand usePathname resout la racine en chaine vide (rendu statique au build)", () => {
+    expect(isNavLinkActive("", "/")).toBe(true);
+  });
+
   it("une rubrique reste active sur ses sous-pages", () => {
     expect(isNavLinkActive("/filieres", "/filieres")).toBe(true);
     expect(isNavLinkActive("/filieres/irt", "/filieres")).toBe(true);
