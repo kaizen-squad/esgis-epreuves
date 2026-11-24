@@ -10,10 +10,11 @@ export default async function LoginPage() {
     redirect(status.role === "ADMIN" ? "/admin" : "/bde/accueil");
   }
   if (status && !status.isActive) {
-    // Jeton encore valide (jusqu'a ~1h) d'un compte BDE desactive apres sa connexion (#164) :
-    // sans ca, la redirection vers l'espace ci-dessus et celle de `requireBdeSession` vers /login
-    // se renverraient la main indefiniment. On la termine ici au lieu de la laisser reapparaitre
-    // a chaque page visitee.
+    // Ne pas rediriger (contrairement au cas actif ci-dessus) : sans ca, cette page et la garde
+    // BDE/Admin se renverraient la main indefiniment pour un compte desactive apres sa connexion
+    // (#164). `signOut` revoque la session cote GoTrue (refus a son prochain refresh) mais ne
+    // supprime pas le cookie deja pose ; le jeton d'acces courant reste valide jusqu'a son
+    // expiration (~1h), fenetre deja couverte par la verification du statut a chaque page.
     const supabase = await createClient();
     await supabase.auth.signOut({ scope: "local" });
   }

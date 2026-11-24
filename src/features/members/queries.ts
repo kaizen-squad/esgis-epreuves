@@ -69,7 +69,13 @@ export async function getCurrentProfileStatus(): Promise<{
     data: { role: string; is_active: boolean } | null;
     error: { message: string } | null;
   };
-  if (error) throw error;
+  // Avale l'erreur plutot que de la laisser planter /login et tout /bde/* (appelants directs) :
+  // mieux vaut traiter une panne du RPC comme une session inconnue (repli sur /login, qui reste
+  // affichable) qu'une page 500 pour quiconque a un cookie de session.
+  if (error) {
+    console.error("getCurrentProfileStatus", error);
+    return null;
+  }
   if (!data) return null;
 
   return {

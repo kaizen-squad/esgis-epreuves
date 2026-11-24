@@ -13,7 +13,10 @@ import { getCurrentProfileStatus } from "@/features/members/queries";
  */
 export const requireBdeSession = cache(async (): Promise<void> => {
   const status = await getCurrentProfileStatus();
-  if (!status) redirect("/login");
+  // Statut avant role : un compte desactive doit toujours finir sur /login, y compris un ADMIN
+  // (jamais desactive par l'app aujourd'hui, mais rien ne l'empeche en base). Teste role en
+  // premier bouclerait /admin <-> /bde pour ce cas, la page de connexion ne consultant que le
+  // meme statut pour decider ou l'envoyer.
+  if (!status || !status.isActive) redirect("/login");
   if (status.role === "ADMIN") redirect("/admin");
-  if (!status.isActive) redirect("/login");
 });

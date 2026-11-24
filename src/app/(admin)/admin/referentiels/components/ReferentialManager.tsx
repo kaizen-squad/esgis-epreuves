@@ -23,6 +23,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import ActiveToggleButton from "@/app/(admin)/components/ActiveToggleButton";
+import { searchTokens } from "@/features/exams/schemas";
 import type { Field, Level } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 
@@ -162,20 +163,22 @@ export default function ReferentialManager({
   // Recherche/filtre reserve a Matieres (#168) : seule liste assez longue (22 items a plat,
   // melangeant filieres et niveaux) pour en avoir besoin ; les 3 autres referentiels restent courts.
   const searchable = kind === "subject";
-  const normalizedQuery = query.trim().toLowerCase();
+  // Memes jetons que la recherche de matiere du formulaire de depot (`SubjectSearch.tsx`) :
+  // insensible aux accents et a l'ordre des mots, chaque jeton doit apparaitre quelque part.
+  const queryTokens = useMemo(() => searchTokens(query), [query]);
   const visibleItems = useMemo(() => {
     const filtered =
-      !searchable || !normalizedQuery
+      !searchable || queryTokens.length === 0
         ? items
         : items.filter((item) => {
-            const haystack = [
-              item.name,
-              item.fieldId ? fieldName.get(item.fieldId) : "",
-              item.levelId ? levelName.get(item.levelId) : "",
-            ]
-              .join(" ")
-              .toLowerCase();
-            return haystack.includes(normalizedQuery);
+            const haystack = searchTokens(
+              [
+                item.name,
+                item.fieldId ? fieldName.get(item.fieldId) : "",
+                item.levelId ? levelName.get(item.levelId) : "",
+              ].join(" "),
+            ).join(" ");
+            return queryTokens.every((token) => haystack.includes(token));
           });
     // Regroupement par filiere puis niveau (#168) : la liste de 22 matieres a plat melangeait
     // tout, trier dessus suffit a faire apparaitre les groupes sans structure de donnees a part.
@@ -193,7 +196,7 @@ export default function ReferentialManager({
       if (levelCompare !== 0) return levelCompare;
       return a.name.localeCompare(b.name);
     });
-  }, [items, searchable, normalizedQuery, fieldName, levelName]);
+  }, [items, searchable, queryTokens, fieldName, levelName]);
 
   const [state, dispatch, pending] = useActionState<CreateState, FormData>(
     async (_prev, formData) => {
@@ -492,7 +495,7 @@ export default function ReferentialManager({
                     }
                     className="text-text-paragraph px-5 py-10 text-center"
                   >
-                    {searchable && normalizedQuery
+                    {searchable && queryTokens.length > 0
                       ? "Aucun résultat pour cette recherche."
                       : `${label.empty} pour l'instant.`}
                   </td>

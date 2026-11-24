@@ -55,4 +55,15 @@ describe("requireBdeSession", () => {
 
     await expect(requireBdeSession()).rejects.toThrow("REDIRECT:/login");
   });
+
+  it("redirige un compte ADMIN desactive vers /login, pas /admin", async () => {
+    // Statut teste avant role : sinon /admin renverrait ici vers /bde/accueil (role ADMIN), qui
+    // renverrait vers /admin (statut inactif), boucle infinie entre les deux gardes.
+    getCurrentProfileStatus.mockResolvedValue({
+      role: "ADMIN",
+      isActive: false,
+    });
+
+    await expect(requireBdeSession()).rejects.toThrow("REDIRECT:/login");
+  });
 });
