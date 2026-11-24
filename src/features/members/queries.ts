@@ -49,6 +49,36 @@ export async function getCurrentUserRole(): Promise<UserRole | null> {
 }
 
 /**
+ * Role et statut actif du compte connecte, `null` sans session (#164). Passe par le RPC
+ * `current_profile_status` (fonction `security definer` exposee en `public`, voir la migration
+ * du meme nom) plutot que par une lecture directe de `profiles` : un compte BDE ne peut pas lire
+ * sa propre ligne (RLS admin-only, voir `getCurrentUserRole`), ce dont la garde BDE a justement
+ * besoin pour detecter un compte desactive sans attendre l'expiration de son jeton de session.
+ */
+export async function getCurrentProfileStatus(): Promise<{
+  role: UserRole;
+  isActive: boolean;
+} | null> {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  if (!claims) return null;
+
+  const { data, error } = (await supabase
+    .rpc("current_profile_status")
+    .maybeSingle()) as {
+    data: { role: string; is_active: boolean } | null;
+    error: { message: string } | null;
+  };
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    role: data.role === "ADMIN" ? "ADMIN" : "BDE",
+    isActive: data.is_active,
+  };
+}
+
+/**
  * Membres BDE pour le tableau de bord Admin, actifs d'abord puis desactives, chacun du plus recent
  * au plus ancien, filtres par nom ou
  * email (`search`) et pagines (`MEMBERS_PAGE_SIZE`). Une page au-dela de la derniere est ramenee

@@ -1,12 +1,21 @@
 import { redirect } from "next/navigation";
-import { getCurrentUserRole } from "@/features/members/queries";
+import { getCurrentProfileStatus } from "@/features/members/queries";
+import { createClient } from "@/lib/supabase/server";
 import LoginForm from "@/features/auth/ui/LoginForm";
 import Image from "next/image";
 
 export default async function LoginPage() {
-  const role = await getCurrentUserRole();
-  if (role) {
-    redirect(role === "ADMIN" ? "/admin" : "/bde/accueil");
+  const status = await getCurrentProfileStatus();
+  if (status?.isActive) {
+    redirect(status.role === "ADMIN" ? "/admin" : "/bde/accueil");
+  }
+  if (status && !status.isActive) {
+    // Jeton encore valide (jusqu'a ~1h) d'un compte BDE desactive apres sa connexion (#164) :
+    // sans ca, la redirection vers l'espace ci-dessus et celle de `requireBdeSession` vers /login
+    // se renverraient la main indefiniment. On la termine ici au lieu de la laisser reapparaitre
+    // a chaque page visitee.
+    const supabase = await createClient();
+    await supabase.auth.signOut({ scope: "local" });
   }
 
   return (
