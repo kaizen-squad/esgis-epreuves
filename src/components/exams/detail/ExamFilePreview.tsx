@@ -1,14 +1,16 @@
+import { Suspense } from "react";
 import { FiDownload, FiExternalLink, FiFileText } from "react-icons/fi";
 import { formatFileSize } from "@/lib/file-format";
-import { getFullPagePreview } from "@/lib/pdf/fullPagePreviewCache";
+import FullPagePreviewImage from "./FullPagePreviewImage";
 
 /**
  * Banniere d'apercu du PDF : la route `/api/exams/[slug]` redirige vers R2, autorise dans
  * `frame-src` (CSP). Les navigateurs mobiles n'affichent pas un PDF dans un iframe : plutot que
- * d'y proposer de charger tout le fichier (R-28), on y montre la premiere page entiere, deja mise
- * en cache pour les cartes. Fichier absent de R2 : encart « apercu indisponible ».
+ * d'y proposer de charger tout le fichier (R-28), on y montre la premiere page entiere, rendue par
+ * `FullPagePreviewImage`, dans une limite `Suspense` pour ne pas bloquer le reste de la page.
+ * Fichier absent de R2 : encart « apercu indisponible ».
  */
-export default async function ExamFilePreview({
+export default function ExamFilePreview({
   slug,
   title,
   available,
@@ -24,12 +26,6 @@ export default async function ExamFilePreview({
   fileSize: number;
 }) {
   const previewHref = `/api/exams/${slug}`;
-  // Pas de rendu si le fichier n'existe pas (r2Key absent) ou si la page entiere echoue (PDF
-  // corrompu) : le bloc mobile retombe alors sur le lien plein ecran, comme avant.
-  const fullPage =
-    available && r2Key
-      ? await getFullPagePreview(r2Key).catch(() => null)
-      : null;
 
   return (
     <section
@@ -61,23 +57,18 @@ export default async function ExamFilePreview({
             className="hidden h-[75vh] min-h-[32rem] w-full bg-white md:block"
           />
           <div className="flex flex-col items-center gap-3 bg-white px-6 py-6 text-center md:hidden">
-            {fullPage ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element -- image server deja au format final, `next/image` n'apporterait rien ici */}
-                <img
-                  src={`/api/exams/${slug}/preview/full?v=${fileVersion}`}
-                  alt={`Première page de ${title}`}
-                  loading="lazy"
-                  width={640}
-                  className="w-full max-w-sm rounded-lg border border-gray-200"
-                />
-                <p className="text-text-paragraph mb-0 text-xs">
-                  Page 1 sur {fullPage.pageCount}
-                </p>
-              </>
-            ) : (
-              <FiFileText size={40} className="text-background-accent" />
-            )}
+            <Suspense
+              fallback={
+                <FiFileText size={40} className="text-background-accent" />
+              }
+            >
+              <FullPagePreviewImage
+                r2Key={r2Key}
+                slug={slug}
+                title={title}
+                fileVersion={fileVersion}
+              />
+            </Suspense>
             <a
               href={`${previewHref}?dl=1`}
               className="bg-background-accent text-text-primary flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium"
