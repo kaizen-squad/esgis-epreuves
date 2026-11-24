@@ -82,7 +82,7 @@ export default function WhatsappNumberForm({
     <form
       action={dispatch}
       noValidate
-      className="bg-background-primary rounded-card p-5shadow-(--shadow-card) flex flex-col gap-6 border border-gray-200 sm:p-6 md:p-8"
+      className="bg-background-primary rounded-card flex flex-col gap-6 border border-gray-200 p-5 shadow-(--shadow-card) sm:p-6 md:p-8"
     >
       <div className="flex items-start gap-4">
         <span
