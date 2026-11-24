@@ -23,6 +23,11 @@ type ResearchProps = {
   initialQuery?: string;
   /** Catalogue vers lequel renvoie la recherche hors catalogue (`/bde/catalogue` cote BDE). */
   catalogueHref?: string;
+  /**
+   * Hors catalogue seulement : le champ occupe toute la largeur de son conteneur, sans la bande
+   * centree par defaut (marges et largeur reduite), pour se ranger dans un en-tete en colonnes.
+   */
+  inline?: boolean;
 };
 
 const DEFAULT_CATALOGUE_HREF = "/catalogue";
@@ -165,7 +170,13 @@ type PreviewState =
   | { status: "error" };
 
 /** Hors catalogue : titres trouves (3 a 5) sous le champ, avec un lien vers le catalogue filtre. */
-function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
+function LinkResearch({
+  catalogueHref,
+  inline,
+}: {
+  catalogueHref: string;
+  inline: boolean;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [preview, setPreview] = useState<PreviewState>({ status: "idle" });
@@ -203,10 +214,12 @@ function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
 
   const showPanel = isOpen && preview.status !== "idle";
 
+  const Shell = inline ? "div" : ResearchShell;
+
   return (
-    <ResearchShell>
+    <Shell>
       <div
-        className="relative mx-auto md:w-2/3 lg:w-1/3"
+        className={`relative ${inline ? "w-full" : "mx-auto md:w-2/3 lg:w-1/3"}`}
         onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget))
             setIsOpen(false);
@@ -281,7 +294,7 @@ function LinkResearch({ catalogueHref }: { catalogueHref: string }) {
           </div>
         )}
       </div>
-    </ResearchShell>
+    </Shell>
   );
 }
 
@@ -289,11 +302,12 @@ const Research = ({
   live = false,
   initialQuery,
   catalogueHref = DEFAULT_CATALOGUE_HREF,
+  inline = false,
 }: ResearchProps) =>
   live ? (
     <LiveResearch initialQuery={initialQuery} />
   ) : (
-    <LinkResearch catalogueHref={catalogueHref} />
+    <LinkResearch catalogueHref={catalogueHref} inline={inline} />
   );
 
 export default Research;
