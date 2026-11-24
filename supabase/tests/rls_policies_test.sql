@@ -1,5 +1,5 @@
 begin;
-select plan(32);
+select plan(33);
 
 -- Tables et RLS forcee
 select has_table('public', 'profiles', 'profiles existe');
@@ -279,6 +279,19 @@ select throws_ok(
   '23514',
   null,
   'un numero hors format international est refuse par la base'
+);
+
+-- BDE desactive : ne peut plus toucher aux reglages non plus (meme garde que sur public.exams).
+reset role;
+update public.profiles set is_active = false where id = '11111111-1111-4111-8111-111111111111';
+set local role authenticated;
+with modifiees as (
+  update public.site_settings set bde_whatsapp_number = '+2290198765432'
+  returning 1
+)
+select is(
+  (select count(*) from modifiees)::int, 0,
+  'BDE desactive ne peut plus modifier les reglages'
 );
 
 select * from finish();
