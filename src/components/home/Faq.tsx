@@ -128,89 +128,97 @@ function questions(contactHref: string): Question[] {
 }
 
 /**
- * FAQ de l'accueil public, a la place du bloc de presentation du site : elle renseigne
- * l'etudiant au lieu de decrire Alexandria. Panneau marine plein, seul aplat sombre de la feuille
- * blanche ; la premiere question (la plus importante) est ouverte d'emblee. Le contact BDE
- * (questions 4 et 6, et l'encart "Ta question n'y est pas ?") suit le numero regle par le BDE.
+ * FAQ de l'accueil public, en fil de discussion : les questions des etudiants a gauche, la
+ * reponse du BDE qui s'ouvre en dessous, a droite (styles `.faq-*` dans `globals.css`). Le fil
+ * se termine par sa barre d'ecriture, qui est le vrai lien WhatsApp vers le BDE.
  */
 export default async function Faq() {
   const contactHref = await getBdeContactHref();
+  const items = questions(contactHref);
 
   return (
     <section
       id="faq"
       aria-labelledby="faq-title"
-      className="bg-background-partial text-text-primary mx-auto mb-20 grid max-w-7xl scroll-mt-6 gap-10 rounded-3xl px-4 py-10 sm:px-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16 lg:rounded-4xl lg:px-14 lg:py-16"
+      className="mx-auto mb-20 grid max-w-7xl scroll-mt-6 gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16"
     >
-      {/* Sous lg, `contents` laisse l'en-tete au-dessus des questions et l'encart de contact
-          en dessous ; a partir de lg, les deux restent ensemble dans la colonne de gauche. */}
-      <div className="contents lg:sticky lg:top-8 lg:flex lg:flex-col lg:justify-between lg:gap-10 lg:self-start">
-        <header className="order-1">
-          <p className="text-text-primary/70 mb-4 flex items-center gap-3 text-sm font-semibold">
-            <span
-              aria-hidden="true"
-              className="bg-background-accent h-0.5 w-6"
-            />
-            Questions fréquentes
-          </p>
-          <h2
-            id="faq-title"
-            className="text-[2rem] leading-[1.05] font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl"
-          >
-            Ce qu&apos;on nous demande le plus
-            <span className="text-background-accent">.</span>
-          </h2>
-          <p className="text-text-primary/75 mt-5 max-w-md text-base text-pretty lg:text-lg">
-            Gratuit, sans compte, alimenté par le BDE&nbsp;: l&apos;essentiel
-            tient en 9 réponses.
-          </p>
-        </header>
-
-        <aside
-          aria-label="Contacter le BDE"
-          className="rounded-card order-3 flex flex-col gap-4 border border-white/15 bg-white/[0.06] p-5 sm:flex-row sm:items-center sm:justify-between lg:flex-col lg:items-start lg:p-6"
+      <header className="lg:sticky lg:top-8 lg:self-start">
+        <p className="text-text-secondary/70 mb-4 flex items-center gap-3 text-sm font-semibold">
+          <span aria-hidden="true" className="bg-background-accent h-0.5 w-6" />
+          Questions fréquentes
+        </p>
+        <h2
+          id="faq-title"
+          className="text-text-secondary text-3xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl"
         >
-          <div>
-            <p className="font-semibold">Ta question n&apos;y est pas&nbsp;?</p>
-            <p className="text-text-primary/75 mt-1 text-sm text-pretty">
-              Une épreuve à ajouter, une erreur à signaler&nbsp;: le BDE te
-              répond sur WhatsApp.
-            </p>
-          </div>
+          Ce qu&apos;on nous demande le plus
+          <span className="text-background-accent">.</span>
+        </h2>
+        <p className="text-text-paragraph mt-5 max-w-md text-base text-pretty lg:text-lg">
+          Gratuit, sans compte, alimenté par le BDE&nbsp;: l&apos;essentiel
+          tient en {items.length} réponses.
+        </p>
+      </header>
+
+      <div>
+        <div className="flex flex-col gap-2">
+          {items.map(({ question, answer }, index) => (
+            <details
+              key={question}
+              name="faq"
+              open={index === 0}
+              className="faq-item"
+            >
+              <summary className="flex cursor-pointer py-1">
+                <span className="faq-question text-text-secondary flex min-w-0 items-center gap-4 py-3 pr-3 pl-4 text-base leading-snug font-semibold text-pretty sm:pl-5 sm:text-lg">
+                  {question.replace(/ ([?:])/g, "\u00a0$1")}
+                  <span
+                    aria-hidden="true"
+                    className="faq-toggle rounded-control size-6 shrink-0"
+                  />
+                </span>
+              </summary>
+              <div className="flex justify-end pt-2 pb-5 pl-4 sm:pl-20">
+                <div className="faq-answer max-w-xl px-4 py-3 sm:px-5 sm:py-4">
+                  <p className="text-background-accent mb-1 text-xs font-semibold">
+                    BDE ESGIS
+                  </p>
+                  <p className="text-text-default mb-0 text-[0.9375rem] leading-relaxed text-pretty sm:text-base">
+                    {answer}
+                  </p>
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+
+        <div className="mt-10">
+          <p className="text-text-secondary font-semibold">
+            Ta question n&apos;y est pas&nbsp;?
+          </p>
+          <p className="text-text-paragraph mt-1 text-sm text-pretty sm:text-base">
+            Une épreuve à ajouter, une erreur à signaler&nbsp;: le BDE te répond
+            sur WhatsApp.
+          </p>
           <a
             href={contactHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-background-accent text-text-primary rounded-control inline-flex w-fit shrink-0 items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-[filter] hover:brightness-110"
+            className="group rounded-card bg-background-primary shadow-card mt-4 flex items-center gap-3 border border-[rgb(17_22_36/0.1)] py-1.5 pr-1.5 pl-4 transition-colors hover:border-[rgb(15_33_85/0.4)] sm:pl-5"
           >
-            <FaWhatsapp size={16} aria-hidden="true" />
-            Écrire au BDE
+            <span className="text-text-paragraph min-w-0 flex-1 text-sm sm:text-base">
+              Écrire au BDE
+              {/* Le pictogramme dit deja WhatsApp a l'oeil ; le nom accessible le garde. */}
+              <span className="max-sm:sr-only"> sur WhatsApp</span>
+            </span>
+            <span
+              aria-hidden="true"
+              className="bg-background-accent text-text-primary rounded-control grid size-10 shrink-0 place-items-center transition-[filter] group-hover:brightness-110"
+            >
+              <FaWhatsapp size={18} />
+            </span>
           </a>
-        </aside>
-      </div>
-
-      <div className="order-2 -mx-1 flex flex-col sm:mx-0">
-        {questions(contactHref).map(({ question, answer }, index) => (
-          <details
-            key={question}
-            name="faq"
-            open={index === 0}
-            className="faq-item rounded-card"
-          >
-            <summary className="flex cursor-pointer items-center justify-between gap-4 px-4 py-5 sm:gap-6 sm:px-6 lg:py-6">
-              <span className="text-base leading-snug font-semibold text-pretty sm:text-lg lg:text-xl">
-                {question.replace(/ ([?:])/g, "\u00a0$1")}
-              </span>
-              <span
-                aria-hidden="true"
-                className="faq-toggle rounded-control size-9 shrink-0 sm:size-10"
-              />
-            </summary>
-            <p className="text-text-paragraph mb-0 max-w-prose px-4 pb-6 text-base leading-relaxed text-pretty sm:px-6 lg:pb-7">
-              {answer}
-            </p>
-          </details>
-        ))}
+        </div>
       </div>
     </section>
   );

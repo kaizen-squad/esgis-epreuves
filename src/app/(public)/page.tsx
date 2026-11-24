@@ -25,7 +25,7 @@ export default function Accueil() {
       <div className="px-6">
         <ResultsResume />
       </div>
-      <div className="sm:px-6">
+      <div className="px-6">
         <Faq />
       </div>
     </>
