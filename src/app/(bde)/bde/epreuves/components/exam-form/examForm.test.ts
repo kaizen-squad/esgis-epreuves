@@ -29,6 +29,7 @@ const validValues = {
   subjectId: UUID,
   session: "Session Normale",
   examType: "Contrôle Continu",
+  optionId: "",
 };
 
 function entry(file = pdf(), title = "Devoir d'algorithmique") {
@@ -99,6 +100,7 @@ describe("addExamFormSchema", () => {
       subjectId: "",
       session: null,
       examType: null,
+      optionId: "",
       files: [],
     });
     expect(result.success).toBe(false);

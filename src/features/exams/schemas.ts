@@ -144,7 +144,7 @@ export const examUploadSchema = z.object({
     )
     .refine(
       (file) => file.size <= MAX_FILE_SIZE_BYTES,
-      `Le fichier depasse la limite de ${Math.floor(MAX_FILE_SIZE_BYTES / 1024)} Ko.`,
+      `Le fichier depasse la limite de ${Math.floor(MAX_FILE_SIZE_BYTES / 1024)} Ko. Compressez-le (un outil de compression PDF en ligne suffit) puis reessayez.`,
     ),
 });
 
