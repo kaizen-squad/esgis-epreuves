@@ -1,7 +1,8 @@
 "use client";
 
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { pageCountOf, visiblePages } from "@/lib/pagination";
+import PageNumberList from "@/components/ui/PageNumberList";
+import { pageCountOf } from "@/lib/pagination";
 
 const ARROW_CLASS =
   "flex size-10 cursor-pointer items-center justify-center rounded-lg border border-gray-200 bg-background-primary transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-background-primary";
@@ -34,7 +35,7 @@ export default function CataloguePagination({
       <p className="text-text-paragraph mb-0 text-sm">
         Épreuves{" "}
         <span className="text-text-title font-semibold">
-          {first}–{last}
+          {first} à {last}
         </span>{" "}
         sur {total}
       </p>
@@ -53,16 +54,10 @@ export default function CataloguePagination({
           <FiChevronLeft />
         </button>
 
-        {visiblePages(page, pageCount).map((item, index) =>
-          item === "…" ? (
-            <span
-              key={`gap-${index}`}
-              className="text-text-paragraph px-1"
-              aria-hidden
-            >
-              …
-            </span>
-          ) : (
+        <PageNumberList
+          page={page}
+          pageCount={pageCount}
+          renderPage={(item) => (
             <button
               type="button"
               key={item}
@@ -74,8 +69,8 @@ export default function CataloguePagination({
             >
               {item}
             </button>
-          ),
-        )}
+          )}
+        />
 
         <button
           type="button"

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { visiblePages } from "@/lib/pagination";
+import PageNumberList from "@/components/ui/PageNumberList";
 
 /** Pagination par liens (`?page=`), qui conserve les autres parametres de l'URL (recherche). */
 export default function Pagination({
@@ -42,12 +42,10 @@ export default function Pagination({
         </span>
       )}
 
-      {visiblePages(page, pageCount).map((item, index) =>
-        item === "…" ? (
-          <span key={`gap-${index}`} className="text-text-paragraph px-1">
-            …
-          </span>
-        ) : (
+      <PageNumberList
+        page={page}
+        pageCount={pageCount}
+        renderPage={(item) => (
           <Link
             key={item}
             href={href(item)}
@@ -56,8 +54,8 @@ export default function Pagination({
           >
             {item}
           </Link>
-        ),
-      )}
+        )}
+      />
 
       {page < pageCount ? (
         <Link
