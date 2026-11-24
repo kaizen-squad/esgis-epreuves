@@ -159,7 +159,7 @@ export default async function Faq() {
           id="faq-title"
           className="text-text-secondary text-3xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl"
         >
-          Avant de commencer
+          Ce qu&apos;il faut savoir
           <span className="text-background-accent">.</span>
         </h2>
         <p className="text-text-paragraph mt-5 max-w-md text-base text-pretty lg:text-lg">
