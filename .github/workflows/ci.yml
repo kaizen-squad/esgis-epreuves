@@ -41,9 +41,10 @@ jobs:
         with:
           version: 2.95.4
 
-      # #157 : / et /filieres sont desormais prerendues au build (ISR), ce qui appelle vraiment la
-      # base ; meme stack minimale que le job e2e, sans R2 (le build ne lit aucun fichier).
-      - run: supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      # #157 : /, /filieres et /epreuves/[slug] sont desormais prerendues au build (ISR), ce qui
+      # appelle vraiment postgrest (via kong) ; gotrue est inutile ici, le seed insere auth.users
+      # en SQL direct et createPublicClient ne s'authentifie pas.
+      - run: supabase start -x gotrue,realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
       - run: supabase db reset
       - name: Exposer la stack Supabase locale comme env applicatif
         run: |
@@ -51,7 +52,6 @@ jobs:
           {
             echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
-            echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
           } >> "$GITHUB_ENV"
 
       - run: pnpm build
