@@ -109,10 +109,10 @@ function questions(contactHref: string): Question[] {
         "Je n'arrive pas à voir ou télécharger le fichier, c'est normal ?",
       answer: (
         <>
-          Sur téléphone, l&apos;aperçu s&apos;ouvre dans le lecteur PDF de
-          l&apos;appareil. «&nbsp;Aperçu indisponible&nbsp;» veut dire que le
-          fichier n&apos;est pas encore en ligne. Chaque fichier est un PDF, et
-          la fiche affiche son poids.
+          Sur téléphone, la fiche affiche la première page en image&nbsp;; le
+          bouton «&nbsp;Télécharger&nbsp;» récupère le PDF. «&nbsp;Aperçu
+          indisponible&nbsp;» veut dire que le fichier n&apos;est pas encore en
+          ligne. Chaque fichier est un PDF, et la fiche affiche son poids.
         </>
       ),
     },
