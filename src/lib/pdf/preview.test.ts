@@ -1,6 +1,12 @@
 import { loadImage } from "@napi-rs/canvas";
 import { describe, expect, it } from "vitest";
-import { PREVIEW_HEIGHT, PREVIEW_WIDTH, renderPdfPreview } from "./preview";
+import {
+  FULL_PAGE_WIDTH,
+  PREVIEW_HEIGHT,
+  PREVIEW_WIDTH,
+  renderPdfFirstPageFull,
+  renderPdfPreview,
+} from "./preview";
 
 /** PDF minimal d'une page A4 (sans table xref : pdf.js la reconstruit). */
 const PDF = `%PDF-1.4
@@ -27,5 +33,23 @@ describe("renderPdfPreview", () => {
 
   it("refuse un fichier qui n'est pas un PDF", async () => {
     await expect(renderPdfPreview(Buffer.from("pas un pdf"))).rejects.toThrow();
+  });
+});
+
+describe("renderPdfFirstPageFull", () => {
+  it("rend la premiere page entiere et compte les pages", async () => {
+    const { image, pageCount } = await renderPdfFirstPageFull(Buffer.from(PDF));
+    const rendered = await loadImage(image);
+
+    expect(rendered.width).toBe(FULL_PAGE_WIDTH);
+    // A4 (595x842) mis a l'echelle de FULL_PAGE_WIDTH : hauteur proportionnelle, pas rognee.
+    expect(rendered.height).toBeGreaterThan(PREVIEW_HEIGHT);
+    expect(pageCount).toBe(1);
+  });
+
+  it("refuse un fichier qui n'est pas un PDF", async () => {
+    await expect(
+      renderPdfFirstPageFull(Buffer.from("pas un pdf")),
+    ).rejects.toThrow();
   });
 });

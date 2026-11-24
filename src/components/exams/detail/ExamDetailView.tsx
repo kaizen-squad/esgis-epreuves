@@ -106,6 +106,9 @@ export default async function ExamDetailView({
           slug={exam.slug}
           title={exam.title}
           available={available}
+          r2Key={r2Key}
+          fileVersion={exam.fileVersion}
+          fileSize={exam.fileSize}
         />
 
         <aside className="bg-background-primary flex flex-col gap-6 rounded-xl border border-gray-200 p-6 shadow-sm lg:sticky lg:top-6">
