@@ -1,12 +1,22 @@
 import { redirect } from "next/navigation";
-import { getCurrentUserRole } from "@/features/members/queries";
+import { getCurrentProfileStatus } from "@/features/members/queries";
+import { createClient } from "@/lib/supabase/server";
 import LoginForm from "@/features/auth/ui/LoginForm";
 import Image from "next/image";
 
 export default async function LoginPage() {
-  const role = await getCurrentUserRole();
-  if (role) {
-    redirect(role === "ADMIN" ? "/admin" : "/bde/accueil");
+  const status = await getCurrentProfileStatus();
+  if (status?.isActive) {
+    redirect(status.role === "ADMIN" ? "/admin" : "/bde/accueil");
+  }
+  if (status && !status.isActive) {
+    // Ne pas rediriger (contrairement au cas actif ci-dessus) : sans ca, cette page et la garde
+    // BDE/Admin se renverraient la main indefiniment pour un compte desactive apres sa connexion
+    // (#164). `signOut` revoque la session cote GoTrue (refus a son prochain refresh) mais ne
+    // supprime pas le cookie deja pose ; le jeton d'acces courant reste valide jusqu'a son
+    // expiration (~1h), fenetre deja couverte par la verification du statut a chaque page.
+    const supabase = await createClient();
+    await supabase.auth.signOut({ scope: "local" });
   }
 
   return (

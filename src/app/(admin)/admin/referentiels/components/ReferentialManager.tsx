@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import {
+  Fragment,
   startTransition,
   useActionState,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useTransition,
@@ -15,10 +17,13 @@ import {
   FiAlertCircle,
   FiArrowRight,
   FiCheck,
+  FiCheckCircle,
   FiEdit2,
+  FiSearch,
   FiX,
 } from "react-icons/fi";
 import ActiveToggleButton from "@/app/(admin)/components/ActiveToggleButton";
+import { searchTokens } from "@/features/exams/schemas";
 import type { Field, Level } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 
@@ -29,6 +34,10 @@ function inputClass(error?: string) {
   return `${INPUT_CLASS} ${error ? "border-red-400" : "border-gray-300"}`;
 }
 
+function capitalize(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 type Kind = "field" | "level" | "subject" | "option";
 
 type Label = {
@@ -36,6 +45,10 @@ type Label = {
   indefinite: string;
   /** "cette filière" */
   demonstrative: string;
+  /** "la" (feminin) ou "le" (masculin), pour accorder un pronom complement ("la retire") */
+  pronoun: "la" | "le";
+  /** "ajoutée" (feminin) ou "ajouté" (masculin), pour le message de confirmation */
+  added: "ajoutée" | "ajouté";
   /** "Aucune filière" */
   empty: string;
   /** "Active" ou "Actif" */
@@ -48,6 +61,8 @@ const LABELS: Record<Kind, Label> = {
   field: {
     indefinite: "une filière",
     demonstrative: "cette filière",
+    pronoun: "la",
+    added: "ajoutée",
     empty: "Aucune filière",
     activeBadge: "Active",
     inactiveBadge: "Désactivée",
@@ -55,6 +70,8 @@ const LABELS: Record<Kind, Label> = {
   level: {
     indefinite: "un niveau",
     demonstrative: "ce niveau",
+    pronoun: "le",
+    added: "ajouté",
     empty: "Aucun niveau",
     activeBadge: "Actif",
     inactiveBadge: "Désactivé",
@@ -62,6 +79,8 @@ const LABELS: Record<Kind, Label> = {
   subject: {
     indefinite: "une matière",
     demonstrative: "cette matière",
+    pronoun: "la",
+    added: "ajoutée",
     empty: "Aucune matière",
     activeBadge: "Active",
     inactiveBadge: "Désactivée",
@@ -69,6 +88,8 @@ const LABELS: Record<Kind, Label> = {
   option: {
     indefinite: "une option",
     demonstrative: "cette option",
+    pronoun: "la",
+    added: "ajoutée",
     empty: "Aucune option",
     activeBadge: "Active",
     inactiveBadge: "Désactivée",
@@ -100,6 +121,7 @@ export default function ReferentialManager({
   items,
   fields,
   levels,
+  examCounts = {},
   create,
   update,
   setActive,
@@ -112,6 +134,8 @@ export default function ReferentialManager({
   fields?: Field[];
   /** Niveaux, meme role que `fields`. Requis pour matiere seulement. */
   levels?: Level[];
+  /** Nombre d'epreuves rattachees a chaque item (#168), pour annoncer l'impact d'une desactivation. */
+  examCounts?: Record<string, number>;
   create: (formData: FormData) => Promise<ActionResult<{ id: string }>>;
   update: (id: string, formData: FormData) => Promise<ActionResult<null>>;
   setActive: (id: string, isActive: boolean) => Promise<ActionResult<unknown>>;
@@ -123,11 +147,56 @@ export default function ReferentialManager({
   const needsField = kind === "subject" || kind === "option";
   const needsLevel = kind === "subject";
   const formRef = useRef<HTMLFormElement>(null);
+  const [query, setQuery] = useState("");
 
-  const fieldName = new Map((fields ?? []).map((f) => [f.id, f.name]));
-  const levelName = new Map((levels ?? []).map((l) => [l.id, l.name]));
+  const fieldName = useMemo(
+    () => new Map((fields ?? []).map((f) => [f.id, f.name])),
+    [fields],
+  );
+  const levelName = useMemo(
+    () => new Map((levels ?? []).map((l) => [l.id, l.name])),
+    [levels],
+  );
   const activeFields = (fields ?? []).filter((f) => f.isActive);
   const activeLevels = (levels ?? []).filter((l) => l.isActive);
+
+  // Recherche/filtre reserve a Matieres (#168) : seule liste assez longue (22 items a plat,
+  // melangeant filieres et niveaux) pour en avoir besoin ; les 3 autres referentiels restent courts.
+  const searchable = kind === "subject";
+  // Memes jetons que la recherche de matiere du formulaire de depot (`SubjectSearch.tsx`) :
+  // insensible aux accents et a l'ordre des mots, chaque jeton doit apparaitre quelque part.
+  const queryTokens = useMemo(() => searchTokens(query), [query]);
+  const visibleItems = useMemo(() => {
+    const filtered =
+      !searchable || queryTokens.length === 0
+        ? items
+        : items.filter((item) => {
+            const haystack = searchTokens(
+              [
+                item.name,
+                item.fieldId ? fieldName.get(item.fieldId) : "",
+                item.levelId ? levelName.get(item.levelId) : "",
+              ].join(" "),
+            ).join(" ");
+            return queryTokens.every((token) => haystack.includes(token));
+          });
+    // Regroupement par filiere puis niveau (#168) : la liste de 22 matieres a plat melangeait
+    // tout, trier dessus suffit a faire apparaitre les groupes sans structure de donnees a part.
+    if (!searchable) return filtered;
+    return [...filtered].sort((a, b) => {
+      const fieldCompare = (
+        (a.fieldId && fieldName.get(a.fieldId)) ||
+        ""
+      ).localeCompare((b.fieldId && fieldName.get(b.fieldId)) || "");
+      if (fieldCompare !== 0) return fieldCompare;
+      const levelCompare = (
+        (a.levelId && levelName.get(a.levelId)) ||
+        ""
+      ).localeCompare((b.levelId && levelName.get(b.levelId)) || "");
+      if (levelCompare !== 0) return levelCompare;
+      return a.name.localeCompare(b.name);
+    });
+  }, [items, searchable, queryTokens, fieldName, levelName]);
 
   const [state, dispatch, pending] = useActionState<CreateState, FormData>(
     async (_prev, formData) => {
@@ -161,6 +230,13 @@ export default function ReferentialManager({
   const errors = state.status === "invalid" ? state.errors : {};
   const failure =
     state.status === "done" && !state.result.ok ? state.result : null;
+  // Mise en avant de la ligne creee (#168) : persiste jusqu'a la prochaine creation, c'est
+  // suffisant pour confirmer visuellement sans minuteur a gerer.
+  const createdId =
+    state.status === "done" && state.result.ok ? state.result.data.id : null;
+  const success = createdId
+    ? `${capitalize(label.indefinite)} a bien été ${label.added}.`
+    : null;
 
   useEffect(() => {
     if (state.status === "done" && state.result.ok) {
@@ -181,6 +257,35 @@ export default function ReferentialManager({
     const formData = new FormData(event.currentTarget);
     startTransition(() => dispatch(formData));
   };
+
+  // Grille du formulaire proportionnee au nombre de champs plutot que figee a 4 colonnes (#168) :
+  // Matieres (filiere + niveau + nom) en a besoin de 3, Options (filiere + nom) de 2, Filieres et
+  // Niveaux (nom seul) de 1 ; le bouton suit toujours en colonne finale auto-largeur.
+  // Impact d'une desactivation (#168) : le sujet de la phrase est toujours "epreuve(s)" (feminin
+  // invariable), jamais le referentiel lui-meme, pour ne pas avoir a regerer l'accord de genre en
+  // plus de celui deja porte par `label.pronoun`.
+  const deactivationImpact = (item: ReferentialItem) => {
+    const count = examCounts[item.id] ?? 0;
+    const examSentence =
+      count === 0
+        ? "Aucune épreuve déposée n'y fait référence pour l'instant."
+        : count === 1
+          ? "1 épreuve déjà déposée y fait référence ; elle ne sera pas affectée."
+          : `${count} épreuves déjà déposées y font référence ; elles ne seront pas affectées.`;
+    const cascadeSentence =
+      kind === "field"
+        ? ` Les matières et options de ${label.demonstrative} disparaissent aussi du formulaire de dépôt du BDE.`
+        : "";
+    return `${examSentence}${cascadeSentence}`;
+  };
+
+  const fieldCount = 1 + (needsField ? 1 : 0) + (needsLevel ? 1 : 0);
+  const gridColsClass =
+    fieldCount === 3
+      ? "sm:grid-cols-[1fr_1fr_1fr_auto]"
+      : fieldCount === 2
+        ? "sm:grid-cols-[1fr_1fr_auto]"
+        : "sm:grid-cols-[1fr_auto]";
 
   return (
     <div className="flex flex-col gap-6">
@@ -205,7 +310,17 @@ export default function ReferentialManager({
           </div>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
+        {success ? (
+          <div
+            role="status"
+            className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+          >
+            <FiCheckCircle size={18} className="mt-0.5 shrink-0" />
+            {success}
+          </div>
+        ) : null}
+
+        <div className={`grid gap-4 sm:items-end ${gridColsClass}`}>
           {needsField ? (
             <div className="flex flex-col gap-1">
               <label htmlFor={`${kind}-fieldId`} className="font-medium">
@@ -216,6 +331,9 @@ export default function ReferentialManager({
                 name="fieldId"
                 defaultValue=""
                 aria-invalid={errors.fieldId ? true : undefined}
+                aria-describedby={
+                  errors.fieldId ? `${kind}-fieldId-error` : undefined
+                }
                 className={inputClass(errors.fieldId)}
               >
                 <option value="" disabled>
@@ -228,7 +346,12 @@ export default function ReferentialManager({
                 ))}
               </select>
               {errors.fieldId ? (
-                <p className="mb-0 text-sm text-red-600">{errors.fieldId}</p>
+                <p
+                  id={`${kind}-fieldId-error`}
+                  className="mb-0 text-sm text-red-600"
+                >
+                  {errors.fieldId}
+                </p>
               ) : null}
             </div>
           ) : null}
@@ -243,6 +366,9 @@ export default function ReferentialManager({
                 name="levelId"
                 defaultValue=""
                 aria-invalid={errors.levelId ? true : undefined}
+                aria-describedby={
+                  errors.levelId ? `${kind}-levelId-error` : undefined
+                }
                 className={inputClass(errors.levelId)}
               >
                 <option value="" disabled>
@@ -255,7 +381,12 @@ export default function ReferentialManager({
                 ))}
               </select>
               {errors.levelId ? (
-                <p className="mb-0 text-sm text-red-600">{errors.levelId}</p>
+                <p
+                  id={`${kind}-levelId-error`}
+                  className="mb-0 text-sm text-red-600"
+                >
+                  {errors.levelId}
+                </p>
               ) : null}
             </div>
           ) : null}
@@ -268,10 +399,16 @@ export default function ReferentialManager({
               id={`${kind}-name`}
               name="name"
               aria-invalid={errors.name ? true : undefined}
+              aria-describedby={errors.name ? `${kind}-name-error` : undefined}
               className={inputClass(errors.name)}
             />
             {errors.name ? (
-              <p className="mb-0 text-sm text-red-600">{errors.name}</p>
+              <p
+                id={`${kind}-name-error`}
+                className="mb-0 text-sm text-red-600"
+              >
+                {errors.name}
+              </p>
             ) : null}
           </div>
 
@@ -288,106 +425,178 @@ export default function ReferentialManager({
             )}
           </button>
         </div>
+
+        {needsField ? (
+          <p className="text-text-paragraph mb-0 text-xs">
+            Le rattachement{" "}
+            {needsLevel ? "à la filière et au niveau" : "à la filière"} est
+            définitif : pour corriger une erreur, désactivez{" "}
+            {label.demonstrative} puis recréez-la avec le bon rattachement.
+          </p>
+        ) : null}
       </form>
 
+      {searchable ? (
+        <div className="relative">
+          <FiSearch
+            aria-hidden
+            size={16}
+            className="text-text-paragraph pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Rechercher une matière, une filière, un niveau…"
+            aria-label="Rechercher une matière"
+            className={`${INPUT_CLASS} border-gray-300 pl-9`}
+          />
+          <p
+            aria-live="polite"
+            className="text-text-paragraph mt-1 mb-0 text-xs"
+          >
+            {visibleItems.length} résultat{visibleItems.length === 1 ? "" : "s"}
+          </p>
+        </div>
+      ) : null}
+
       <div className="bg-background-primary rounded-card shadow-card overflow-hidden border border-gray-200">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-background-default text-text-paragraph text-xs uppercase">
-            <tr>
-              <th scope="col" className="px-5 py-3 font-medium">
-                Nom
-              </th>
-              {needsField ? (
-                <th scope="col" className="px-5 py-3 font-medium">
-                  Filière
-                </th>
-              ) : null}
-              {needsLevel ? (
-                <th scope="col" className="px-5 py-3 font-medium">
-                  Niveau
-                </th>
-              ) : null}
-              <th scope="col" className="px-5 py-3 font-medium">
-                Statut
-              </th>
-              <th scope="col" className="px-5 py-3 text-right font-medium">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {items.length === 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[42rem] text-left text-sm">
+            <thead className="bg-background-default text-text-paragraph text-xs uppercase">
               <tr>
-                <td
-                  colSpan={2 + (needsField ? 1 : 0) + (needsLevel ? 1 : 0) + 1}
-                  className="text-text-paragraph px-5 py-10 text-center"
-                >
-                  {label.empty} pour l&apos;instant.
-                </td>
+                <th scope="col" className="px-5 py-3 font-medium">
+                  Nom
+                </th>
+                {needsField ? (
+                  <th scope="col" className="px-5 py-3 font-medium">
+                    Filière
+                  </th>
+                ) : null}
+                {needsLevel ? (
+                  <th scope="col" className="px-5 py-3 font-medium">
+                    Niveau
+                  </th>
+                ) : null}
+                <th scope="col" className="px-5 py-3 font-medium">
+                  Statut
+                </th>
+                <th scope="col" className="px-5 py-3 text-right font-medium">
+                  Actions
+                </th>
               </tr>
-            ) : (
-              items.map((item) => (
-                <tr key={item.id} className={item.isActive ? "" : "bg-gray-50"}>
-                  <td className="px-5 py-3">
-                    <RenameCell item={item} update={update} />
-                  </td>
-                  {needsField ? (
-                    <td className="text-text-paragraph px-5 py-3">
-                      {(item.fieldId && fieldName.get(item.fieldId)) ||
-                        "Aucune"}
-                    </td>
-                  ) : null}
-                  {needsLevel ? (
-                    <td className="text-text-paragraph px-5 py-3">
-                      {(item.levelId && levelName.get(item.levelId)) || "Aucun"}
-                    </td>
-                  ) : null}
-                  <td className="px-5 py-3">
-                    {item.isActive ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                        <span
-                          aria-hidden
-                          className="size-1.5 rounded-full bg-green-600"
-                        />
-                        {label.activeBadge}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
-                        <span
-                          aria-hidden
-                          className="size-1.5 rounded-full bg-gray-500"
-                        />
-                        {label.inactiveBadge}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex justify-end">
-                      <ActiveToggleButton
-                        id={item.id}
-                        name={item.name}
-                        isActive={item.isActive}
-                        setActive={setActive}
-                        title={
-                          item.isActive
-                            ? `Désactiver ${label.demonstrative} ?`
-                            : `Réactiver ${label.demonstrative} ?`
-                        }
-                        description={
-                          <p className="mb-0">
-                            {item.isActive
-                              ? `Désactiver ${label.demonstrative} la retire des listes publiques (menu, filtres, formulaire de dépôt). Les épreuves déjà déposées qui la référencent ne sont pas affectées.`
-                              : `Réactiver ${label.demonstrative} la remet dans les listes publiques.`}
-                          </p>
-                        }
-                      />
-                    </div>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {visibleItems.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={
+                      2 + (needsField ? 1 : 0) + (needsLevel ? 1 : 0) + 1
+                    }
+                    className="text-text-paragraph px-5 py-10 text-center"
+                  >
+                    {searchable && queryTokens.length > 0
+                      ? "Aucun résultat pour cette recherche."
+                      : `${label.empty} pour l'instant.`}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                visibleItems.map((item, index) => {
+                  const previous = visibleItems[index - 1];
+                  const showFieldGroupHeader =
+                    searchable && item.fieldId !== previous?.fieldId;
+                  return (
+                    <Fragment key={item.id}>
+                      {showFieldGroupHeader ? (
+                        <tr key={`group-${item.fieldId ?? "none"}`}>
+                          <td
+                            colSpan={
+                              2 +
+                              (needsField ? 1 : 0) +
+                              (needsLevel ? 1 : 0) +
+                              1
+                            }
+                            className="bg-background-default text-text-secondary px-5 py-1.5 text-xs font-semibold"
+                          >
+                            {(item.fieldId && fieldName.get(item.fieldId)) ||
+                              "Sans filière"}
+                          </td>
+                        </tr>
+                      ) : null}
+                      <tr
+                        key={item.id}
+                        className={
+                          item.id === createdId
+                            ? "bg-background-accent/10"
+                            : item.isActive
+                              ? ""
+                              : "bg-gray-50"
+                        }
+                      >
+                        <td className="px-5 py-3">
+                          <RenameCell item={item} update={update} />
+                        </td>
+                        {needsField ? (
+                          <td className="text-text-paragraph px-5 py-3">
+                            {(item.fieldId && fieldName.get(item.fieldId)) ||
+                              "Aucune"}
+                          </td>
+                        ) : null}
+                        {needsLevel ? (
+                          <td className="text-text-paragraph px-5 py-3">
+                            {(item.levelId && levelName.get(item.levelId)) ||
+                              "Aucun"}
+                          </td>
+                        ) : null}
+                        <td className="px-5 py-3">
+                          {item.isActive ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                              <span
+                                aria-hidden
+                                className="size-1.5 rounded-full bg-green-600"
+                              />
+                              {label.activeBadge}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+                              <span
+                                aria-hidden
+                                className="size-1.5 rounded-full bg-gray-500"
+                              />
+                              {label.inactiveBadge}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex justify-end">
+                            <ActiveToggleButton
+                              id={item.id}
+                              name={item.name}
+                              isActive={item.isActive}
+                              setActive={setActive}
+                              title={
+                                item.isActive
+                                  ? `Désactiver ${label.demonstrative} ?`
+                                  : `Réactiver ${label.demonstrative} ?`
+                              }
+                              description={
+                                <p className="mb-0">
+                                  {item.isActive
+                                    ? `Désactiver ${label.demonstrative} ${label.pronoun} retire des listes publiques (menu, filtres, formulaire de dépôt). ${deactivationImpact(item)}`
+                                    : `Réactiver ${label.demonstrative} ${label.pronoun} remet dans les listes publiques.`}
+                                </p>
+                              }
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    </Fragment>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -452,13 +661,10 @@ function RenameCell({
         type="button"
         onClick={() => setEditing(true)}
         aria-label={`Renommer ${item.name}`}
-        className={`group flex items-center gap-2 text-left font-medium ${item.isActive ? "text-text-default" : "text-gray-500"}`}
+        className={`flex items-center gap-2 text-left font-medium ${item.isActive ? "text-text-default" : "text-gray-500"}`}
       >
         {item.name}
-        <FiEdit2
-          size={13}
-          className="text-text-paragraph opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-        />
+        <FiEdit2 size={13} className="text-text-paragraph" />
       </button>
     );
   }
@@ -477,7 +683,9 @@ function RenameCell({
             }
             if (event.key === "Escape") cancel();
           }}
+          aria-label={`Nouveau nom pour ${item.name}`}
           aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `rename-${item.id}-error` : undefined}
           className={`${INPUT_CLASS} py-1 ${error ? "border-red-400" : "border-gray-300"}`}
         />
         <button
@@ -503,7 +711,11 @@ function RenameCell({
           <FiX size={16} />
         </button>
       </div>
-      {error ? <p className="mb-0 text-xs text-red-600">{error}</p> : null}
+      {error ? (
+        <p id={`rename-${item.id}-error`} className="mb-0 text-xs text-red-600">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

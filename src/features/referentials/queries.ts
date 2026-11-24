@@ -106,6 +106,39 @@ export async function getSubjects(
   }));
 }
 
+/** `max_rows` de PostgREST (`supabase/config.toml`) : une page de `getExamCountsByColumn` au-dela
+ * de cette taille serait tronquee sans erreur. */
+const POSTGREST_MAX_ROWS = 1000;
+
+/** Nombre d'epreuves rattachees a chaque filiere, niveau, matiere ou option, pour annoncer
+ * l'impact d'une desactivation dans l'Admin (#168). Un SELECT de la colonne, page par page
+ * (`POSTGREST_MAX_ROWS` a la fois) : le volume d'epreuves reste trop faible pour justifier un
+ * COUNT par ligne cote serveur, mais une seule page tronquerait silencieusement le compte au-dela
+ * de `max_rows`. */
+export async function getExamCountsByColumn(
+  column: "field_id" | "level_id" | "subject_id" | "option_id",
+): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const counts: Record<string, number> = {};
+
+  for (let from = 0; ; from += POSTGREST_MAX_ROWS) {
+    const { data, error } = await supabase
+      .from("exams")
+      .select(column)
+      .range(from, from + POSTGREST_MAX_ROWS - 1);
+    if (error) throw error;
+
+    for (const row of data as Record<string, string | null>[]) {
+      const id = row[column];
+      if (!id) continue;
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    if (data.length < POSTGREST_MAX_ROWS) break;
+  }
+
+  return counts;
+}
+
 /** Options de specialisation, pour le formulaire de depot/edition d'epreuve (actives uniquement sauf `includeInactive`, #64). */
 export async function getOptions(options: ListOptions = {}): Promise<Option[]> {
   const supabase = await createClient();

@@ -3,7 +3,11 @@ import {
   setOptionActive,
   updateOption,
 } from "@/features/referentials/actions";
-import { getFields, getOptions } from "@/features/referentials/queries";
+import {
+  getExamCountsByColumn,
+  getFields,
+  getOptions,
+} from "@/features/referentials/queries";
 import AdminPageHeader from "../../../components/AdminPageHeader";
 import { requireAdminSession } from "../../../lib/requireAdminSession";
 import ReferentialManager from "../components/ReferentialManager";
@@ -11,9 +15,10 @@ import ReferentialTabs from "../components/ReferentialTabs";
 
 export default async function OptionsPage() {
   await requireAdminSession();
-  const [options, fields] = await Promise.all([
+  const [options, fields, examCounts] = await Promise.all([
     getOptions({ includeInactive: true }),
     getFields({ includeInactive: true }),
+    getExamCountsByColumn("option_id"),
   ]);
 
   return (
@@ -27,6 +32,7 @@ export default async function OptionsPage() {
         kind="option"
         items={options}
         fields={fields}
+        examCounts={examCounts}
         create={createOption}
         update={updateOption}
         setActive={setOptionActive}

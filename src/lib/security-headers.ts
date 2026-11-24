@@ -13,6 +13,12 @@
 export function buildContentSecurityPolicy(env: {
   r2AccountId: string;
   isDev: boolean;
+  /** Origine du stockage S3 local de Supabase (`R2_ENDPOINT`), qui tient lieu de R2 en
+   * developpement : la redirection 307 de `/api/exams/[slug]` y pointe reellement, jamais vers
+   * `{r2AccountId}.r2.cloudflarestorage.com` meme si `R2_ACCOUNT_ID=local` en dev. Sans l'ajouter
+   * ici, l'apercu PDF en iframe reste bloque par le navigateur en local (frame-src ne couvre pas
+   * l'origine effective de la redirection). Ignore hors developpement. */
+  localStorageOrigin?: string;
 }): string {
   if (!env.r2AccountId && !env.isDev) {
     // ponytail: pas d'echec dur (casserait next typegen, qui n'injecte pas toujours
@@ -25,6 +31,8 @@ export function buildContentSecurityPolicy(env: {
   const r2Origins = env.r2AccountId
     ? `https://${env.r2AccountId}.r2.cloudflarestorage.com https://*.${env.r2AccountId}.r2.cloudflarestorage.com`
     : "";
+  const localOrigin =
+    env.isDev && env.localStorageOrigin ? ` ${env.localStorageOrigin}` : "";
 
   const directives = [
     "default-src 'self'",
@@ -33,7 +41,7 @@ export function buildContentSecurityPolicy(env: {
     "img-src 'self' data: blob:",
     "font-src 'self'",
     "connect-src 'self'",
-    `frame-src 'self' ${r2Origins}`,
+    `frame-src 'self' ${r2Origins}${localOrigin}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

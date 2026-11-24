@@ -14,6 +14,9 @@ const securityHeaders = [
     value: buildContentSecurityPolicy({
       r2AccountId: process.env.R2_ACCOUNT_ID ?? "",
       isDev: process.env.NODE_ENV === "development",
+      localStorageOrigin: process.env.R2_ENDPOINT
+        ? new URL(process.env.R2_ENDPOINT).origin
+        : undefined,
     }),
   },
 ];

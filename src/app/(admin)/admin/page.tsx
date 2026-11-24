@@ -70,7 +70,7 @@ export default async function AdminDashboardPage({
           </div>
           {memberCount > 0 ? (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <MemberSearch />
+              <MemberSearch resultCount={total} />
               <AddMemberLink />
             </div>
           ) : null}
@@ -84,7 +84,7 @@ export default async function AdminDashboardPage({
             {total > 0 ? (
               <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-200 px-5 py-4 sm:flex-row">
                 <p className="text-text-paragraph mb-0 text-sm">
-                  {first}–{last} sur {total} membre{total > 1 ? "s" : ""}
+                  {first} à {last} sur {total} membre{total > 1 ? "s" : ""}
                 </p>
                 <Pagination
                   page={page}

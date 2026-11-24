@@ -32,145 +32,151 @@ export default function MembersTable({
   search: string;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[48rem] text-left text-sm">
-        <thead className="bg-background-default text-text-paragraph text-xs uppercase">
-          <tr>
-            <th scope="col" className="px-5 py-3 font-medium">
-              Nom &amp; prénoms
-            </th>
-            <th scope="col" className="px-5 py-3 font-medium">
-              Email
-            </th>
-            <th scope="col" className="px-5 py-3 font-medium">
-              Date d&apos;ajout
-            </th>
-            <th scope="col" className="px-5 py-3 font-medium">
-              Statut
-            </th>
-            <th scope="col" className="px-5 py-3 text-right font-medium">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {members.length === 0 ? (
+    <div className="relative">
+      <div
+        aria-hidden
+        className="from-background-primary pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l to-transparent sm:hidden"
+      />
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[48rem] text-left text-sm">
+          <thead className="bg-background-default text-text-paragraph text-xs uppercase">
             <tr>
-              <td
-                colSpan={5}
-                className="text-text-paragraph px-5 py-12 text-center"
-              >
-                Aucun membre ne correspond à « {search} ».{" "}
-                <Link
-                  href="/admin"
-                  className="text-background-accent font-medium underline"
-                >
-                  Effacer la recherche
-                </Link>
-              </td>
+              <th scope="col" className="px-5 py-3 font-medium">
+                Nom &amp; prénoms
+              </th>
+              <th scope="col" className="px-5 py-3 font-medium">
+                Email
+              </th>
+              <th scope="col" className="px-5 py-3 font-medium">
+                Date d&apos;ajout
+              </th>
+              <th scope="col" className="px-5 py-3 font-medium">
+                Statut
+              </th>
+              <th scope="col" className="px-5 py-3 text-right font-medium">
+                Actions
+              </th>
             </tr>
-          ) : (
-            members.map((member) => {
-              const name = member.fullName || member.email;
-              return (
-                <tr
-                  key={member.id}
-                  className={
-                    member.isActive
-                      ? "hover:bg-background-default/60"
-                      : "bg-gray-50 text-gray-400"
-                  }
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {members.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="text-text-paragraph px-5 py-12 text-center"
                 >
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <span
-                        aria-hidden
-                        className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${member.isActive ? "bg-background-partial text-text-primary" : "bg-gray-200 text-gray-500"}`}
-                      >
-                        {initials(member.fullName) || "?"}
-                      </span>
-                      <span
-                        className={`font-medium ${member.isActive ? "text-text-default" : "text-gray-500"}`}
-                      >
-                        {member.fullName || "—"}
-                      </span>
-                    </div>
-                  </td>
-                  <td
-                    className={`px-5 py-3 ${member.isActive ? "text-text-paragraph" : ""}`}
+                  Aucun membre ne correspond à « {search} ».{" "}
+                  <Link
+                    href="/admin"
+                    className="text-background-accent font-medium underline"
                   >
-                    {member.email}
-                  </td>
-                  <td
-                    className={`px-5 py-3 whitespace-nowrap ${member.isActive ? "text-text-paragraph" : ""}`}
+                    Effacer la recherche
+                  </Link>
+                </td>
+              </tr>
+            ) : (
+              members.map((member) => {
+                const name = member.fullName || member.email;
+                return (
+                  <tr
+                    key={member.id}
+                    className={
+                      member.isActive
+                        ? "hover:bg-background-default/60"
+                        : "bg-gray-50 text-gray-600"
+                    }
                   >
-                    <time dateTime={member.createdAt}>
-                      {dateFormat.format(new Date(member.createdAt))}
-                    </time>
-                  </td>
-                  <td className="px-5 py-3">
-                    {member.isActive ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
                         <span
                           aria-hidden
-                          className="size-1.5 rounded-full bg-green-600"
-                        />
-                        Actif
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+                          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${member.isActive ? "bg-background-partial text-text-primary" : "bg-gray-200 text-gray-500"}`}
+                        >
+                          {initials(member.fullName) || "?"}
+                        </span>
                         <span
-                          aria-hidden
-                          className="size-1.5 rounded-full bg-gray-500"
+                          className={`font-medium ${member.isActive ? "text-text-default" : "text-gray-500"}`}
+                        >
+                          {member.fullName || "Sans nom"}
+                        </span>
+                      </div>
+                    </td>
+                    <td
+                      className={`px-5 py-3 ${member.isActive ? "text-text-paragraph" : ""}`}
+                    >
+                      {member.email}
+                    </td>
+                    <td
+                      className={`px-5 py-3 whitespace-nowrap ${member.isActive ? "text-text-paragraph" : ""}`}
+                    >
+                      <time dateTime={member.createdAt}>
+                        {dateFormat.format(new Date(member.createdAt))}
+                      </time>
+                    </td>
+                    <td className="px-5 py-3">
+                      {member.isActive ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                          <span
+                            aria-hidden
+                            className="size-1.5 rounded-full bg-green-600"
+                          />
+                          Actif
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+                          <span
+                            aria-hidden
+                            className="size-1.5 rounded-full bg-gray-500"
+                          />
+                          Désactivé
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex justify-end gap-2">
+                        <Link
+                          href={`/admin/membres/${member.id}/modifier`}
+                          aria-label={`Modifier ${name}`}
+                          className="text-text-default rounded-control flex items-center gap-1.5 border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
+                        >
+                          <FiEdit2 size={13} /> Modifier
+                        </Link>
+                        <ActiveToggleButton
+                          id={member.id}
+                          name={name}
+                          isActive={member.isActive}
+                          setActive={setBdeMemberActive}
+                          title={
+                            member.isActive
+                              ? "Désactiver ce membre ?"
+                              : "Activer ce membre ?"
+                          }
+                          description={
+                            member.isActive ? (
+                              <p className="mb-0">
+                                <strong>{name}</strong> ne pourra plus se
+                                connecter ni gérer les épreuves. Les épreuves
+                                déjà déposées restent en ligne. Vous pourrez
+                                réactiver ce compte à tout moment.
+                              </p>
+                            ) : (
+                              <p className="mb-0">
+                                <strong>{name}</strong> pourra de nouveau se
+                                connecter avec ses identifiants actuels et gérer
+                                les épreuves.
+                              </p>
+                            )
+                          }
                         />
-                        Désactivé
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex justify-end gap-2">
-                      <Link
-                        href={`/admin/membres/${member.id}/modifier`}
-                        aria-label={`Modifier ${name}`}
-                        className="text-text-default rounded-control flex items-center gap-1.5 border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
-                      >
-                        <FiEdit2 size={13} /> Modifier
-                      </Link>
-                      <ActiveToggleButton
-                        id={member.id}
-                        name={name}
-                        isActive={member.isActive}
-                        setActive={setBdeMemberActive}
-                        title={
-                          member.isActive
-                            ? "Désactiver ce membre ?"
-                            : "Réactiver ce membre ?"
-                        }
-                        description={
-                          member.isActive ? (
-                            <p className="mb-0">
-                              <strong>{name}</strong> ne pourra plus se
-                              connecter ni gérer les épreuves. Les épreuves déjà
-                              déposées restent en ligne. Vous pourrez réactiver
-                              ce compte à tout moment.
-                            </p>
-                          ) : (
-                            <p className="mb-0">
-                              <strong>{name}</strong> pourra de nouveau se
-                              connecter avec ses identifiants actuels et gérer
-                              les épreuves.
-                            </p>
-                          )
-                        }
-                      />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -11,7 +11,7 @@ const DEBOUNCE_MS = 300;
  * Recherche d'un membre par nom ou email. Met a jour `?q=` (et revient a la premiere page) apres
  * une courte pause de frappe ; la liste est filtree cote serveur.
  */
-export default function MemberSearch() {
+export default function MemberSearch({ resultCount }: { resultCount: number }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -73,7 +73,7 @@ export default function MemberSearch() {
         value={query}
         onChange={(event) => handleChange(event.target.value)}
         placeholder="Rechercher par nom ou email"
-        className="focus:border-background-accent w-full rounded-lg border border-gray-300 py-2 pr-9 pl-9 text-sm outline-none"
+        className="focus:border-background-accent rounded-control w-full border border-gray-300 py-2 pr-9 pl-9 text-sm outline-none"
       />
       {pending ? (
         <CgSpinner
@@ -81,6 +81,9 @@ export default function MemberSearch() {
           className="text-text-paragraph absolute top-1/2 right-3 -translate-y-1/2 animate-spin"
         />
       ) : null}
+      <p aria-live="polite" className="sr-only">
+        {resultCount} résultat{resultCount === 1 ? "" : "s"}
+      </p>
     </form>
   );
 }

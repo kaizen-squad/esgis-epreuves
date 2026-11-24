@@ -32,6 +32,7 @@ const IS_ACTIVE_SCHEMA = z.boolean();
  */
 async function insertReferential(
   label: string,
+  itemLabel: string,
   table: string,
   duplicateMessage: string,
   values: Record<string, unknown>,
@@ -45,19 +46,24 @@ async function insertReferential(
   if (error) {
     if (error.code === "23505") return actionError(duplicateMessage);
     console.error(`${label}: insertion`, error);
-    return actionError("Impossible d'enregistrer.");
+    return actionError(
+      `Impossible d'enregistrer ${itemLabel}. Réessayez dans un instant.`,
+    );
   }
   return actionOk({ id: data.id });
 }
 
 async function updateReferential(
   label: string,
+  itemLabel: string,
   table: string,
   id: string,
   duplicateMessage: string,
   values: Record<string, unknown>,
 ): Promise<ActionResult<null>> {
-  if (!ID_SCHEMA.safeParse(id).success) return actionError("Introuvable.");
+  if (!ID_SCHEMA.safeParse(id).success) {
+    return actionError(`Impossible de trouver ${itemLabel}.`);
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -68,23 +74,28 @@ async function updateReferential(
   if (error) {
     if (error.code === "23505") return actionError(duplicateMessage);
     console.error(`${label}: mise a jour`, error);
-    return actionError("Impossible de modifier.");
+    return actionError(`Impossible de modifier ${itemLabel}.`);
   }
   // La RLS *_write_admin refuse un UPDATE non autorise sans jamais lever d'erreur Postgres : USING
   // s'evalue d'abord et renvoie 0 ligne affectee si faux (voir updateExamMetadata, exams/actions.ts,
   // meme principe sur exams_write_bde) ; aucune ligne affectee veut donc dire refus silencieux ou
   // id inexistant, jamais une anomalie a signaler autrement.
-  if (!data || data.length === 0) return actionError("Introuvable.");
+  if (!data || data.length === 0) {
+    return actionError(`Impossible de trouver ${itemLabel}.`);
+  }
   return actionOk(null);
 }
 
 async function setReferentialActive(
   label: string,
+  itemLabel: string,
   table: string,
   id: string,
   isActive: boolean,
 ): Promise<ActionResult<null>> {
-  if (!ID_SCHEMA.safeParse(id).success) return actionError("Introuvable.");
+  if (!ID_SCHEMA.safeParse(id).success) {
+    return actionError(`Impossible de trouver ${itemLabel}.`);
+  }
   if (!IS_ACTIVE_SCHEMA.safeParse(isActive).success) {
     return actionError("Données invalides.");
   }
@@ -97,9 +108,13 @@ async function setReferentialActive(
     .select("id");
   if (error) {
     console.error(`${label}: changement d'etat`, error);
-    return actionError("Impossible de changer l'état.");
+    return actionError(
+      `Impossible de changer l'état de ${itemLabel}. Réessayez dans un instant.`,
+    );
   }
-  if (!data || data.length === 0) return actionError("Introuvable.");
+  if (!data || data.length === 0) {
+    return actionError(`Impossible de trouver ${itemLabel}.`);
+  }
   return actionOk(null);
 }
 
@@ -115,6 +130,7 @@ export async function createField(
   }
   return insertReferential(
     "createField",
+    "cette filière",
     "fields",
     "Cette filière existe déjà.",
     parsed.data,
@@ -134,6 +150,7 @@ export async function updateField(
   }
   return updateReferential(
     "updateField",
+    "cette filière",
     "fields",
     id,
     "Cette filière existe déjà.",
@@ -145,7 +162,13 @@ export async function setFieldActive(
   id: string,
   isActive: boolean,
 ): Promise<ActionResult<null>> {
-  return setReferentialActive("setFieldActive", "fields", id, isActive);
+  return setReferentialActive(
+    "setFieldActive",
+    "cette filière",
+    "fields",
+    id,
+    isActive,
+  );
 }
 
 export async function createLevel(
@@ -160,6 +183,7 @@ export async function createLevel(
   }
   return insertReferential(
     "createLevel",
+    "ce niveau",
     "levels",
     "Ce niveau existe déjà.",
     parsed.data,
@@ -179,6 +203,7 @@ export async function updateLevel(
   }
   return updateReferential(
     "updateLevel",
+    "ce niveau",
     "levels",
     id,
     "Ce niveau existe déjà.",
@@ -190,7 +215,13 @@ export async function setLevelActive(
   id: string,
   isActive: boolean,
 ): Promise<ActionResult<null>> {
-  return setReferentialActive("setLevelActive", "levels", id, isActive);
+  return setReferentialActive(
+    "setLevelActive",
+    "ce niveau",
+    "levels",
+    id,
+    isActive,
+  );
 }
 
 export async function createSubject(
@@ -210,6 +241,7 @@ export async function createSubject(
   const { fieldId, levelId, name } = parsed.data;
   return insertReferential(
     "createSubject",
+    "cette matière",
     "subjects",
     "Cette matière existe déjà pour cette filière et ce niveau.",
     { field_id: fieldId, level_id: levelId, name },
@@ -231,6 +263,7 @@ export async function updateSubject(
   }
   return updateReferential(
     "updateSubject",
+    "cette matière",
     "subjects",
     id,
     "Cette matière existe déjà pour cette filière et ce niveau.",
@@ -242,7 +275,13 @@ export async function setSubjectActive(
   id: string,
   isActive: boolean,
 ): Promise<ActionResult<null>> {
-  return setReferentialActive("setSubjectActive", "subjects", id, isActive);
+  return setReferentialActive(
+    "setSubjectActive",
+    "cette matière",
+    "subjects",
+    id,
+    isActive,
+  );
 }
 
 export async function createOption(
@@ -261,6 +300,7 @@ export async function createOption(
   const { fieldId, name } = parsed.data;
   return insertReferential(
     "createOption",
+    "cette option",
     "options",
     "Cette option existe déjà pour cette filière.",
     { field_id: fieldId, name },
@@ -282,6 +322,7 @@ export async function updateOption(
   }
   return updateReferential(
     "updateOption",
+    "cette option",
     "options",
     id,
     "Cette option existe déjà pour cette filière.",
@@ -293,5 +334,11 @@ export async function setOptionActive(
   id: string,
   isActive: boolean,
 ): Promise<ActionResult<null>> {
-  return setReferentialActive("setOptionActive", "options", id, isActive);
+  return setReferentialActive(
+    "setOptionActive",
+    "cette option",
+    "options",
+    id,
+    isActive,
+  );
 }

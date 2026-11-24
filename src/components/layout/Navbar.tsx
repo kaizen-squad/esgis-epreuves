@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
 import { isNavLinkActive } from "./spaces";
 
 export type NavLink = {
@@ -12,10 +11,6 @@ export type NavLink = {
 
 type NavbarProps = {
   links: NavLink[];
-  /** Contenu affiche a droite du logo (ex. bouton de deconnexion de l'espace BDE). */
-  endSlot?: ReactNode;
-  /** Cible du logo : l'accueil de l'espace (`/bde/accueil` cote BDE). */
-  homeHref?: string;
 };
 
 /**
@@ -24,6 +19,8 @@ type NavbarProps = {
  * `.binder-tab` dans `globals.css`). La profondeur d'un onglet inactif (1 ou 2) est sa distance
  * a l'onglet actif : plus il est loin, plus sa feuille est enfoncee dans la pile.
  *
+ * Reserve a l'espace public (#175) : le BDE a son propre header, qui ne porte pas ce chrome.
+ *
  * Les onglets restent visibles sur mobile, sans menu burger : trois rubriques courtes tiennent
  * des 320px, et le classeur doit se lire des le premier ecran du telephone. Au-dela de quatre
  * rubriques, il faudra revoir cette largeur.
@@ -31,7 +28,7 @@ type NavbarProps = {
  * L'etat actif suit `isNavLinkActive` : une sous-page (`/filieres/[id]`) garde l'onglet de sa
  * section actif, pas seulement sa racine.
  */
-const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
+const Navbar = ({ links }: NavbarProps) => {
   const pathname = usePathname();
   const activeIndex = links.findIndex((link) =>
     isNavLinkActive(pathname, link.link),
@@ -42,20 +39,13 @@ const Navbar = ({ links, endSlot, homeHref = "/" }: NavbarProps) => {
     // des feuilles du dessous (ombre portee de la page) reste visible sous les onglets.
     <header className="isolate px-4 pt-5 lg:px-14 lg:pt-8">
       <nav aria-label="Navigation principale" className="flex flex-col">
-        {/* `flex-wrap` : sous 360px, le bouton de l'espace BDE passe sous le logo. */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-5 lg:pb-4">
+        <div className="flex items-center pb-5 lg:pb-4">
           <Link
             className="text-text-primary text-3xl font-extrabold tracking-tight lg:text-4xl"
-            href={homeHref}
+            href="/"
           >
             Alexandria<span className="text-background-accent">.</span>
           </Link>
-
-          {endSlot ? (
-            <div className="bg-background-primary rounded-control flex shrink-0 items-center p-1">
-              {endSlot}
-            </div>
-          ) : null}
         </div>
 
         {/* Marge droite : l'onglet le plus a droite et son conge restent sur le bord droit de
