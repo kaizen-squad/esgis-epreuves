@@ -30,8 +30,7 @@ function questions(contactHref: string): Question[] {
       answer: (
         <>
           Oui, c&apos;est gratuit, et aucun compte n&apos;est nécessaire. Tu
-          consultes, télécharges et partages sans inscription. Seuls les membres
-          du BDE ont un compte, pour déposer les épreuves.
+          consultes, télécharges et partages sans inscription.
         </>
       ),
     },
