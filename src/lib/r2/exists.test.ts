@@ -27,4 +27,18 @@ describe("examFileExists", () => {
     expect(await examFileExists("exams/a.pdf")).toBe(false);
     expect(console.error).toHaveBeenCalled();
   });
+
+  it("faux sur un 404 en mode strict, sans relancer", async () => {
+    send.mockRejectedValue({ $metadata: { httpStatusCode: 404 } });
+    expect(await examFileExists("exams/a.pdf", { strict: true })).toBe(false);
+  });
+
+  it("relance toute autre erreur en mode strict, apres l'avoir journalisee", async () => {
+    const error = new Error("network");
+    send.mockRejectedValue(error);
+    await expect(
+      examFileExists("exams/a.pdf", { strict: true }),
+    ).rejects.toThrow(error);
+    expect(console.error).toHaveBeenCalled();
+  });
 });
