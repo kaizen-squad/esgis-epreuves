@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   startTransition,
   useActionState,
@@ -32,6 +31,7 @@ import {
   type ExamCommonValues,
 } from "./examForm";
 import AddExamResult from "./AddExamResult";
+import CancelAction from "./CancelAction";
 import ExamFormSaving from "./ExamFormSaving";
 import type { ExamFormStep } from "./ExamFormStepper";
 import ExamCommonFields from "./ExamCommonFields";
@@ -125,6 +125,8 @@ export default function AddExamFlow({
 
   const errors = state.status === "invalid" ? state.errors : {};
   const fileErrors = state.status === "invalid" ? state.fileErrors : {};
+  const isDirty =
+    files.length > 0 || Object.values(values).some((value) => value !== "");
   const showResult = state.status === "done" && state.id !== dismissedId;
   const step: ExamFormStep = pending
     ? "saving"
@@ -288,12 +290,7 @@ export default function AddExamFlow({
           </section>
 
           <div className="ml-auto flex items-center gap-4">
-            <Link
-              href="/bde/accueil"
-              className="text-text-paragraph px-2 py-2 hover:underline"
-            >
-              Annuler
-            </Link>
+            <CancelAction href="/bde/accueil" isDirty={isDirty} />
             <button
               type="submit"
               disabled={pending}

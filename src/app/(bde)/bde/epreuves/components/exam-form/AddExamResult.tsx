@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import {
   FiAlertTriangle,
   FiCheckCircle,
@@ -9,6 +10,7 @@ import type {
   ExamBatchEntryResult,
   ExamBatchReport,
 } from "@/features/exams/actions";
+import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
 import type { ActionResult } from "@/lib/action-result";
 import ExamPreviewLink from "./ExamPreviewLink";
 
@@ -17,9 +19,19 @@ function EntryRow({ entry }: { entry: ExamBatchEntryResult }) {
     return (
       <li className="flex gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm">
         <FiCheckCircle className="mt-0.5 shrink-0 text-green-700" size={18} />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="mb-0 truncate font-medium">{entry.file}</p>
-          <p className="mb-0 text-green-800">Publiée.</p>
+          <p className="mb-0 text-green-800">
+            Publiée.{" "}
+            <Link
+              href={examHref(BDE_BASE_PATH, entry.slug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold underline"
+            >
+              Voir l&apos;épreuve
+            </Link>
+          </p>
           {entry.warning ? (
             <p className="mt-1 mb-0 text-amber-800">
               Une autre épreuve a la même matière, année, session et type :{" "}
@@ -115,14 +127,29 @@ export default function AddExamResult({
         : "L'épreuve est désormais disponible dans le catalogue."
       : `${summary?.imported ?? 0} sur ${summary?.total ?? 0} fichier(s) publié(s). Corrigez les fichiers restants puis réessayez.`;
 
+  // Focus sur le resultat a l'arrivee sur cette etape : le formulaire disparait et, sans cela,
+  // le focus retombait sur `body` (#171).
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
+
   return (
     <div
-      role={allImported ? "status" : "alert"}
-      className="flex flex-col items-center gap-4 text-center"
+      ref={containerRef}
+      tabIndex={-1}
+      className="flex flex-col items-center gap-4 text-center outline-none"
     >
-      <Icon className={iconClass} size={56} />
-      <h3 className="text-text-secondary text-2xl font-semibold">{title}</h3>
-      <p className="text-text-paragraph mb-2 max-w-lg">{description}</p>
+      {/* Seul ce resumé est annoncé par le lecteur d'écran (#171) : la liste détaillée et les
+          actions, verbeuses, restent hors de la région live, consultables normalement. */}
+      <div
+        role={allImported ? "status" : "alert"}
+        className="flex flex-col items-center gap-4"
+      >
+        <Icon className={iconClass} size={56} />
+        <h3 className="text-text-secondary text-2xl font-semibold">{title}</h3>
+        <p className="text-text-paragraph mb-2 max-w-lg">{description}</p>
+      </div>
 
       {result.ok ? (
         <ul className="flex w-full flex-col gap-2 text-left">

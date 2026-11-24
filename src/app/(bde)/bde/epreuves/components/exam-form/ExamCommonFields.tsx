@@ -94,7 +94,9 @@ export default function ExamCommonFields({
         Matière manquante ? Demandez son ajout à l&apos;administrateur.
       </p>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      {/* lg plutot que md : un nom de filiere long (ex. "Telecommunications et Reseaux") se
+          coupait dans un select trop etroit dès que les deux colonnes apparaissaient (#171). */}
+      <div className="grid gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="fieldId" className="font-medium">
             Filière *

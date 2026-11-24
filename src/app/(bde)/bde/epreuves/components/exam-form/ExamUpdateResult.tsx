@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { FiCheckCircle, FiXCircle } from "react-icons/fi";
+import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
 import type { ActionResult } from "@/lib/action-result";
 import ExamPreviewLink from "./ExamPreviewLink";
 
@@ -29,35 +30,45 @@ export default function ExamUpdateResult({
 }) {
   const Icon = result.ok ? FiCheckCircle : FiXCircle;
 
+  // Focus sur le resultat a l'arrivee sur cette etape (#171, meme raison qu'AddExamResult).
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
+
   return (
     <div
-      role={result.ok ? "status" : "alert"}
-      className="flex flex-col items-center gap-4 text-center"
+      ref={containerRef}
+      tabIndex={-1}
+      className="flex flex-col items-center gap-4 text-center outline-none"
     >
-      <Icon
-        className={result.ok ? "text-green-600" : "text-red-600"}
-        size={56}
-      />
-      <h3 className="text-text-secondary text-2xl font-semibold">
-        {result.ok ? successTitle : failureTitle}
-      </h3>
+      {/* Seul ce resumé est annoncé par le lecteur d'écran (#171), pas le detail ni les actions. */}
+      <div
+        role={result.ok ? "status" : "alert"}
+        className="flex flex-col items-center gap-4"
+      >
+        <Icon
+          className={result.ok ? "text-green-600" : "text-red-600"}
+          size={56}
+        />
+        <h3 className="text-text-secondary text-2xl font-semibold">
+          {result.ok ? successTitle : failureTitle}
+        </h3>
+        <p className="text-text-paragraph mb-0 max-w-lg">
+          {result.ok ? successMessage(result.data.slug) : result.error}
+        </p>
+      </div>
 
       {result.ok ? (
-        <>
-          <p className="text-text-paragraph mb-0 max-w-lg">
-            {successMessage(result.data.slug)}
+        result.warning ? (
+          <p className="mb-0 max-w-lg rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            Attention : une autre épreuve a la même matière, année, session et
+            type : <ExamPreviewLink exam={result.warning} />. Vérifiez
+            qu&apos;il ne s&apos;agit pas d&apos;un doublon.
           </p>
-          {result.warning ? (
-            <p className="mb-0 max-w-lg rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-              Attention : une autre épreuve a la même matière, année, session et
-              type : <ExamPreviewLink exam={result.warning} />. Vérifiez
-              qu&apos;il ne s&apos;agit pas d&apos;un doublon.
-            </p>
-          ) : null}
-        </>
+        ) : null
       ) : (
         <>
-          <p className="text-text-paragraph mb-0 max-w-lg">{result.error}</p>
           {"duplicate" in result ? (
             <p className="mb-0 text-sm">
               Épreuve existante : <ExamPreviewLink exam={result.duplicate} />
@@ -79,10 +90,10 @@ export default function ExamUpdateResult({
         {result.ok ? (
           <>
             <Link
-              href="/bde/catalogue"
+              href={examHref(BDE_BASE_PATH, result.data.slug)}
               className="flex items-center rounded-lg border border-black px-4 py-2"
             >
-              Voir le catalogue
+              Voir l&apos;épreuve
             </Link>
             <button
               type="button"

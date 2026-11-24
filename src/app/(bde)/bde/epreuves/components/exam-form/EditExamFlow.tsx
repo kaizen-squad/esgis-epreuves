@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   startTransition,
   useActionState,
+  useEffect,
+  useRef,
   useState,
   type SubmitEvent,
 } from "react";
@@ -18,6 +20,7 @@ import type {
 } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 import { formatFileSize } from "@/lib/file-format";
+import CancelAction from "./CancelAction";
 import ExamCommonFields, { inputClass } from "./ExamCommonFields";
 import ExamFileCard from "./ExamFileCard";
 import {
@@ -28,7 +31,7 @@ import {
   type ExamCommonValues,
 } from "./examForm";
 import ExamFormSaving from "./ExamFormSaving";
-import ExamFormStepper, { type ExamFormStep } from "./ExamFormStepper";
+import type { ExamFormStep } from "./ExamFormStepper";
 import ExamPreviewLink from "./ExamPreviewLink";
 import ExamUpdateResult from "./ExamUpdateResult";
 import FieldError from "./FieldError";
@@ -85,6 +88,9 @@ export default function EditExamFlow({
 }) {
   const [values, setValues] = useState<EditValues>(() => initialValues(exam));
   const [dismissedId, setDismissedId] = useState<number | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const isDirty =
+    JSON.stringify(values) !== JSON.stringify(initialValues(exam));
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
@@ -132,12 +138,21 @@ export default function EditExamFlow({
     : showResult
       ? "result"
       : "form";
-  const outcome =
-    state.status === "done"
-      ? state.result.ok
-        ? "success"
-        : "failure"
-      : undefined;
+
+  // Deplace le focus sur le premier champ en erreur apres un echec de validation (#171, meme
+  // pattern que AddExamFlow). Un `<fieldset>` (session, type) n'est pas focusable : on cible
+  // alors son premier bouton radio.
+  useEffect(() => {
+    if (state.status !== "invalid") return;
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>(
+      '[aria-invalid="true"]',
+    );
+    const target =
+      firstInvalid?.tagName === "FIELDSET"
+        ? firstInvalid.querySelector<HTMLElement>("input")
+        : firstInvalid;
+    target?.focus();
+  }, [state]);
 
   const availableOptions = options.filter(
     (option) => option.fieldId === values.fieldId,
@@ -166,8 +181,6 @@ export default function EditExamFlow({
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6">
-      <ExamFormStepper current={step} outcome={outcome} />
-
       {step === "saving" ? (
         <ExamFormSaving
           title="Modification en cours…"
@@ -194,48 +207,49 @@ export default function EditExamFlow({
 
       {step === "form" ? (
         <form
+          ref={formRef}
           onSubmit={handleSubmit}
           noValidate
           className="flex flex-col gap-10"
         >
           <section className="flex flex-col gap-3">
             <h3 className="section-title">Fichier de l&apos;épreuve</h3>
-            <div className="bg-background-default flex flex-col items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-6 py-6 text-center">
-              <span className="text-text-paragraph text-sm">
-                Le fichier PDF n&apos;est pas modifié ici. Pour le changer,
-                utilisez « Remplacer ».
-              </span>
-              <ul className="mt-2 flex w-full flex-col gap-2">
-                <ExamFileCard
-                  idPrefix="exam"
-                  name="Fichier PDF actuel"
-                  detail={formatFileSize(exam.fileSize)}
-                  values={values}
-                  errors={errors}
-                  onChange={(patch) =>
-                    setValues((current) => ({ ...current, ...patch }))
-                  }
-                  actions={
-                    <div className="flex shrink-0 gap-1">
-                      <a
-                        href={`/api/exams/${exam.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={ACTION_LINK_CLASS}
-                      >
-                        <FiExternalLink size={14} /> Voir
-                      </a>
-                      <Link
-                        href={`/bde/epreuves/${exam.slug}/remplacer`}
-                        className={ACTION_LINK_CLASS}
-                      >
-                        <FiRefreshCw size={14} /> Remplacer
-                      </Link>
-                    </div>
-                  }
-                />
-              </ul>
-            </div>
+            {/* Plus de cadre en pointilles (zone de depot) : le fichier n'est pas deposable ici,
+                seulement consultable (#171). */}
+            <p className="text-text-paragraph mb-0 text-sm">
+              Le fichier PDF n&apos;est pas modifié ici. Pour le changer,
+              utilisez « Remplacer ».
+            </p>
+            <ul className="flex flex-col gap-2">
+              <ExamFileCard
+                idPrefix="exam"
+                name="Fichier PDF actuel"
+                detail={formatFileSize(exam.fileSize)}
+                values={values}
+                errors={errors}
+                onChange={(patch) =>
+                  setValues((current) => ({ ...current, ...patch }))
+                }
+                actions={
+                  <div className="flex shrink-0 gap-1">
+                    <a
+                      href={`/api/exams/${exam.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={ACTION_LINK_CLASS}
+                    >
+                      <FiExternalLink size={14} /> Voir
+                    </a>
+                    <Link
+                      href={`/bde/epreuves/${exam.slug}/remplacer`}
+                      className={ACTION_LINK_CLASS}
+                    >
+                      <FiRefreshCw size={14} /> Remplacer
+                    </Link>
+                  </div>
+                }
+              />
+            </ul>
           </section>
 
           <section className="flex flex-col gap-5">
@@ -296,12 +310,10 @@ export default function EditExamFlow({
           </section>
 
           <div className="ml-auto flex items-center gap-4">
-            <Link
-              href="/bde/catalogue"
-              className="text-text-paragraph px-2 py-2 hover:underline"
-            >
-              Annuler
-            </Link>
+            <CancelAction
+              href={`/bde/epreuves/${exam.slug}`}
+              isDirty={isDirty}
+            />
             <button
               type="submit"
               disabled={pending}
