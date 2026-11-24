@@ -1,7 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaWhatsapp } from "@/components/icons";
-import { getBdeContactHref } from "@/features/contact/queries";
+import {
+  getBdeContactHref,
+  getBdeWhatsappNumber,
+} from "@/features/contact/queries";
 
 type Question = { question: string; answer: ReactNode };
 
@@ -130,10 +133,15 @@ function questions(contactHref: string): Question[] {
 /**
  * FAQ de l'accueil public, en fil de discussion : les questions des etudiants a gauche, la
  * reponse du BDE qui s'ouvre en dessous, a droite (styles `.faq-*` dans `globals.css`). Le fil
- * se termine par sa barre d'ecriture, qui est le vrai lien WhatsApp vers le BDE.
+ * se termine par sa barre d'ecriture, qui est le vrai lien WhatsApp vers le BDE. Sans numero
+ * regle par le BDE, ce lien ouvre WhatsApp sans destinataire : le texte le dit au lieu de
+ * promettre une reponse que personne ne recevrait.
  */
 export default async function Faq() {
-  const contactHref = await getBdeContactHref();
+  const [bdeNumber, contactHref] = await Promise.all([
+    getBdeWhatsappNumber(),
+    getBdeContactHref(),
+  ]);
   const items = questions(contactHref);
 
   return (
@@ -197,8 +205,18 @@ export default async function Faq() {
             Ta question n&apos;y est pas&nbsp;?
           </p>
           <p className="text-text-paragraph mt-1 text-sm text-pretty sm:text-base">
-            Une épreuve à ajouter, une erreur à signaler&nbsp;: le BDE te répond
-            sur WhatsApp.
+            {bdeNumber ? (
+              <>
+                Une épreuve à ajouter, une erreur à signaler&nbsp;: écris
+                directement au BDE sur WhatsApp.
+              </>
+            ) : (
+              <>
+                Une épreuve à ajouter, une erreur à signaler&nbsp;: WhatsApp
+                s&apos;ouvre avec ton message déjà rédigé, tu choisis le membre
+                du BDE à qui l&apos;envoyer.
+              </>
+            )}
           </p>
           <a
             href={contactHref}
@@ -207,7 +225,7 @@ export default async function Faq() {
             className="group rounded-card bg-background-primary shadow-card mt-4 flex items-center gap-3 border border-[rgb(17_22_36/0.1)] py-1.5 pr-1.5 pl-4 transition-colors hover:border-[rgb(15_33_85/0.4)] sm:pl-5"
           >
             <span className="text-text-paragraph min-w-0 flex-1 text-sm sm:text-base">
-              Écrire au BDE
+              {bdeNumber ? "Écrire au BDE" : "Préparer mon message"}
               {/* Le pictogramme dit deja WhatsApp a l'oeil ; le nom accessible le garde. */}
               <span className="max-sm:sr-only"> sur WhatsApp</span>
             </span>
