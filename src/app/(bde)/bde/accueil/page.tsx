@@ -8,16 +8,18 @@ import Research from "@/components/exams/Research";
 import RecentlyAdded, {
   RecentlyAddedSkeleton,
 } from "@/components/exams/RecentlyAdded";
+import { getTotalSubjectGapCount } from "@/features/exams/queries";
 import { BDE_BASE_PATH, catalogueHref } from "@/components/layout/spaces";
 
 const BDE_CATALOGUE_HREF = catalogueHref(BDE_BASE_PATH);
 
 const BDEAccueil = async () => {
   await requireBdeSession();
+  const gapCount = await getTotalSubjectGapCount();
 
   return (
     <>
-      <BDEWelcomeSection />
+      <BDEWelcomeSection gapCount={gapCount} />
       <Research catalogueHref={BDE_CATALOGUE_HREF} />
       <div className="px-6">
         <Suspense fallback={<MyRecentUploadsSkeleton />}>

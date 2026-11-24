@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
-import { getFieldById } from "@/features/referentials/queries";
+import { getFieldById, getFields } from "@/features/referentials/queries";
 import { getExamFileInfo } from "@/lib/r2/metadata";
 import { examFiltersSchema, fixedFieldFilters } from "./schemas";
 import { buildFieldDirectory, coupleKey } from "./directory";
@@ -496,6 +496,22 @@ export async function getSubjectCoverage(
   fieldId: string,
 ): Promise<SubjectCoverage[]> {
   return getSubjectCoverageCached(fieldId);
+}
+
+/**
+ * Nombre total de matieres actives sans aucune epreuve archivee, toutes filieres confondues
+ * (#174) : le poste de travail BDE doit montrer cette tache concrete sur son accueil.
+ */
+export async function getTotalSubjectGapCount(): Promise<number> {
+  const fields = await getFields();
+  const coverages = await Promise.all(
+    fields.map((field) => getSubjectCoverage(field.id)),
+  );
+  return coverages.reduce(
+    (total, coverage) =>
+      total + coverage.filter((entry) => entry.examCount === 0).length,
+    0,
+  );
 }
 
 /**

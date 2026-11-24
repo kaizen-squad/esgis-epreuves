@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FiCheckCircle } from "react-icons/fi";
 import { getSubjectCoverage } from "@/features/exams/queries";
 
 /** Groupe la couverture par niveau (trie par nom de niveau, puis de matiere dans chaque groupe). */
@@ -62,11 +63,15 @@ export default async function FieldCoverageMatrix({
     <div className="mb-10">
       <div className="mb-3 flex items-center justify-between gap-4">
         <h3 className="text-text-secondary text-xl font-semibold">{heading}</h3>
-        <p className="text-text-paragraph text-sm">
-          {gaps === 0
-            ? "Fonds complet"
-            : `${gaps} matière${gaps > 1 ? "s" : ""} sans épreuve`}
-        </p>
+        {gaps === 0 ? (
+          <p className="flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-green-700">
+            <FiCheckCircle size={16} /> Fonds complet
+          </p>
+        ) : (
+          <p className="text-text-paragraph text-sm">
+            {gaps} matière{gaps > 1 ? "s" : ""} sans épreuve
+          </p>
+        )}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {levels.map((level) => (
@@ -78,23 +83,31 @@ export default async function FieldCoverageMatrix({
               {level.levelName}
             </p>
             <ul className="flex flex-col gap-1.5">
-              {level.subjects.map((subject) => (
-                <li
-                  key={subject.subjectId}
-                  className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-sm ${
-                    subject.examCount === 0
-                      ? "bg-red-50 text-red-700"
-                      : "text-text-default"
-                  }`}
-                >
-                  <span className="truncate">{subject.subjectName}</span>
-                  <span className="shrink-0 font-medium">
-                    {subject.examCount === 0
-                      ? "Aucune épreuve"
-                      : subject.examCount}
-                  </span>
-                </li>
-              ))}
+              {level.subjects.map((subject) => {
+                const isGap = subject.examCount === 0;
+                // Une lacune ouvre l'ajout prerempli ; sinon on pointe vers les epreuves
+                // existantes de cette matiere (#174). Bleu plutot que rouge : une tache a faire,
+                // pas une erreur.
+                const href = isGap
+                  ? `/bde/epreuves/ajouter?fieldId=${fieldId}&levelId=${subject.levelId}&subjectId=${subject.subjectId}`
+                  : `/bde/catalogue?subjectId=${subject.subjectId}`;
+                return (
+                  <li key={subject.subjectId}>
+                    <Link
+                      href={href}
+                      title={subject.subjectName}
+                      className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-sm hover:underline ${
+                        isGap ? "bg-blue-50 text-blue-700" : "text-text-default"
+                      }`}
+                    >
+                      <span className="truncate">{subject.subjectName}</span>
+                      <span className="shrink-0 font-medium">
+                        {isGap ? "Aucune épreuve" : subject.examCount}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}

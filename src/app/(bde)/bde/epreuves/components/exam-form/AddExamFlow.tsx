@@ -91,13 +91,18 @@ export default function AddExamFlow({
   levels,
   subjects,
   options,
+  initialSubject,
 }: {
   fields: Field[];
   levels: Level[];
   subjects: Subject[];
   options: Option[];
+  /** Lacune du fonds ouverte depuis la matrice de couverture (#174) : matiere preremplie. */
+  initialSubject?: { fieldId: string; levelId: string; subjectId: string };
 }) {
-  const [values, setValues] = useState<AddValues>(EMPTY_VALUES);
+  const [values, setValues] = useState<AddValues>(() =>
+    initialSubject ? { ...EMPTY_VALUES, ...initialSubject } : EMPTY_VALUES,
+  );
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [bulkYear, setBulkYear] = useState("");
   const [dismissedId, setDismissedId] = useState<number | null>(null);
