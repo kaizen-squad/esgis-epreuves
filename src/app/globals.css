@@ -395,6 +395,94 @@
   }
 }
 
+/*
+ * FAQ de l'accueil : questions posees sur le panneau marine, separees par un filet. La question
+ * ouverte se detache du panneau en carte blanche, et son bouton passe du contour au rouge plein,
+ * le trait vertical du "+" se couchant pour former le "-". Un seul `<details>` ouvert a la fois
+ * (attribut `name`), ouverture animee la ou `::details-content` et `interpolate-size` existent,
+ * instantanee ailleurs.
+ */
+@layer components {
+  .faq-item {
+    interpolate-size: allow-keywords;
+    border-top: 1px solid rgb(255 255 255 / 0.14);
+    transition:
+      background-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-item:first-child,
+  .faq-item[open],
+  .faq-item[open] + .faq-item {
+    border-top-color: transparent;
+  }
+  .faq-item[open] {
+    background-color: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    box-shadow: 0 28px 48px -20px rgb(0 0 0 / 0.55);
+  }
+
+  .faq-item::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      content-visibility 420ms allow-discrete;
+  }
+  .faq-item[open]::details-content {
+    block-size: auto;
+  }
+
+  .faq-item > summary {
+    list-style: none;
+  }
+  .faq-item > summary::-webkit-details-marker {
+    display: none;
+  }
+  /* L'anneau de focus global suit les coins de la carte. */
+  .faq-item > summary:focus-visible {
+    border-radius: var(--radius-card);
+  }
+
+  .faq-toggle {
+    position: relative;
+    border: 1px solid rgb(255 255 255 / 0.3);
+    transition:
+      background-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-toggle::before,
+  .faq-toggle::after {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 14px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: currentColor;
+    translate: -50% -50%;
+    transition: rotate 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-toggle::after {
+    rotate: 90deg;
+  }
+  .faq-item:not([open]) > summary:hover .faq-toggle {
+    background-color: rgb(255 255 255 / 0.1);
+    border-color: rgb(255 255 255 / 0.55);
+  }
+  .faq-item[open] .faq-toggle {
+    background-color: var(--color-background-accent);
+    border-color: var(--color-background-accent);
+    color: var(--color-text-primary);
+    transform: rotate(180deg);
+  }
+  .faq-item[open] .faq-toggle::after {
+    rotate: 0deg;
+  }
+}
+
 @layer components {
   .sub-title {
     @apply text-text-title mb-6 font-medium;
