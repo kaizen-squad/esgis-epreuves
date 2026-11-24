@@ -396,33 +396,18 @@
 }
 
 /*
- * FAQ de l'accueil : questions posees sur le panneau marine, separees par un filet. La question
- * ouverte se detache du panneau en carte blanche, et son bouton passe du contour au rouge plein,
- * le trait vertical du "+" se couchant pour former le "-". Un seul `<details>` ouvert a la fois
- * (attribut `name`), ouverture animee la ou `::details-content` et `interpolate-size` existent,
- * instantanee ailleurs.
+ * FAQ de l'accueil, en fil de discussion : chaque question est une bulle posee a gauche, la
+ * reponse du BDE s'ouvre en dessous, decalee a droite, comme la reponse a un message. Deux
+ * matieres seulement, deja celles du site : un lavis tres pale de l'encre marine pour les
+ * questions, le papier blanc des cartes (filet + ombre) pour la reponse, seule surface ou l'on
+ * lit vraiment. Aucun aplat de section : la feuille reste blanche, les bulles portent seules la
+ * conversation. Un seul `<details>` ouvert a la fois (attribut `name`) ; hauteur animee la ou
+ * `::details-content` et `interpolate-size` existent, instantanee ailleurs.
  */
 @layer components {
   .faq-item {
     interpolate-size: allow-keywords;
-    border-top: 1px solid rgb(255 255 255 / 0.14);
-    transition:
-      background-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
-      color 320ms cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 320ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .faq-item:first-child,
-  .faq-item[open],
-  .faq-item[open] + .faq-item {
-    border-top-color: transparent;
-  }
-  .faq-item[open] {
-    background-color: var(--color-background-primary);
-    color: var(--color-text-secondary);
-    box-shadow: 0 28px 48px -20px rgb(0 0 0 / 0.55);
-  }
-
   .faq-item::details-content {
     block-size: 0;
     overflow-y: clip;
@@ -436,21 +421,85 @@
 
   .faq-item > summary {
     list-style: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .faq-item > summary::-webkit-details-marker {
     display: none;
   }
-  /* L'anneau de focus global suit les coins de la carte. */
-  .faq-item > summary:focus-visible {
-    border-radius: var(--radius-card);
+
+  /* Bulle de question : coin bas gauche resserre, cote de l'expediteur. */
+  .faq-question {
+    background-color: color-mix(
+      in oklab,
+      var(--color-text-secondary) 6%,
+      var(--color-background-primary)
+    );
+    border-radius: var(--radius-card) var(--radius-card) var(--radius-card)
+      0.25rem;
+    transition: background-color 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-item > summary:hover .faq-question,
+  .faq-item[open] .faq-question {
+    background-color: color-mix(
+      in oklab,
+      var(--color-text-secondary) 10%,
+      var(--color-background-primary)
+    );
   }
 
+  /* L'anneau de focus quitte la ligne entiere pour epouser la bulle. */
+  .faq-item > summary:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+  .faq-item > summary:focus-visible .faq-question {
+    outline: 2px solid #ffffff;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 4px var(--color-background-accent);
+  }
+
+  /*
+   * Bulle de reponse : papier blanc des cartes, coin bas droit resserre. Elle descend de la
+   * question en se posant (opacite + translation, rien qui force une mise en page).
+   */
+  .faq-answer {
+    background-color: var(--color-background-primary);
+    border-radius: var(--radius-card) var(--radius-card) 0.25rem
+      var(--radius-card);
+    box-shadow:
+      0 0 0 1px rgb(17 22 36 / 0.08),
+      0 1px 2px rgb(17 22 36 / 0.06),
+      0 14px 32px -18px rgb(17 22 36 / 0.22);
+    transform-origin: top right;
+    transition:
+      opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      translate 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      scale 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-item:not([open]) .faq-answer {
+    opacity: 0;
+    translate: 0 -0.5rem;
+    scale: 0.97;
+  }
+  @starting-style {
+    .faq-item[open] .faq-answer {
+      opacity: 0;
+      translate: 0 -0.5rem;
+      scale: 0.97;
+    }
+  }
+
+  /*
+   * Pastille d'etat, dans la bulle : le "+" dont le trait vertical se couche pour former le "-",
+   * blanc sur le lavis tant que la question est fermee, rouge plein une fois ouverte.
+   */
   .faq-toggle {
     position: relative;
-    border: 1px solid rgb(255 255 255 / 0.3);
+    color: var(--color-text-secondary);
+    background-color: var(--color-background-primary);
     transition:
       background-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 320ms cubic-bezier(0.22, 1, 0.36, 1),
       transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .faq-toggle::before,
@@ -458,7 +507,7 @@
     content: "";
     position: absolute;
     inset: 50% auto auto 50%;
-    width: 14px;
+    width: 10px;
     height: 2px;
     border-radius: 1px;
     background-color: currentColor;
@@ -468,13 +517,8 @@
   .faq-toggle::after {
     rotate: 90deg;
   }
-  .faq-item:not([open]) > summary:hover .faq-toggle {
-    background-color: rgb(255 255 255 / 0.1);
-    border-color: rgb(255 255 255 / 0.55);
-  }
   .faq-item[open] .faq-toggle {
     background-color: var(--color-background-accent);
-    border-color: var(--color-background-accent);
     color: var(--color-text-primary);
     transform: rotate(180deg);
   }
