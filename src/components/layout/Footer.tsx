@@ -1,26 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FaWhatsapp, FiLinkedin } from "@/components/icons";
+import { getBdeContactHref } from "@/features/contact/queries";
 import type { NavLink } from "./Navbar";
 
 type FooterProps = {
   links: NavLink[];
 };
 
-// ponytail: numero a renseigner (ticket action-mouwafic #144) ; wa.me reste valide sans numero,
-// le lien ouvre juste le choix d'un contact en attendant.
-const BDE_WHATSAPP_NUMBER = "";
-const BDE_WHATSAPP_MESSAGE =
-  "Bonjour, je vous contacte à propos d'Alexandria, le site des épreuves ESGIS.";
-const BDE_WHATSAPP_HREF = `https://wa.me/${BDE_WHATSAPP_NUMBER}?text=${encodeURIComponent(BDE_WHATSAPP_MESSAGE)}`;
-
 /**
  * Bas de la couverture du classeur, sous la feuille de la page. Deux objets poses sur la meme
  * couverture marine : l'etiquette papier glissee dans son porte-etiquette (logo, rubriques,
  * contact) et le titre du classeur frappe a froid sur toute la largeur (`.cover-stamp` dans
  * `globals.css`), son point frappe a chaud en rouge comme la marque de la navigation.
+ * "Nous contacter" vise le numero WhatsApp regle par le BDE (`/bde/reglages`).
  */
-const Footer = ({ links }: FooterProps) => {
+const Footer = async ({ links }: FooterProps) => {
+  const contactHref = await getBdeContactHref();
+
   return (
     // `overflow-clip` : la boite de ligne du titre deborde sous sa ligne de base (zone des
     // jambages, vide ici) ; on la coupe sans creer de conteneur de defilement.
@@ -52,7 +49,7 @@ const Footer = ({ links }: FooterProps) => {
             </nav>
 
             <a
-              href={BDE_WHATSAPP_HREF}
+              href={contactHref}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-background-accent text-text-primary rounded-control inline-flex w-fit shrink-0 items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-[filter] hover:brightness-110"
