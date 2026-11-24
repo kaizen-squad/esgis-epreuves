@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   FiAlertTriangle,
   FiCheckCircle,
@@ -122,11 +122,8 @@ export default function AddExamResult({
       : `${summary?.imported ?? 0} sur ${summary?.total ?? 0} fichier(s) publié(s). Corrigez les fichiers restants puis réessayez.`;
 
   // Focus sur le resultat a l'arrivee sur cette etape : le formulaire disparait et, sans cela,
-  // le focus retombait sur `body` (#171). `aria-labelledby` plutot qu'un `role="alert"/"status"`
-  // en plus du focus (revue de code, #171, apres coup) : les deux auraient annonce le resume en
-  // double, un live region deja rempli a l'insertion n'etant d'ailleurs pas garanti d'etre lu.
+  // le focus retombait sur `body` (#171).
   const containerRef = useRef<HTMLDivElement>(null);
-  const titleId = useId();
   useEffect(() => {
     containerRef.current?.focus();
   }, []);
@@ -135,14 +132,16 @@ export default function AddExamResult({
     <div
       ref={containerRef}
       tabIndex={-1}
-      aria-labelledby={titleId}
       className="flex flex-col items-center gap-4 text-center outline-none"
     >
-      <div className="flex flex-col items-center gap-4">
+      {/* Seul ce resumé est annoncé par le lecteur d'écran (#171) : la liste détaillée et les
+          actions, verbeuses, restent hors de la région live, consultables normalement. */}
+      <div
+        role={allImported ? "status" : "alert"}
+        className="flex flex-col items-center gap-4"
+      >
         <Icon className={iconClass} size={56} aria-hidden="true" />
-        <h3 id={titleId} className="text-text-secondary text-2xl font-semibold">
-          {title}
-        </h3>
+        <h3 className="text-text-secondary text-2xl font-semibold">{title}</h3>
         <p className="text-text-paragraph mb-2 max-w-lg">{description}</p>
       </div>
 
