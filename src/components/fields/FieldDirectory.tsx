@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import { connection } from "next/server";
 import { FiArrowRight } from "@/components/icons";
 import {
   fieldDisplayName,
@@ -235,8 +234,6 @@ function FieldRow({
  * filiere, une fiche bristol par niveau, alignees en colonnes sous l'accolade de leur cycle.
  */
 export default async function FieldDirectory() {
-  // Rendu a la requete, pas au build : la CI build sans variables Supabase.
-  await connection();
   const { columns, fields } = await getFieldDirectory();
 
   if (fields.length === 0) {
