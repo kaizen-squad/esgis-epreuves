@@ -15,6 +15,10 @@ const STANDARD_FONTS_DIR = `${PDFJS_DIR}/standard_fonts/`;
 /** Decodeurs d'images des PDF scannes (JPEG 2000, JBIG2). */
 const WASM_DIR = `${PDFJS_DIR}/wasm/`;
 
+/** Decode max d'une image embarquee : un PDF de quelques centaines de ko ne doit pas pouvoir
+ * forcer le decodage de centaines de Mo (image compressee malveillante ou corrompue). */
+const MAX_DECODED_IMAGE_PIXELS = 4096 * 4096;
+
 function openPdf(file: Uint8Array) {
   return getDocument({
     // Copie : pdf.js prend possession du tampon recu, et refuse un Buffer Node.
@@ -22,6 +26,7 @@ function openPdf(file: Uint8Array) {
     standardFontDataUrl: STANDARD_FONTS_DIR,
     wasmUrl: WASM_DIR,
     useSystemFonts: false,
+    maxImageSize: MAX_DECODED_IMAGE_PIXELS,
     verbosity: 0,
   });
 }
