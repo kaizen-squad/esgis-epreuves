@@ -4,6 +4,9 @@ import Research from "@/components/exams/Research";
 import FieldDirectory from "@/components/fields/FieldDirectory";
 import FieldDirectorySkeleton from "@/components/fields/FieldDirectorySkeleton";
 
+/** Pas de searchParams/cookies/headers ici : rendu statique avec la meme fenetre que le cache de donnees (#157). */
+export const revalidate = 60;
+
 /**
  * Page dediee aux filieres : le repertoire complet (une rangee par filiere, une fiche par niveau),
  * distinct de la grille compacte de l'accueil qui reste un raccourci.

@@ -2,6 +2,20 @@ import type { Metadata } from "next";
 import ExamDetailView, {
   getExamCached,
 } from "@/components/exams/detail/ExamDetailView";
+import { getRecentExams } from "@/features/exams/queries";
+
+/** Pas de searchParams/cookies/headers ici : rendu statique avec la meme fenetre que le cache de donnees (#157). */
+export const revalidate = 60;
+
+/**
+ * Pre-rendu des epreuves les plus recentes (meme requete que l'accueil) ; les autres slugs
+ * restent generes a la demande puis caches (`dynamicParams` par defaut), pas d'avance aveugle sur
+ * tout le catalogue.
+ */
+export async function generateStaticParams() {
+  const exams = await getRecentExams(20);
+  return exams.map((exam) => ({ slug: exam.slug }));
+}
 
 export async function generateMetadata({
   params,
