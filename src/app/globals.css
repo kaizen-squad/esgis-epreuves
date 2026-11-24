@@ -251,9 +251,9 @@
   /*
    * Cartes filiere : chaque couple niveau x filiere est un intercalaire du classeur, range dans
    * le logement de sa filiere (`.filing-tray`, meme geste que `.cover-slot`, creuse cette fois
-   * dans la feuille blanche). Sa languette (`.binder-tab`, la meme que la navigation) porte le
-   * niveau ; comme dans un vrai jeu de cinq intercalaires, elle se decale d'un cran par niveau
-   * (`--tab-step`, 0 a 4), du bord gauche au bord droit.
+   * dans la feuille blanche). Le niveau est imprime sur son bord renforce (`.divider-edge`) et
+   * non sur une languette : posees cote a cote dans une grille, des languettes decalees d'un cran
+   * par niveau donnaient a chaque carte une silhouette differente, sans pile pour les justifier.
    */
   .filing-tray {
     background-color: color-mix(
@@ -267,7 +267,6 @@
   }
 
   .divider-card {
-    --tab-inset: calc(var(--radius-card) + 0.75rem);
     --pile: 0 0 0 transparent;
     box-shadow:
       var(--pile),
@@ -308,18 +307,223 @@
       0 19px 0 -6px rgb(17 22 36 / 0.22);
   }
 
-  /* Position de la languette : `--tab-step` quarts de la largeur utile, sans mordre les coins. */
-  .divider-tab {
-    left: calc(
-      var(--tab-inset) + (100% - 2 * var(--tab-inset)) * var(--tab-step) / 4
+  /*
+   * L'intercalaire lui-meme, en carton teinte : cinq tons (`--tab-step`, 0 a 4), du plus clair au
+   * plus sombre, comme les onglets de la navigation s'assombrissent avec la profondeur. Le rang se
+   * lit ainsi sans que la silhouette de la carte change d'un niveau a l'autre.
+   */
+  .divider-edge {
+    /* Plancher a 10% : en dessous, le premier ton se confond avec le fond du logement. */
+    --edge-ink: calc(10% + 6% * var(--tab-step));
+    background-color: color-mix(
+      in oklab,
+      var(--color-background-primary),
+      var(--color-background-secondary) var(--edge-ink)
     );
-    translate: calc(-100% * var(--tab-step) / 4) 0;
+    transition: background-color 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Survol ou focus de la carte : on tire l'intercalaire, comme un onglet de la navigation. */
-  .divider-card:hover .divider-tab::before,
-  .divider-card:focus-visible .divider-tab::before {
-    transform: scaleY(1.2) perspective(4em) rotateX(6deg);
+  /*
+   * Feuille classee devant l'intercalaire : elle le couvre sauf sur son bord gauche, ou le niveau
+   * reste lisible, et y jette la meme ombre que les onglets de la navigation sur leurs voisins.
+   */
+  .divider-sheet {
+    box-shadow:
+      -1px 0 0 rgb(17 22 36 / 0.06),
+      -7px 0 10px -6px rgb(17 22 36 / 0.45);
+  }
+
+  /* Survol ou focus : l'intercalaire fonce d'un ton, comme un onglet de la navigation qu'on tire. */
+  .divider-card:hover,
+  .divider-card:focus-visible {
+    --edge-ink: calc(15% + 6% * var(--tab-step));
+  }
+
+  /*
+   * Repertoire de la page /filieres : chaque niveau d'une filiere est une fiche bristol du fichier
+   * de la bibliotheque. Filet rouge sous l'en-tete, lignes reglees marine tres pales sur lesquelles
+   * les matieres archivees sont inscrites (leur interligne est celui du reglage), et qui continuent
+   * jusqu'au bas de la fiche, la ou de prochaines matieres viendront s'inscrire.
+   */
+  .index-card {
+    --index-rule: 1.75rem;
+    position: relative;
+    isolation: isolate;
+    box-shadow:
+      0 0 0 1px rgb(17 22 36 / 0.08),
+      0 1px 2px rgb(17 22 36 / 0.06);
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Ombre de survol sur un calque a part : seule son opacite s'anime, jamais l'ombre elle-meme. */
+  .index-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    box-shadow: var(--shadow-elevated);
+    opacity: 0;
+    transition: opacity 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /*
+   * `.focus-ring-within` (couche base) pose l'anneau rouge par `box-shadow`, que le liseré
+   * ci-dessus ecrase : il est remis ici. Selecteur volontairement distinct de celui du survol, que
+   * la minification fusionnerait avec lui en perdant cette regle.
+   */
+  .index-card:has(:focus-visible) {
+    box-shadow:
+      0 0 0 4px var(--color-background-accent),
+      0 1px 2px rgb(17 22 36 / 0.06);
+  }
+  .index-card:has(a:hover),
+  .index-card:has(a:focus-visible) {
+    transform: translateY(-3px);
+  }
+  .index-card:has(a:hover)::before,
+  .index-card:has(a:focus-visible)::before {
+    opacity: 1;
+  }
+
+  .index-card-lines {
+    line-height: var(--index-rule);
+    background-image: linear-gradient(
+      to bottom,
+      transparent calc(var(--index-rule) - 1px),
+      color-mix(in oklab, var(--color-text-secondary) 13%, transparent) 0
+    );
+    background-size: 100% var(--index-rule);
+  }
+}
+
+/*
+ * FAQ de l'accueil, en fil de discussion : chaque question est une bulle posee a gauche, la
+ * reponse du BDE s'ouvre en dessous, decalee a droite, comme la reponse a un message. Deux
+ * matieres seulement, deja celles du site : un lavis tres pale de l'encre marine pour les
+ * questions, le papier blanc des cartes (filet + ombre) pour la reponse, seule surface ou l'on
+ * lit vraiment. Aucun aplat de section : la feuille reste blanche, les bulles portent seules la
+ * conversation. Un seul `<details>` ouvert a la fois (attribut `name`) ; hauteur animee la ou
+ * `::details-content` et `interpolate-size` existent, instantanee ailleurs.
+ */
+@layer components {
+  .faq-item {
+    interpolate-size: allow-keywords;
+  }
+  .faq-item::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      content-visibility 420ms allow-discrete;
+  }
+  .faq-item[open]::details-content {
+    block-size: auto;
+  }
+
+  .faq-item > summary {
+    list-style: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .faq-item > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Bulle de question : coin bas gauche resserre, cote de l'expediteur. */
+  .faq-question {
+    background-color: color-mix(
+      in oklab,
+      var(--color-text-secondary) 6%,
+      var(--color-background-primary)
+    );
+    border-radius: var(--radius-card) var(--radius-card) var(--radius-card)
+      0.25rem;
+    transition: background-color 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-item > summary:hover .faq-question,
+  .faq-item[open] .faq-question {
+    background-color: color-mix(
+      in oklab,
+      var(--color-text-secondary) 10%,
+      var(--color-background-primary)
+    );
+  }
+
+  /* L'anneau de focus quitte la ligne entiere pour epouser la bulle. */
+  .faq-item > summary:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+  .faq-item > summary:focus-visible .faq-question {
+    outline: 2px solid #ffffff;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 4px var(--color-background-accent);
+  }
+
+  /*
+   * Bulle de reponse : papier blanc des cartes, coin bas droit resserre. Elle descend de la
+   * question en se posant (opacite + translation, rien qui force une mise en page).
+   */
+  .faq-answer {
+    background-color: var(--color-background-primary);
+    border-radius: var(--radius-card) var(--radius-card) 0.25rem
+      var(--radius-card);
+    box-shadow:
+      0 0 0 1px rgb(17 22 36 / 0.08),
+      0 1px 2px rgb(17 22 36 / 0.06),
+      0 14px 32px -18px rgb(17 22 36 / 0.22);
+    transform-origin: top right;
+    transition:
+      opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      translate 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      scale 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-item:not([open]) .faq-answer {
+    opacity: 0;
+    translate: 0 -0.5rem;
+    scale: 0.97;
+  }
+  @starting-style {
+    .faq-item[open] .faq-answer {
+      opacity: 0;
+      translate: 0 -0.5rem;
+      scale: 0.97;
+    }
+  }
+
+  /*
+   * Pastille d'etat, dans la bulle : le "+" dont le trait vertical se couche pour former le "-",
+   * blanc sur le lavis tant que la question est fermee, rouge plein une fois ouverte.
+   */
+  .faq-toggle {
+    position: relative;
+    color: var(--color-text-secondary);
+    background-color: var(--color-background-primary);
+    transition:
+      background-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-toggle::before,
+  .faq-toggle::after {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 10px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: currentColor;
+    translate: -50% -50%;
+    transition: rotate 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-toggle::after {
+    rotate: 90deg;
+  }
+  .faq-item[open] .faq-toggle {
+    background-color: var(--color-background-accent);
+    color: var(--color-text-primary);
+    transform: rotate(180deg);
+  }
+  .faq-item[open] .faq-toggle::after {
+    rotate: 0deg;
   }
 }
 

@@ -15,7 +15,7 @@ export default function FilieresSkeleton() {
           {Array.from({ length: HOME_CARDS_LIMIT }).map((_, index) => (
             <div
               key={index}
-              className={`${cardVisibilityClass(index)} rounded-card mt-10 h-19 animate-pulse bg-gray-200`}
+              className={`${cardVisibilityClass(index)} rounded-card h-20 animate-pulse bg-gray-200`}
             />
           ))}
         </div>

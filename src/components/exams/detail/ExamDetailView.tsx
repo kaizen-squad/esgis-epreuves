@@ -46,7 +46,11 @@ export default async function ExamDetailView({
     getExamR2Key(slug),
   ]);
   if (!exam) notFound();
-  const available = r2Key ? await examFileExists(r2Key) : false;
+  // #157 : page publique en ISR, `strict` seulement ici (BDE reste dynamique, degradation
+  // gracieuse suffisante) pour qu'un rate R2 passager ne soit jamais mis en cache.
+  const available = r2Key
+    ? await examFileExists(r2Key, { strict: basePath === "" })
+    : false;
 
   const details = [
     { label: "Filière", value: exam.field },
@@ -106,6 +110,9 @@ export default async function ExamDetailView({
           slug={exam.slug}
           title={exam.title}
           available={available}
+          r2Key={r2Key}
+          fileVersion={exam.fileVersion}
+          fileSize={exam.fileSize}
         />
 
         <aside className="bg-background-primary flex flex-col gap-6 rounded-xl border border-gray-200 p-6 shadow-sm lg:sticky lg:top-6">

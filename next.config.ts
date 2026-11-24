@@ -45,6 +45,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "4mb",
     },
+    // Desactive (#161) : ce cache fichier a survecu a un changement de code entre deux builds
+    // Vercel (meme cache de build restaure "source: branch"), servant en prod une page statique
+    // (`/`, revalidate=60) compilee avant le correctif au lieu de la recompiler.
+    turbopackFileSystemCacheForBuild: false,
   },
   turbopack: {
     rules: {

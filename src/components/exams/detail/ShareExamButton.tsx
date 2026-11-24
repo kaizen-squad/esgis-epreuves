@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FiCheck, FiCopy, FiMessageCircle, FiShare2 } from "react-icons/fi";
+import { whatsappHref } from "@/features/contact/whatsapp";
 
 const COPIED_MS = 2500;
 
@@ -103,18 +104,16 @@ export default function ShareExamButton({
     );
   }
 
-  const whatsappHref = shareUrl
-    ? `https://wa.me/?text=${encodeURIComponent(`${title} ${shareUrl}`)}`
-    : undefined;
+  const shareHref = shareUrl ? whatsappHref(`${title} ${shareUrl}`) : undefined;
 
   return (
     <div className="flex flex-col gap-2">
       <a
-        href={whatsappHref}
+        href={shareHref}
         target="_blank"
         rel="noopener noreferrer"
-        aria-disabled={!whatsappHref}
-        className={`${ACTION_BUTTON_CLASS} ${!whatsappHref ? "pointer-events-none opacity-50" : ""}`}
+        aria-disabled={!shareHref}
+        className={`${ACTION_BUTTON_CLASS} ${!shareHref ? "pointer-events-none opacity-50" : ""}`}
       >
         <FiMessageCircle size={18} /> Partager sur WhatsApp
       </a>

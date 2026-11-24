@@ -6,14 +6,16 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { getFieldById } from "@/features/referentials/queries";
 import { getExamFileInfo } from "@/lib/r2/metadata";
 import { examFiltersSchema, fixedFieldFilters } from "./schemas";
+import { buildFieldDirectory, coupleKey } from "./directory";
 import type {
   Exam,
   ExamFilters,
   ExamListResult,
+  FieldDirectory,
   FieldExamsResult,
-  FieldCategory,
   FieldLevelSummary,
   SubjectCoverage,
+  YearSpan,
 } from "./types";
 
 const EXAM_CATALOG_SELECT =
@@ -165,11 +167,15 @@ async function queryExams(
   return { ...page, exams: rows.map((row) => toExam(row, files.get(row.id))) };
 }
 
-/** Recherche texte + filtres combinables sur le catalogue (#9), pagination par decalage. */
+/**
+ * Recherche texte + filtres combinables sur le catalogue (#9), pagination par decalage. Lecture
+ * publique (RLS identique anon/authenticated) : client public, pas de cookies() (#157, pour que
+ * les pages qui en dependent restent prerendables en statique/ISR).
+ */
 export async function getExams(
   rawFilters: ExamFilters,
 ): Promise<ExamListResult> {
-  return queryExams(await createClient(), rawFilters);
+  return queryExams(createPublicClient(), rawFilters);
 }
 
 /**
@@ -179,7 +185,7 @@ export async function getExams(
 export async function searchExamTitles(
   rawFilters: ExamFilters,
 ): Promise<{ total: number; exams: Pick<Exam, "title" | "slug">[] }> {
-  const { rows, total } = await queryCatalog(await createClient(), rawFilters);
+  const { rows, total } = await queryCatalog(createPublicClient(), rawFilters);
   return {
     total,
     exams: rows.map((row) => ({ title: row.title, slug: row.slug })),
@@ -319,19 +325,65 @@ export async function getFieldLevelSummaries(): Promise<FieldLevelSummary[]> {
   return getFieldLevelSummariesCached();
 }
 
-/** Page /filieres : une categorie par filiere, dans l'ordre du tri des couples (meme cache). */
-export async function getFieldCategories(): Promise<FieldCategory[]> {
-  const categories = new Map<string, FieldCategory>();
-  for (const summary of await getFieldLevelSummaries()) {
-    const category = categories.get(summary.fieldId) ?? {
-      fieldId: summary.fieldId,
-      fieldName: summary.fieldName,
-      levels: [],
+const getFieldLevelYearsCached = unstable_cache(
+  async (fieldId: string, levelId: string): Promise<YearSpan | null> => {
+    const supabase = createPublicClient();
+    // Deux lectures d'une ligne (la plus ancienne, la plus recente) : lire toutes les epreuves du
+    // couple pour en tirer les bornes serait tronque par `max_rows`.
+    const edge = async (ascending: boolean) => {
+      const { data, error } = await supabase
+        .from("exams")
+        .select("academic_year")
+        .eq("field_id", fieldId)
+        .eq("level_id", levelId)
+        .order("academic_year", { ascending })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.academic_year as string | undefined;
     };
-    category.levels.push(summary);
-    categories.set(summary.fieldId, category);
-  }
-  return [...categories.values()];
+
+    const [first, last] = await Promise.all([edge(true), edge(false)]);
+    return first && last ? { first, last } : null;
+  },
+  ["field-level-years"],
+  { revalidate: FIELD_LEVEL_SUMMARIES_REVALIDATE_SECONDS, tags: ["exams"] },
+);
+
+/**
+ * Repertoire de la page /filieres : pour chaque filiere, une fiche par niveau avec ses matieres
+ * archivees (`getSubjectCoverage`, en cache) et ses annees extremes. Lectures exactes, chacune
+ * bornee a une ligne ou a un comptage, quel que soit `max_rows`.
+ */
+export async function getFieldDirectory(): Promise<FieldDirectory> {
+  const summaries = await getFieldLevelSummaries();
+  const fieldIds = [...new Set(summaries.map((summary) => summary.fieldId))];
+
+  const [coverages, years] = await Promise.all([
+    Promise.all(
+      fieldIds.map(
+        async (fieldId) =>
+          [fieldId, await getSubjectCoverage(fieldId)] as const,
+      ),
+    ),
+    Promise.all(
+      summaries
+        .filter((summary) => summary.examCount > 0)
+        .map(
+          async (summary) =>
+            [
+              coupleKey(summary.fieldId, summary.levelId),
+              await getFieldLevelYearsCached(summary.fieldId, summary.levelId),
+            ] as const,
+        ),
+    ),
+  ]);
+
+  return buildFieldDirectory(
+    summaries,
+    new Map(coverages),
+    new Map(years.filter((entry): entry is [string, YearSpan] => !!entry[1])),
+  );
 }
 
 /**
@@ -444,9 +496,12 @@ export async function getSubjectCoverage(
   return getSubjectCoverageCached(fieldId);
 }
 
-/** Lecture d'une epreuve par son slug, pour la page detail. `null` si absente (notFound() cote page). */
+/**
+ * Lecture d'une epreuve par son slug, pour la page detail. `null` si absente (notFound() cote
+ * page). Lecture publique : client public, pas de cookies() (#157).
+ */
 export async function getExamBySlug(slug: string): Promise<Exam | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("exams_catalog")
     .select(EXAM_CATALOG_SELECT)
@@ -464,9 +519,12 @@ export async function getExamBySlug(slug: string): Promise<Exam | null> {
 /** `getExamBySlug` memoisee par requete : partagee entre `generateMetadata`, la vue et l'image de partage, pour ne lire l'epreuve qu'une fois. */
 export const getExamCached = cache(getExamBySlug);
 
-/** Cle R2 du PDF d'une epreuve par son slug, pour la route de previsualisation/telechargement (#50). `null` si absente. */
+/**
+ * Cle R2 du PDF d'une epreuve par son slug, pour la route de previsualisation/telechargement
+ * (#50). `null` si absente. Lecture publique : client public, pas de cookies() (#157).
+ */
 export async function getExamR2Key(slug: string): Promise<string | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("exams")
     .select("r2_key")

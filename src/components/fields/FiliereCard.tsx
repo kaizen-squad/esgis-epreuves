@@ -12,33 +12,33 @@ export type FiliereCardData = {
 interface FiliereProps {
   className?: string;
   data: FiliereCardData;
-  /** Rang du niveau dans sa filiere : place la languette (cinq crans, voir `.divider-tab`). */
+  /** Rang du niveau dans sa filiere : teinte du bord de l'intercalaire (cinq tons, voir `.divider-edge`). */
   step: number;
 }
 
 /**
- * Intercalaire d'un couple niveau x filiere (voir `.divider-card` dans `globals.css`) : la
- * languette porte le niveau, la tranche des feuilles classees derriere depasse sous la carte.
+ * Intercalaire d'un couple niveau x filiere (voir `.divider-card` dans `globals.css`) : le niveau
+ * est imprime sur son bord renforce, la tranche des feuilles classees derriere depasse sous la carte.
  */
 const FiliereCard = ({
   data: { level, field, examCount, href },
   step,
-  // "block" (ou son equivalent responsive) vient toujours d'ici, jamais aussi du gabarit ci-dessous :
+  // "flex" (ou son equivalent responsive) vient toujours d'ici, jamais aussi du gabarit ci-dessous :
   // deux classes d'affichage sans prefixe sur le meme element se disputeraient la cascade.
-  className = "block",
+  className = "flex",
 }: FiliereProps) => {
   return (
     <Link
       href={href}
       data-pile={Math.min(examCount, 3)}
-      style={{ "--tab-step": step % 5 } as CSSProperties}
-      className={`${className} divider-card group bg-background-primary rounded-card relative mt-10 px-5 py-4`}
+      style={{ "--tab-step": Math.min(step, 4) } as CSSProperties}
+      className={`${className} divider-card divider-edge group rounded-card relative items-stretch`}
     >
-      <span className="binder-tab divider-tab text-text-secondary absolute bottom-full max-w-[calc(100%-2*var(--tab-inset))] px-4 py-1.5 text-lg leading-7 font-bold">
-        {/* Troncature sur un enfant : sur la languette, `overflow` couperait ses conges. */}
+      {/* Sous 640px, bord et marges se resserrent : "GESTION" tient en entier des 320px. */}
+      <span className="text-text-secondary flex w-12 shrink-0 items-center justify-center pr-0.5 pl-1.5 text-lg leading-none font-bold tabular-nums sm:w-15 sm:pr-1 sm:pl-2 sm:text-xl">
         <span className="block truncate">{level}</span>
       </span>
-      <span className="flex items-center justify-between gap-4">
+      <span className="divider-sheet bg-background-primary rounded-card flex min-w-0 flex-1 items-center justify-between gap-2 py-4 pr-3 pl-3 sm:gap-4 sm:pr-5 sm:pl-4">
         <span className="min-w-0">
           <span className="text-text-secondary group-hover:decoration-background-accent block truncate text-lg font-semibold uppercase underline decoration-transparent decoration-2 underline-offset-[0.3em] transition-colors">
             {field}

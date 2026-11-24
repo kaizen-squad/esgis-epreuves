@@ -73,9 +73,29 @@ export type FieldLevelSummary = {
   examCount: number;
 };
 
-/** Categorie de la page /filieres : une filiere et ses couples niveau x filiere. */
-export type FieldCategory = {
+/** Annees academiques extremes des epreuves archivees (egales s'il n'y en a qu'une). */
+export type YearSpan = { first: string; last: string };
+
+/** Fiche d'un niveau dans le repertoire /filieres : ses matieres archivees et ses annees. */
+export type FieldDirectoryLevel = FieldLevelSummary & {
+  /** Matieres ayant au moins une epreuve, les plus fournies d'abord. */
+  subjects: SubjectCoverage[];
+  years: YearSpan | null;
+};
+
+/** Rangee d'une filiere dans le repertoire /filieres, totaux compris. */
+export type FieldDirectoryEntry = {
   fieldId: string;
   fieldName: string;
-  levels: FieldLevelSummary[];
+  examCount: number;
+  /** Matieres couvertes (au moins une epreuve), tous niveaux confondus. */
+  subjectCount: number;
+  years: YearSpan | null;
+  levels: FieldDirectoryLevel[];
+};
+
+/** Repertoire /filieres : colonnes de niveaux communes a toutes les rangees, puis les filieres. */
+export type FieldDirectory = {
+  columns: { levelId: string; levelName: string }[];
+  fields: FieldDirectoryEntry[];
 };

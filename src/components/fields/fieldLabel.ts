@@ -34,6 +34,24 @@ export function toFiliereCardData(
   };
 }
 
+/** Cycle d'un niveau d'apres son sigle ("L2" : Licence, "M1" : Master), `null` sinon. */
+export function levelCycle(levelName: string): string | null {
+  if (/^L\d/i.test(levelName)) return "Licence";
+  if (/^M\d/i.test(levelName)) return "Master";
+  return null;
+}
+
+/** "2022-2023 à 2024-2025", ou l'annee seule quand les deux bornes sont egales. */
+export function yearSpanLabel({
+  first,
+  last,
+}: {
+  first: string;
+  last: string;
+}): string {
+  return first === last ? first : `${first} à ${last}`;
+}
+
 /** Niveaux du tronc commun : les epreuves n'y ont pas d'option. */
 const COMMON_CORE_LEVELS = ["L1", "L2"];
 

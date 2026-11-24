@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 const single = vi.fn();
 const insertSelect = vi.fn(() => ({ single }));
 const insert = vi.fn<
@@ -137,9 +139,10 @@ beforeEach(() => {
   deleteSelect
     .mockReset()
     .mockImplementation(() => ({ maybeSingle: deleteMaybeSingle }));
-  deleteMaybeSingle
-    .mockReset()
-    .mockResolvedValue({ data: { r2_key: "exams/abc.pdf" }, error: null });
+  deleteMaybeSingle.mockReset().mockResolvedValue({
+    data: { r2_key: "exams/abc.pdf", slug: "algo-s1-abc12345" },
+    error: null,
+  });
   maybeSingle.mockReset().mockResolvedValue({ data: null, error: null });
   updateEq.mockReset().mockImplementation(() => ({ select: updateSelect }));
   updateSelect
@@ -756,7 +759,7 @@ describe("deleteExam", () => {
 
   it("supprime la ligne puis le fichier R2 correspondant", async () => {
     deleteMaybeSingle.mockResolvedValue({
-      data: { r2_key: "exams/abc.pdf" },
+      data: { r2_key: "exams/abc.pdf", slug: "algo-s1-abc12345" },
       error: null,
     });
 
@@ -769,7 +772,7 @@ describe("deleteExam", () => {
 
   it("ne fait pas echouer la suppression quand celle du fichier R2 echoue", async () => {
     deleteMaybeSingle.mockResolvedValue({
-      data: { r2_key: "exams/abc.pdf" },
+      data: { r2_key: "exams/abc.pdf", slug: "algo-s1-abc12345" },
       error: null,
     });
     deleteExamFile.mockRejectedValue(new Error("R2 indisponible"));

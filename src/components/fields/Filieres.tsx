@@ -1,7 +1,6 @@
 import { FiArrowRight } from "@/components/icons";
 import FiliereCard from "@/components/fields/FiliereCard";
 import Link from "next/link";
-import { connection } from "next/server";
 import { getFieldLevelSummaries } from "@/features/exams/queries";
 import { toFiliereCardData } from "@/components/fields/fieldLabel";
 import {
@@ -22,8 +21,6 @@ export default async function Filieres({
 }: {
   basePath?: SpaceBasePath;
 }) {
-  // Rendu a la requete, pas au build : la CI build sans variables Supabase (meme raison que RecentlyAdded).
-  await connection();
   const allSummaries = await getFieldLevelSummaries();
   const summaries = allSummaries.slice(0, HOME_CARDS_LIMIT);
   const title =

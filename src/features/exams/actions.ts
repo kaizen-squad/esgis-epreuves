@@ -1,9 +1,11 @@
 "use server";
 
 import { createHash } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { describeDbError, examInsertErrorMessage } from "@/lib/supabase/errors";
 import { createClient } from "@/lib/supabase/server";
+import { publicExamPath } from "@/components/layout/spaces";
 import { r2UploadErrorMessage } from "@/lib/r2/errors";
 import { deleteExamFile, putExamFile } from "@/lib/r2/upload";
 import {
@@ -252,6 +254,10 @@ export async function updateExamMetadata(
     return actionError("Epreuve introuvable.");
   }
 
+  // #157 : la page publique est desormais en ISR (revalidate = 60), jamais relue a chaque
+  // requete ; sans ca, l'ancienne fiche resterait affichee jusqu'a 60 s apres la modification.
+  revalidatePath(publicExamPath(current.slug));
+
   if (duplicate.kind === "quadruplet") {
     return actionOkWithWarning(
       { slug: current.slug },
@@ -400,6 +406,9 @@ export async function replaceExamFile(
     }
   }
 
+  // #157 : voir updateExamMetadata, meme raison (page publique en ISR).
+  revalidatePath(publicExamPath(current.slug));
+
   if (duplicate.kind === "quadruplet") {
     return actionOkWithWarning(
       { slug: current.slug },
@@ -438,7 +447,7 @@ export async function deleteExam(examId: string): Promise<ActionResult<null>> {
     .from("exams")
     .delete()
     .eq("id", examId)
-    .select("r2_key")
+    .select("r2_key, slug")
     .maybeSingle();
   if (deleteError) {
     console.error("deleteExam: suppression", deleteError);
@@ -453,6 +462,10 @@ export async function deleteExam(examId: string): Promise<ActionResult<null>> {
   } catch (error) {
     console.error("deleteExam: suppression du fichier R2", error);
   }
+
+  // #157 : voir updateExamMetadata, meme raison (page publique en ISR) ; la page supprimee
+  // regenere alors tout de suite un notFound() au lieu d'attendre jusqu'a 60 s.
+  revalidatePath(publicExamPath(deleted.slug));
 
   return actionOk(null);
 }

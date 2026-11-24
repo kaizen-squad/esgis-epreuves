@@ -351,3 +351,21 @@ Image d'aperçu d'une carte, rendue une fois par clé R2 puis mise en cache (ser
 CSP fixe (#26), construite une fois au build dans `next.config.ts` à partir de `R2_ACCOUNT_ID` et `NODE_ENV` : pas de nonce par requête, donc pas de rendu dynamique forcé sur tout le site. Autorise uniquement le compte R2 du projet, en `frame-src` (forme `https://<compte>.r2.cloudflarestorage.com` et `https://*.<compte>.r2.cloudflarestorage.com`, les deux styles d'URL que peut produire le SDK S3 selon le style path/virtual-host), pour la redirection 307 de `GET /api/exams/[slug]` vers une URL R2 présignée si elle finit affichée dans un iframe côté front. Ni Supabase ni R2 ne sont ajoutés à `connect-src`/`img-src` : rien ne les contacte depuis le navigateur pour l'instant (`src/lib/supabase/client.ts` n'est importé nulle part), à ajouter le jour où un composant client en a réellement besoin. `script-src`/`style-src` gardent `'unsafe-inline'` : l'App Router de Next.js injecte le payload RSC dans des `<script>` inline à chaque rendu, tant qu'aucun nonce par requête n'est mis en place dans `src/proxy.ts`. `script-src` ajoute `'unsafe-eval'` uniquement quand `isDev` (requis par `next dev`, jamais en production). `r2AccountId` vide hors développement ne fait pas échouer le build (`next typegen` n'injecte pas toujours les variables), juste un `console.warn` : `frame-src` retombe sur `'self'` seul.
 
 **Région (#26)** : le projet Supabase `esgis-epreuves` (prod) tourne en `eu-west-1`, les buckets R2 `esgis-epreuves-dev`/`esgis-epreuves-prod` en `WEUR` (Europe de l'Ouest) : déjà alignés, rien à changer côté infrastructure.
+
+## `src/features/contact/`
+
+### `whatsappHref(text: string, phone?: string | null): string` (`whatsapp.ts`)
+
+Seul constructeur de lien `wa.me` du site : contact du BDE (pied de page, FAQ de l'accueil) et partage d'une épreuve (`ShareExamButton`). Module pur, importable côté client. Sans numéro, `https://wa.me/?text=…` reste valide et laisse choisir le destinataire.
+
+### `getBdeWhatsappNumber(): Promise<string | null>`, `getBdeContactHref(): Promise<string>` (`queries.ts`)
+
+Lisent `site_settings.bde_whatsapp_number` (une seule ligne, lecture publique) via `unstable_cache` (tag `site-settings`, 1 h). Exception assumée à la convention des `queries.ts` : une erreur de lecture renvoie `null` au lieu de lever, car le pied de page de chaque page en dépend et le lien reste utilisable sans numéro. `getBdeContactHref` est le point d'accès de tout bouton « Nous contacter ».
+
+### `whatsappNumberSchema` (`schemas.ts`)
+
+Numéro au format international E.164 (`+` puis 8 à 15 chiffres, même règle que la contrainte SQL). Tolère espaces, points, tirets, parenthèses et `00` à la place du `+` ; une saisie vide donne `null` (numéro retiré).
+
+### `updateBdeWhatsappNumber(formData): Promise<ActionResult<{ number: string | null }>>` (`actions.ts`)
+
+Écran `/bde/reglages`. Écriture protégée par la RLS `site_settings_update_bde` (BDE actif uniquement, ni anon ni ADMIN), sans vérification de rôle dupliquée : 0 ligne modifiée signale un refus. Invalide le tag `site-settings` (`updateTag`) : le nouveau numéro est en ligne dès la requête suivante.

@@ -1,22 +1,22 @@
 import { Suspense } from "react";
-import MaFiliereLink from "@/components/classeur/MaFiliereLink";
 import Filieres from "@/components/fields/Filieres";
 import FilieresSkeleton from "@/components/fields/FilieresSkeleton";
 import RecentlyAdded, {
   RecentlyAddedSkeleton,
 } from "@/components/exams/RecentlyAdded";
 import Research from "@/components/exams/Research";
+import Faq from "@/components/home/Faq";
 import ResultsResume from "@/components/home/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
+
+/** Pas de searchParams/cookies/headers ici : rendu statique avec la meme fenetre que le cache de donnees (#157). */
+export const revalidate = 60;
 
 export default function Accueil() {
   return (
     <>
       <WelcomeSection />
       <Research />
-      <div className="mb-8 px-6 text-center">
-        <MaFiliereLink />
-      </div>
       <div className="px-6">
         <Suspense fallback={<RecentlyAddedSkeleton />}>
           <RecentlyAdded title="Récemment ajoutés" />
@@ -27,6 +27,9 @@ export default function Accueil() {
       </div>
       <div className="px-6">
         <ResultsResume />
+      </div>
+      <div className="px-6">
+        <Faq />
       </div>
     </>
   );
