@@ -82,7 +82,11 @@ describe("createField", () => {
 
     const result = await createField(form({ name: "Informatique" }));
 
-    expect(result).toEqual({ ok: false, error: "Impossible d'enregistrer." });
+    expect(result).toEqual({
+      ok: false,
+      error:
+        "Impossible d'enregistrer cette filière. Réessayez dans un instant.",
+    });
   });
 });
 
@@ -100,7 +104,10 @@ describe("updateField", () => {
   it("renvoie Introuvable sur un id qui n'est pas un uuid, sans toucher la base", async () => {
     const result = await updateField("pas-un-uuid", form({ name: "Gestion" }));
 
-    expect(result).toEqual({ ok: false, error: "Introuvable." });
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de trouver cette filière.",
+    });
     expect(from).not.toHaveBeenCalled();
   });
 
@@ -109,7 +116,10 @@ describe("updateField", () => {
 
     const result = await updateField(UNKNOWN_UUID, form({ name: "Gestion" }));
 
-    expect(result).toEqual({ ok: false, error: "Introuvable." });
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de trouver cette filière.",
+    });
     expect(update).toHaveBeenCalled();
   });
 
@@ -158,7 +168,10 @@ describe("setFieldActive", () => {
   it("rejette un id qui n'est pas un uuid, sans toucher la base", async () => {
     const result = await setFieldActive("pas-un-uuid", false);
 
-    expect(result).toEqual({ ok: false, error: "Introuvable." });
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de trouver cette filière.",
+    });
     expect(from).not.toHaveBeenCalled();
   });
 
@@ -175,7 +188,10 @@ describe("setFieldActive", () => {
 
     const result = await setFieldActive(UNKNOWN_UUID, false);
 
-    expect(result).toEqual({ ok: false, error: "Introuvable." });
+    expect(result).toEqual({
+      ok: false,
+      error: "Impossible de trouver cette filière.",
+    });
     expect(update).toHaveBeenCalled();
   });
 
@@ -189,7 +205,8 @@ describe("setFieldActive", () => {
 
     expect(result).toEqual({
       ok: false,
-      error: "Impossible de changer l'état.",
+      error:
+        "Impossible de changer l'état de cette filière. Réessayez dans un instant.",
     });
   });
 });
