@@ -6,14 +6,16 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { getFieldById } from "@/features/referentials/queries";
 import { getExamFileInfo } from "@/lib/r2/metadata";
 import { examFiltersSchema, fixedFieldFilters } from "./schemas";
+import { buildFieldDirectory, coupleKey } from "./directory";
 import type {
   Exam,
   ExamFilters,
   ExamListResult,
+  FieldDirectory,
   FieldExamsResult,
-  FieldCategory,
   FieldLevelSummary,
   SubjectCoverage,
+  YearSpan,
 } from "./types";
 
 const EXAM_CATALOG_SELECT =
@@ -319,19 +321,65 @@ export async function getFieldLevelSummaries(): Promise<FieldLevelSummary[]> {
   return getFieldLevelSummariesCached();
 }
 
-/** Page /filieres : une categorie par filiere, dans l'ordre du tri des couples (meme cache). */
-export async function getFieldCategories(): Promise<FieldCategory[]> {
-  const categories = new Map<string, FieldCategory>();
-  for (const summary of await getFieldLevelSummaries()) {
-    const category = categories.get(summary.fieldId) ?? {
-      fieldId: summary.fieldId,
-      fieldName: summary.fieldName,
-      levels: [],
+const getFieldLevelYearsCached = unstable_cache(
+  async (fieldId: string, levelId: string): Promise<YearSpan | null> => {
+    const supabase = createPublicClient();
+    // Deux lectures d'une ligne (la plus ancienne, la plus recente) : lire toutes les epreuves du
+    // couple pour en tirer les bornes serait tronque par `max_rows`.
+    const edge = async (ascending: boolean) => {
+      const { data, error } = await supabase
+        .from("exams")
+        .select("academic_year")
+        .eq("field_id", fieldId)
+        .eq("level_id", levelId)
+        .order("academic_year", { ascending })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.academic_year as string | undefined;
     };
-    category.levels.push(summary);
-    categories.set(summary.fieldId, category);
-  }
-  return [...categories.values()];
+
+    const [first, last] = await Promise.all([edge(true), edge(false)]);
+    return first && last ? { first, last } : null;
+  },
+  ["field-level-years"],
+  { revalidate: FIELD_LEVEL_SUMMARIES_REVALIDATE_SECONDS, tags: ["exams"] },
+);
+
+/**
+ * Repertoire de la page /filieres : pour chaque filiere, une fiche par niveau avec ses matieres
+ * archivees (`getSubjectCoverage`, en cache) et ses annees extremes. Lectures exactes, chacune
+ * bornee a une ligne ou a un comptage, quel que soit `max_rows`.
+ */
+export async function getFieldDirectory(): Promise<FieldDirectory> {
+  const summaries = await getFieldLevelSummaries();
+  const fieldIds = [...new Set(summaries.map((summary) => summary.fieldId))];
+
+  const [coverages, years] = await Promise.all([
+    Promise.all(
+      fieldIds.map(
+        async (fieldId) =>
+          [fieldId, await getSubjectCoverage(fieldId)] as const,
+      ),
+    ),
+    Promise.all(
+      summaries
+        .filter((summary) => summary.examCount > 0)
+        .map(
+          async (summary) =>
+            [
+              coupleKey(summary.fieldId, summary.levelId),
+              await getFieldLevelYearsCached(summary.fieldId, summary.levelId),
+            ] as const,
+        ),
+    ),
+  ]);
+
+  return buildFieldDirectory(
+    summaries,
+    new Map(coverages),
+    new Map(years.filter((entry): entry is [string, YearSpan] => !!entry[1])),
+  );
 }
 
 /**

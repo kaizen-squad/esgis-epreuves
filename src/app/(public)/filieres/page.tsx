@@ -1,23 +1,31 @@
 import { Suspense } from "react";
 import CTACatalogue from "@/components/home/CTACatalogue";
 import Research from "@/components/exams/Research";
-import FiliereCategories from "@/components/fields/FiliereCategories";
-import FiliereCategoriesSkeleton from "@/components/fields/FiliereCategoriesSkeleton";
+import FieldDirectory from "@/components/fields/FieldDirectory";
+import FieldDirectorySkeleton from "@/components/fields/FieldDirectorySkeleton";
 
+/**
+ * Page dediee aux filieres : le repertoire complet (une rangee par filiere, une fiche par niveau),
+ * distinct de la grille compacte de l'accueil qui reste un raccourci.
+ */
 const Filieres = () => {
   return (
     <>
-      <div className="text-center">
-        <h1 className="head-title">Filtre selon ta filière</h1>
-        <p className="mb-6">
-          Recherche rapidement un sujet spécifique et télécharge le fichier en
-          un instant. Notre interface fluide simplifie tes révisions avant
-          l&apos;examen.
-        </p>
-      </div>
-      <Research />
-      <Suspense fallback={<FiliereCategoriesSkeleton />}>
-        <FiliereCategories />
+      <header className="mx-auto mb-8 grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-6 lg:mb-10 lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-end">
+        <div>
+          <h1 className="head-title mb-4">
+            Choisis ta filière, puis ton niveau
+          </h1>
+          <p className="text-text-paragraph max-w-2xl text-pretty">
+            Chaque fiche correspond à un niveau : les matières dont on a déjà
+            des épreuves, et les années couvertes. Ouvre la fiche de ton niveau
+            pour voir ses épreuves.
+          </p>
+        </div>
+        <Research inline />
+      </header>
+      <Suspense fallback={<FieldDirectorySkeleton />}>
+        <FieldDirectory />
       </Suspense>
       <CTACatalogue />
     </>
