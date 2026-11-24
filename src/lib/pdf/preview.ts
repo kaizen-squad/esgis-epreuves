@@ -57,6 +57,12 @@ export async function renderPdfPreview(file: Uint8Array): Promise<Buffer> {
 
 /** Largeur du rendu complet : deux fois celle d'une carte, lisible sur un ecran de telephone. */
 export const FULL_PAGE_WIDTH = 640;
+/**
+ * Hauteur maximale du rendu : une page MediaBox demesuree (PDF corrompu ou malveillant) ne doit
+ * pas forcer l'allocation d'un canvas arbitrairement grand. Largement au-dessus d'un A4 a cette
+ * largeur (~905px) ; au-dela, la page est recadree plutot que rendue en entier.
+ */
+const MAX_FULL_PAGE_HEIGHT = 2400;
 
 /**
  * Apercu de la premiere page entiere (pas seulement son haut), avec le nombre total de pages :
@@ -71,8 +77,18 @@ export async function renderPdfFirstPageFull(
     const pdf = await loadingTask.promise;
     const page = await pdf.getPage(1);
     const scale = FULL_PAGE_WIDTH / page.getViewport({ scale: 1 }).width;
+    if (!Number.isFinite(scale) || scale <= 0) {
+      throw new Error("Dimensions de page PDF invalides");
+    }
     const viewport = page.getViewport({ scale });
-    const height = Math.round(viewport.height);
+    if (
+      !Number.isFinite(viewport.width) ||
+      !Number.isFinite(viewport.height) ||
+      viewport.height <= 0
+    ) {
+      throw new Error("Dimensions de page PDF invalides");
+    }
+    const height = Math.min(Math.round(viewport.height), MAX_FULL_PAGE_HEIGHT);
 
     const canvas = createCanvas(FULL_PAGE_WIDTH, height);
     const context = canvas.getContext("2d");
