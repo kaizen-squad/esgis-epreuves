@@ -6,6 +6,7 @@ import RecentlyAdded, {
 } from "@/components/exams/RecentlyAdded";
 import Research from "@/components/exams/Research";
 import Faq from "@/components/home/Faq";
+import ResultsResume from "@/components/home/ResultsResume";
 import WelcomeSection from "./accueil/components/WelcomeSection";
 
 export default function Accueil() {
@@ -20,6 +21,9 @@ export default function Accueil() {
         <Suspense fallback={<FilieresSkeleton />}>
           <Filieres />
         </Suspense>
+      </div>
+      <div className="px-6">
+        <ResultsResume />
       </div>
       <div className="sm:px-6">
         <Faq />
