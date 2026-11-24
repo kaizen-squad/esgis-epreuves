@@ -18,12 +18,14 @@ export {
   FiExternalLink,
   FiEye,
   FiFileText,
+  FiFolder,
   FiLayers,
   FiLinkedin,
   FiMoreVertical,
   FiRefreshCw,
   FiSettings,
   FiStar,
+  FiUpload,
   FiX,
 } from "react-icons/fi";
 export { GoDotFill } from "react-icons/go";
