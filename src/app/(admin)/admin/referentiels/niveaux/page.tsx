@@ -3,7 +3,10 @@ import {
   setLevelActive,
   updateLevel,
 } from "@/features/referentials/actions";
-import { getLevels } from "@/features/referentials/queries";
+import {
+  getExamCountsByColumn,
+  getLevels,
+} from "@/features/referentials/queries";
 import AdminPageHeader from "../../../components/AdminPageHeader";
 import { requireAdminSession } from "../../../lib/requireAdminSession";
 import ReferentialManager from "../components/ReferentialManager";
@@ -11,7 +14,10 @@ import ReferentialTabs from "../components/ReferentialTabs";
 
 export default async function NiveauxPage() {
   await requireAdminSession();
-  const levels = await getLevels({ includeInactive: true });
+  const [levels, examCounts] = await Promise.all([
+    getLevels({ includeInactive: true }),
+    getExamCountsByColumn("level_id"),
+  ]);
 
   return (
     <>
@@ -23,6 +29,7 @@ export default async function NiveauxPage() {
       <ReferentialManager
         kind="level"
         items={levels}
+        examCounts={examCounts}
         create={createLevel}
         update={updateLevel}
         setActive={setLevelActive}

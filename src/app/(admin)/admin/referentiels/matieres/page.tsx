@@ -4,6 +4,7 @@ import {
   updateSubject,
 } from "@/features/referentials/actions";
 import {
+  getExamCountsByColumn,
   getFields,
   getLevels,
   getSubjects,
@@ -16,10 +17,11 @@ import ReferentialTabs from "../components/ReferentialTabs";
 /** `#ajouter` ouvre directement sur le formulaire de création, pour un lien marque-page. */
 export default async function MatieresPage() {
   await requireAdminSession();
-  const [subjects, fields, levels] = await Promise.all([
+  const [subjects, fields, levels, examCounts] = await Promise.all([
     getSubjects({ includeInactive: true }),
     getFields({ includeInactive: true }),
     getLevels({ includeInactive: true }),
+    getExamCountsByColumn("subject_id"),
   ]);
 
   return (
@@ -34,6 +36,7 @@ export default async function MatieresPage() {
         items={subjects}
         fields={fields}
         levels={levels}
+        examCounts={examCounts}
         create={createSubject}
         update={updateSubject}
         setActive={setSubjectActive}

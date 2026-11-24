@@ -106,6 +106,25 @@ export async function getSubjects(
   }));
 }
 
+/** Nombre d'epreuves rattachees a chaque filiere, niveau, matiere ou option, pour annoncer
+ * l'impact d'une desactivation dans l'Admin (#168). Un seul SELECT de la colonne : le volume
+ * d'epreuves reste trop faible pour justifier un COUNT par ligne. */
+export async function getExamCountsByColumn(
+  column: "field_id" | "level_id" | "subject_id" | "option_id",
+): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("exams").select(column);
+  if (error) throw error;
+
+  const counts: Record<string, number> = {};
+  for (const row of data as Record<string, string | null>[]) {
+    const id = row[column];
+    if (!id) continue;
+    counts[id] = (counts[id] ?? 0) + 1;
+  }
+  return counts;
+}
+
 /** Options de specialisation, pour le formulaire de depot/edition d'epreuve (actives uniquement sauf `includeInactive`, #64). */
 export async function getOptions(options: ListOptions = {}): Promise<Option[]> {
   const supabase = await createClient();
