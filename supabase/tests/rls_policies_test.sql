@@ -1,5 +1,5 @@
 begin;
-select plan(33);
+select plan(37);
 
 -- Tables et RLS forcee
 select has_table('public', 'profiles', 'profiles existe');
@@ -47,6 +47,14 @@ select is(
   (select count(*) from public.profiles)::int, 0,
   'anon ne voit aucun profil (pas de politique de lecture)'
 );
+-- has_function_privilege plutot que throws_ok + appel reel : invoquer une fonction a colonnes
+-- (RETURNS TABLE) sans le droit EXECUTE fait planter ce Postgres local (segfault observe,
+-- CLI 2.95.4) quand throws_ok intercepte l'erreur de permission via sa propre savepoint.
+select is(
+  has_function_privilege('anon', 'public.current_profile_status()', 'execute'),
+  false,
+  'anon ne peut pas appeler current_profile_status (#164)'
+);
 reset role;
 
 -- BDE authentifie : peut ecrire les epreuves, pas les referentiels
@@ -84,8 +92,22 @@ select throws_ok(
   'BDE ne peut pas ecrire profiles'
 );
 
+-- current_profile_status (#164) : un compte voit son propre role et statut, jamais celui d'un
+-- autre (profiles reste autrement illisible pour un BDE, voir plus haut).
+select results_eq(
+  $$ select role, is_active from public.current_profile_status() $$,
+  $$ values ('BDE'::text, true) $$,
+  'current_profile_status renvoie le role et le statut du compte BDE connecte'
+);
+
 -- ADMIN authentifie : peut ecrire les referentiels et profiles, pas les epreuves
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+
+select results_eq(
+  $$ select role, is_active from public.current_profile_status() $$,
+  $$ values ('ADMIN'::text, true) $$,
+  'current_profile_status renvoie le role et le statut du compte ADMIN connecte'
+);
 
 select lives_ok(
   $$ insert into public.fields (name) values ('IRT') $$,
@@ -209,6 +231,12 @@ select is(
   'has_role renvoie false pour un compte desactive'
 );
 set local role authenticated;
+
+select results_eq(
+  $$ select role, is_active from public.current_profile_status() $$,
+  $$ values ('BDE'::text, false) $$,
+  'current_profile_status detecte un compte BDE desactive en cours de session (#164)'
+);
 
 with modifiees as (
   update public.exams set title = 'Titre pirate'
