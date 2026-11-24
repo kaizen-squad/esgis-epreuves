@@ -42,9 +42,10 @@ jobs:
           version: 2.95.4
 
       # #157 : /, /filieres et /epreuves/[slug] sont desormais prerendues au build (ISR), ce qui
-      # appelle vraiment postgrest (via kong) ; gotrue est inutile ici, le seed insere auth.users
-      # en SQL direct et createPublicClient ne s'authentifie pas.
-      - run: supabase start -x gotrue,realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      # appelle vraiment postgrest (via kong) et storage-api (`examFileExists`, en mode strict sur
+      # la page publique). gotrue reste necessaire : `supabase status -o env` n'expose
+      # PUBLISHABLE_KEY que via ce service, meme si createPublicClient ne s'authentifie jamais.
+      - run: supabase start -x realtime,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
       - run: supabase db reset
       - name: Exposer la stack Supabase locale comme env applicatif
         run: |
@@ -52,7 +53,15 @@ jobs:
           {
             echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
+            echo "R2_ENDPOINT=$STORAGE_S3_URL"
+            echo "R2_BUCKET=esgis-epreuves-quality"
+            echo "R2_ACCESS_KEY_ID=$S3_PROTOCOL_ACCESS_KEY_ID"
+            echo "R2_SECRET_ACCESS_KEY=$S3_PROTOCOL_ACCESS_KEY_SECRET"
           } >> "$GITHUB_ENV"
+
+      # Bucket vide (aucun fichier seede) : les epreuves pre-rendues recoivent un 404 legitime,
+      # sans erreur de configuration qui ferait echouer le build en mode strict.
+      - run: pnpm tsx scripts/ensure-r2-bucket.ts
 
       - run: pnpm build
 
