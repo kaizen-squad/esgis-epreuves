@@ -13,7 +13,11 @@ import {
   publicExamPath,
   type SpaceBasePath,
 } from "@/components/layout/spaces";
-import { getExamCached, getExamR2Key } from "@/features/exams/queries";
+import {
+  getExamCached,
+  getExamDepositorName,
+  getExamR2Key,
+} from "@/features/exams/queries";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { examFileExists } from "@/lib/r2/exists";
 import Cote from "@/components/exams/Cote";
@@ -52,6 +56,11 @@ export default async function ExamDetailView({
   const available = r2Key
     ? await examFileExists(r2Key, { strict: basePath === "" })
     : false;
+  // Depositaire lu a part, seulement cote BDE (#176) : jamais via un client anonyme (#157).
+  const depositorName =
+    basePath === BDE_BASE_PATH
+      ? await getExamDepositorName(exam.createdBy)
+      : null;
 
   const details = [
     { label: "Filière", value: exam.field },
@@ -69,9 +78,8 @@ export default async function ExamDetailView({
       label: "Ajoutée le",
       value: dateFormat.format(new Date(exam.createdAt)),
     },
-    // Depositaire visible uniquement cote BDE (#176) : jamais serialise au rendu public.
     ...(basePath === BDE_BASE_PATH
-      ? [{ label: "Déposée par", value: exam.depositorName ?? "Inconnu" }]
+      ? [{ label: "Déposée par", value: depositorName ?? "Inconnu" }]
       : []),
   ];
 

@@ -19,7 +19,7 @@ import type {
 } from "./types";
 
 const EXAM_CATALOG_SELECT =
-  "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, level_id, level_name, subject_id, subject_name, option_id, option_name, created_by_name";
+  "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, level_id, level_name, subject_id, subject_name, option_id, option_name, created_by";
 
 /** PostgREST : decalage hors bornes avec un count exact (page trop loin apres un filtre qui reduit le total). */
 const RANGE_NOT_SATISFIABLE = "PGRST103";
@@ -43,7 +43,7 @@ type CatalogRow = {
   subject_name: string;
   option_id: string | null;
   option_name: string | null;
-  created_by_name: string | null;
+  created_by: string;
 };
 
 type ExamFile = Pick<Exam, "fileSize" | "mimeType" | "fileVersion">;
@@ -108,7 +108,7 @@ function toExam(row: CatalogRow, file: ExamFile | undefined): Exam {
     mimeType: file?.mimeType ?? "",
     fileVersion: file?.fileVersion ?? "",
     createdAt: row.created_at,
-    depositorName: row.created_by_name,
+    createdBy: row.created_by,
   };
 }
 
@@ -536,6 +536,25 @@ export async function getExamBySlug(slug: string): Promise<Exam | null> {
 
 /** `getExamBySlug` memoisee par requete : partagee entre `generateMetadata`, la vue et l'image de partage, pour ne lire l'epreuve qu'une fois. */
 export const getExamCached = cache(getExamBySlug);
+
+/**
+ * Nom du depositaire d'une epreuve (#176), pour la fiche cote BDE seulement. Jamais depuis
+ * `exams_catalog` (lue par un client anonyme aussi, cote public, #157) : `profile_display_name`
+ * est reservee a `authenticated`, d'ou ce client authentifie a part.
+ */
+export async function getExamDepositorName(
+  createdBy: string,
+): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("profile_display_name", {
+    profile_id: createdBy,
+  });
+  if (error) {
+    console.error("getExamDepositorName", error);
+    return null;
+  }
+  return data ?? null;
+}
 
 /**
  * Cle R2 du PDF d'une epreuve par son slug, pour la route de previsualisation/telechargement
