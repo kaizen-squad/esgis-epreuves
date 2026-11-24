@@ -1,10 +1,5 @@
 import Link from "next/link";
-import {
-  FiCalendar,
-  FiDownload,
-  FiFileText,
-  GoDotFill,
-} from "@/components/icons";
+import { FiDownload, FiFileText } from "@/components/icons";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
 import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
 import Cote from "./Cote";
@@ -85,14 +80,9 @@ const ExamCard = (data: ExamCardProps) => {
         </h4>
 
         <div className="text-text-paragraph mt-auto flex items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <FiCalendar size={12} />
-              {data.year - 1}-{data.year}
-            </span>
-            <GoDotFill size={6} />
-            <span>{formatFileSize(data.fileSize)}</span>
-          </div>
+          {/* L'annee academique est deja dans la Cote ci-dessus : l'afficher encore ici la
+              doublait (#179). */}
+          <span>{formatFileSize(data.fileSize)}</span>
           <div className="relative z-20 flex items-center gap-1">
             {downloadHref ? (
               <a

@@ -45,31 +45,38 @@ export default function Cote({
     academicYear: fields.academicYear ?? undefined,
   };
 
+  const segments = coteSegments(fields);
+
   return (
     <ol
       aria-label="Cote de l'épreuve"
       className={`flex flex-wrap items-center gap-1 ${className ?? ""}`}
     >
-      {coteSegments(fields).map((segment, index) => {
+      {segments.map((segment, index) => {
         const param = LINK_PARAM[segment.key];
         const id = ids[segment.key];
         const href =
           param && id ? `${base}?${param}=${encodeURIComponent(id)}` : null;
+        const isLast = index === segments.length - 1;
 
         return (
-          <li key={segment.key} className="flex min-w-0 items-center gap-1">
-            {index > 0 ? <span aria-hidden="true">:</span> : null}
+          // Le separateur suit son segment plutot que de precedeer le suivant (#179) : un
+          // retour a la ligne ne laisse plus jamais un ":" seul en debut de ligne. Plus de
+          // `truncate`/`min-w-0` par segment : un nom coupe ("SÉCU...") venait de la, le
+          // flex-wrap du <ol> suffit a passer a la ligne entre segments.
+          <li key={segment.key} className="flex items-center gap-1">
             {href ? (
               <Link
                 href={href}
                 aria-label={`${segment.name} (${segment.label})`}
-                className="truncate hover:underline focus-visible:underline"
+                className="hover:underline focus-visible:underline"
               >
                 {segment.name}
               </Link>
             ) : (
-              <span className="truncate">{segment.name}</span>
+              <span>{segment.name}</span>
             )}
+            {isLast ? null : <span aria-hidden="true">:</span>}
           </li>
         );
       })}

@@ -113,7 +113,9 @@ function SearchForm({
         maxLength={MAX_QUERY_LENGTH}
         onChange={(event) => onChange(event.target.value)}
         onFocus={onFocus}
-        placeholder="Rechercher une matière, un titre..."
+        // Plus court que "Rechercher une matière, un titre..." : ce dernier se tronquait sur
+        // mobile, le champ y etant plus etroit (#179).
+        placeholder="Rechercher une épreuve..."
         aria-label="Rechercher une épreuve"
         autoComplete="off"
       />
