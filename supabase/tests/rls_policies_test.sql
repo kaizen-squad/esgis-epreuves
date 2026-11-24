@@ -1,5 +1,5 @@
 begin;
-select plan(24);
+select plan(32);
 
 -- Tables et RLS forcee
 select has_table('public', 'profiles', 'profiles existe');
@@ -218,6 +218,67 @@ with modifiees as (
 select is(
   (select count(*) from modifiees)::int, 0,
   'BDE desactive ne peut plus modifier une epreuve'
+);
+
+-- Reglages du site (numero WhatsApp du BDE) : une seule ligne, lue par tous, modifiee par le BDE.
+reset role;
+update public.profiles set is_active = true where id = '11111111-1111-4111-8111-111111111111';
+
+select has_table('public', 'site_settings', 'site_settings existe');
+select ok(
+  (select relrowsecurity and relforcerowsecurity from pg_class
+   where relname = 'site_settings' and relnamespace = 'public'::regnamespace),
+  'RLS activee et forcee sur site_settings'
+);
+
+set local role anon;
+select is(
+  (select count(*) from public.site_settings)::int, 1,
+  'anon lit l''unique ligne des reglages'
+);
+with modifiees as (
+  update public.site_settings set bde_whatsapp_number = '+22900000000'
+  returning 1
+)
+select is(
+  (select count(*) from modifiees)::int, 0,
+  'anon ne peut pas modifier les reglages'
+);
+select throws_ok(
+  $$ insert into public.site_settings (id, bde_whatsapp_number) values (false, '+22900000000') $$,
+  '42501',
+  null,
+  'anon ne peut pas inserer de reglages'
+);
+reset role;
+
+-- ADMIN authentifie : le numero appartient au BDE, pas a l'administration.
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+with modifiees as (
+  update public.site_settings set bde_whatsapp_number = '+22900000000'
+  returning 1
+)
+select is(
+  (select count(*) from modifiees)::int, 0,
+  'ADMIN ne peut pas modifier les reglages'
+);
+
+-- BDE authentifie : peut renseigner le numero.
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+with modifiees as (
+  update public.site_settings set bde_whatsapp_number = '+2290123456789'
+  returning bde_whatsapp_number
+)
+select is(
+  (select bde_whatsapp_number from modifiees), '+2290123456789',
+  'BDE peut renseigner le numero WhatsApp'
+);
+select throws_ok(
+  $$ update public.site_settings set bde_whatsapp_number = '0123 45' $$,
+  '23514',
+  null,
+  'un numero hors format international est refuse par la base'
 );
 
 select * from finish();
