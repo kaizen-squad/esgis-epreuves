@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import {
+  Fragment,
   startTransition,
   useActionState,
   useEffect,
@@ -502,7 +503,7 @@ export default function ReferentialManager({
                   const showFieldGroupHeader =
                     searchable && item.fieldId !== previous?.fieldId;
                   return (
-                    <>
+                    <Fragment key={item.id}>
                       {showFieldGroupHeader ? (
                         <tr key={`group-${item.fieldId ?? "none"}`}>
                           <td
@@ -586,7 +587,7 @@ export default function ReferentialManager({
                           </div>
                         </td>
                       </tr>
-                    </>
+                    </Fragment>
                   );
                 })
               )}
