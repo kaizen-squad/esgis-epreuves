@@ -37,6 +37,9 @@ export default function WhatsappNumberForm({
   const formRef = useRef<HTMLFormElement>(null);
   // Court-circuite la confirmation une seule fois, pour le resoumis declenche par `confirmClear`.
   const bypassConfirmRef = useRef(false);
+  const [lastConfirmState, setLastConfirmState] = useState<State | undefined>(
+    undefined,
+  );
 
   const [state, dispatch, pending] = useActionState<State, FormData>(
     async (previous, formData) => {
@@ -97,10 +100,20 @@ export default function WhatsappNumberForm({
   };
 
   const confirmClear = () => {
-    setConfirmClearOpen(false);
+    // Le dialogue reste ouvert (pending) jusqu'a la fin de l'envoi, comme `ActiveToggleButton` :
+    // le fermer tout de suite rendrait le focus au bouton d'enregistrement deja desactive par
+    // `pending`, qui retomberait alors sur `body`.
     bypassConfirmRef.current = true;
     formRef.current?.requestSubmit();
   };
+
+  // Ferme le dialogue de confirmation une fois l'envoi resolu (seul declencheur possible d'un
+  // changement de `state` pendant qu'il est ouvert, voir confirmClear). Ajuste pendant le rendu
+  // plutot que dans un effet (pas de rendu intermediaire avec un dialogue perime).
+  if (state !== lastConfirmState) {
+    if (confirmClearOpen) setConfirmClearOpen(false);
+    setLastConfirmState(state);
+  }
 
   return (
     <form
@@ -228,6 +241,7 @@ export default function WhatsappNumberForm({
         }
         confirmLabel="Retirer le numéro"
         tone="danger"
+        pending={pending}
         onConfirm={confirmClear}
         onCancel={() => setConfirmClearOpen(false)}
       />

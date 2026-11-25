@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setBdeMemberActive } from "@/features/members/actions";
-import { getBdeMember } from "@/features/members/queries";
+import { getBdeMemberCached } from "@/features/members/queries";
 import AdminPageHeader from "../../../../components/AdminPageHeader";
 import ActiveToggleButton from "../../../../components/ActiveToggleButton";
 import { requireAdminSession } from "../../../../lib/requireAdminSession";
@@ -16,7 +16,7 @@ const dateFormat = new Intl.DateTimeFormat("fr-FR", {
 export async function generateMetadata({
   params,
 }: PageProps<"/admin/membres/[id]/modifier">): Promise<Metadata> {
-  const member = await getBdeMember((await params).id);
+  const member = await getBdeMemberCached((await params).id);
   const name = member ? member.fullName || member.email : "membre introuvable";
   return { title: `Modifier ${name} · Admin` };
 }
@@ -26,7 +26,7 @@ export default async function EditMemberPage({
 }: PageProps<"/admin/membres/[id]/modifier">) {
   await requireAdminSession();
   const { id } = await params;
-  const member = await getBdeMember(id);
+  const member = await getBdeMemberCached(id);
   if (!member) notFound();
 
   const name = member.fullName || member.email;

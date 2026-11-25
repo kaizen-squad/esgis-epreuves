@@ -22,7 +22,6 @@ import {
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { createBdeMember, updateBdeMember } from "@/features/members/actions";
 import {
-  MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
   memberCreateSchema,
   memberUpdateSchema,
@@ -73,12 +72,17 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
   const [showPassword, setShowPassword] = useState(false);
   const [dismissedId, setDismissedId] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
-  // Email deja confirme pour le changement d'email en cours : evite de redemander a chaque
-  // soumission si l'utilisateur a deja valide ce changement precis.
-  const [confirmedEmail, setConfirmedEmail] = useState(initial.email);
+  // Email deja confirme pour le changement d'email en cours (normalise, comme a l'envoi) : evite
+  // de redemander a chaque soumission si l'utilisateur a deja valide ce changement precis.
+  const [confirmedEmail, setConfirmedEmail] = useState(
+    initial.email.trim().toLowerCase(),
+  );
   const [confirmEmailOpen, setConfirmEmailOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const pendingFormDataRef = useRef<FormData | null>(null);
+  const [lastConfirmState, setLastConfirmState] = useState<
+    SubmitState | undefined
+  >(undefined);
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
@@ -133,13 +137,16 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const newEmail = values.email.trim().toLowerCase();
-    // Changer l'email change aussi l'identifiant de connexion du membre : avertissement explicite
-    // avant d'envoyer, une seule fois par valeur d'email saisie.
-    if (
+    // La confirmation ne doit porter que sur une saisie valide : sinon on avertit d'un changement
+    // d'email qui ne pourra pas s'envoyer (ex. domaine manquant), avant meme l'erreur de validation.
+    const validEmailChange =
       member &&
       newEmail !== member.email.toLowerCase() &&
-      newEmail !== confirmedEmail.toLowerCase()
-    ) {
+      newEmail !== confirmedEmail &&
+      (isEdit ? memberUpdateSchema : memberCreateSchema).safeParse(
+        Object.fromEntries(formData),
+      ).success;
+    if (validEmailChange) {
       pendingFormDataRef.current = formData;
       setConfirmEmailOpen(true);
       return;
@@ -148,8 +155,10 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
   };
 
   const confirmEmailChange = () => {
-    setConfirmEmailOpen(false);
-    setConfirmedEmail(values.email);
+    // Le dialogue reste ouvert (pending) jusqu'a la fin de l'envoi, comme `ActiveToggleButton` :
+    // le fermer tout de suite rendrait le focus a un bouton de soumission deja desactive par
+    // `pending`, qui retomberait alors sur `body`.
+    setConfirmedEmail(values.email.trim().toLowerCase());
     if (pendingFormDataRef.current) submitFormData(pendingFormDataRef.current);
     pendingFormDataRef.current = null;
   };
@@ -157,6 +166,14 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
   const dismiss = () => {
     if (state.status === "done") setDismissedId(state.id);
   };
+
+  // Ferme le dialogue de confirmation d'email une fois l'envoi resolu (seul declencheur possible
+  // d'un changement de `state` pendant qu'il est ouvert, voir confirmEmailChange). Ajuste pendant
+  // le rendu plutot que dans un effet (pas de rendu intermediaire avec un dialogue perime).
+  if (state !== lastConfirmState) {
+    if (confirmEmailOpen) setConfirmEmailOpen(false);
+    setLastConfirmState(state);
+  }
 
   // Deplace le focus sur le premier champ en erreur apres un envoi invalide (serveur ou client),
   // au lieu de le laisser retomber sur `body` (bureau) ou sur le bouton de soumission (mobile).
@@ -203,12 +220,14 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
           <button
             type="button"
             onClick={() => {
+              const email = values.email.trim().toLowerCase();
               navigator.clipboard
-                .writeText(`${values.email} / ${values.password}`)
+                ?.writeText(`${email} / ${values.password}`)
                 .then(() => {
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
-                });
+                })
+                .catch(() => {});
             }}
             className="text-text-default mb-6 flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50"
           >
@@ -331,7 +350,6 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
               autoComplete="new-password"
               required={!isEdit}
               aria-required={!isEdit}
-              maxLength={MAX_PASSWORD_LENGTH}
               aria-invalid={errors.password ? true : undefined}
               aria-describedby={
                 errors.password
@@ -388,11 +406,13 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
         title="Changer l'email du membre ?"
         description={
           <p className="mb-0">
-            <strong>{values.email}</strong> deviendra son nouvel identifiant de
-            connexion : il ne pourra plus se connecter avec l&apos;ancien email.
+            <strong>{values.email.trim().toLowerCase()}</strong> deviendra son
+            nouvel identifiant de connexion : il ne pourra plus se connecter
+            avec l&apos;ancien email.
           </p>
         }
         confirmLabel="Changer l'email"
+        pending={pending}
         onConfirm={confirmEmailChange}
         onCancel={() => {
           setConfirmEmailOpen(false);

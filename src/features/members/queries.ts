@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -35,33 +36,45 @@ function toMember(row: MemberRow): BdeMember {
  * Complete chaque membre avec son nombre d'epreuves versees et la date de son dernier depot
  * (#166), pour decider une desactivation en connaissance de cause. `exams` est lisible par tous
  * (`exams_select_public`), pas besoin du client admin.
+ *
+ * Une requete par membre (comptage exact + derniere date), jamais une lecture de toutes les
+ * lignes de `exams` : PostgREST plafonne une reponse a `max_rows` (1000, voir
+ * `supabase/config.toml`), ce qu'un membre actif qui verse par lots finit par depasser, faussant
+ * silencieusement le compte et la derniere date sans la moindre erreur.
  */
 async function attachActivity(members: BdeMember[]): Promise<BdeMember[]> {
   if (members.length === 0) return members;
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("exams")
-    .select("created_by, created_at")
-    .in(
-      "created_by",
-      members.map((member) => member.id),
-    );
-  if (error) throw error;
+  const activity = await Promise.all(
+    members.map(async (member) => {
+      const [{ count, error: countError }, { data: last, error: lastError }] =
+        await Promise.all([
+          supabase
+            .from("exams")
+            .select("id", { count: "exact", head: true })
+            .eq("created_by", member.id),
+          supabase
+            .from("exams")
+            .select("created_at")
+            .eq("created_by", member.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
+      if (countError) throw countError;
+      if (lastError) throw lastError;
+      return {
+        id: member.id,
+        count: count ?? 0,
+        lastAt: last?.created_at ?? null,
+      };
+    }),
+  );
 
-  const activity = new Map<string, { count: number; lastAt: string }>();
-  for (const row of data ?? []) {
-    const current = activity.get(row.created_by);
-    if (!current) {
-      activity.set(row.created_by, { count: 1, lastAt: row.created_at });
-    } else {
-      current.count += 1;
-      if (row.created_at > current.lastAt) current.lastAt = row.created_at;
-    }
-  }
-
+  const byId = new Map(activity.map((entry) => [entry.id, entry]));
   return members.map((member) => {
-    const entry = activity.get(member.id);
+    const entry = byId.get(member.id);
     return {
       ...member,
       examCount: entry?.count ?? 0,
@@ -235,3 +248,6 @@ export async function getBdeMember(
   const [lastName = "", ...rest] = member.fullName.split(" ");
   return { ...member, lastName, firstNames: rest.join(" ") };
 }
+
+/** `getBdeMember` memoisee par requete : partagee entre `generateMetadata` et la page. */
+export const getBdeMemberCached = cache(getBdeMember);

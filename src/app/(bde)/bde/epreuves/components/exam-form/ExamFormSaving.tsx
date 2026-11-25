@@ -34,7 +34,7 @@ export default function ExamFormSaving({
       className="bg-background-default flex flex-col items-center gap-4 rounded-lg px-6 py-16 text-center"
     >
       <CgSpinner className="text-background-accent animate-spin" size={48} />
-      <h3 className="text-text-secondary text-xl font-semibold">{title}</h3>
+      <h2 className="text-text-secondary text-xl font-semibold">{title}</h2>
       <p className="text-text-paragraph mb-0">
         {description} Ne quittez pas cette page.
       </p>

@@ -156,7 +156,9 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
           className="flex flex-col gap-10"
         >
           <section className="flex flex-col gap-3">
-            <h2 className="section-title">Fichier actuel</h2>
+            <h2 className="text-text-secondary text-xl font-semibold">
+              Fichier actuel
+            </h2>
             <p className="text-text-paragraph mb-0 text-sm">
               Les données de l&apos;épreuve sont conservées, seul le PDF est
               remplacé.
@@ -181,7 +183,9 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
           </section>
 
           <section className="flex flex-col gap-3">
-            <h2 className="section-title">Téléverser le nouveau fichier</h2>
+            <h2 className="text-text-secondary text-xl font-semibold">
+              Téléverser le nouveau fichier
+            </h2>
             <ExamDropzone
               hint={`Un seul fichier, ${MAX_FILE_SIZE_LABEL} maximum`}
               error={fileError}
