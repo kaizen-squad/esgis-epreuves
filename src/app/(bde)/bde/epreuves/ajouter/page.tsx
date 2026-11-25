@@ -9,7 +9,7 @@ import {
 import ExamWelcomeSection from "../components/ExamWelcomeSection";
 import AddExamFlow from "../components/exam-form/AddExamFlow";
 
-export const metadata: Metadata = { title: "Ajouter une épreuve · Espace BDE" };
+export const metadata: Metadata = { title: "Verser une épreuve · Espace BDE" };
 
 export default async function AjouterEpreuvePage({
   searchParams,
@@ -42,7 +42,7 @@ export default async function AjouterEpreuvePage({
 
   return (
     <div>
-      <ExamWelcomeSection title="Ajouter une Épreuve" />
+      <ExamWelcomeSection title="Verser une épreuve" />
       <AddExamFlow
         fields={fields}
         levels={levels}

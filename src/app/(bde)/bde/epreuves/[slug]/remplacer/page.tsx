@@ -24,7 +24,7 @@ export default async function RemplacerEpreuvePage({
 
   return (
     <div>
-      <ExamWelcomeSection title="Remplacer le Fichier" />
+      <ExamWelcomeSection title="Remplacer le fichier" />
       <ReplaceExamFileFlow exam={exam} />
     </div>
   );

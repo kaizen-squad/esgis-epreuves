@@ -47,7 +47,7 @@ export default async function ModifierEpreuvePage({
 
   return (
     <div>
-      <ExamWelcomeSection title="Modifier une Épreuve" />
+      <ExamWelcomeSection title="Modifier une épreuve" />
       <EditExamFlow
         exam={exam}
         fields={fields}

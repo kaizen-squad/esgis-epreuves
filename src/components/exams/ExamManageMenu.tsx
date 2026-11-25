@@ -46,7 +46,7 @@ export default function ExamManageMenu({
           href={`/bde/epreuves/${slug}/remplacer`}
           name={
             <span className="flex items-center gap-2 text-sm">
-              Remplacer l&apos;épreuve <FiRotateCcw />
+              Remplacer le fichier <FiRotateCcw />
             </span>
           }
         />

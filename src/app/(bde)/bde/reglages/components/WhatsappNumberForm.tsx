@@ -115,7 +115,7 @@ export default function WhatsappNumberForm({
           inputMode="tel"
           autoComplete="off"
           spellCheck={false}
-          placeholder="+229 01 23 45 67 89…"
+          placeholder="+229 01 23 45 67 89"
           value={value}
           onChange={(event) => setValue(event.target.value)}
           aria-invalid={state.fieldError ? true : undefined}

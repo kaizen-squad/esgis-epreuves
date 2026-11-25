@@ -119,7 +119,7 @@ export default function AddExamResult({
       ? summary.total > 1
         ? `Les ${summary.total} épreuves sont désormais disponibles dans le catalogue.`
         : "L'épreuve est désormais disponible dans le catalogue."
-      : `${summary?.imported ?? 0} sur ${summary?.total ?? 0} fichier(s) publié(s). Corrigez les fichiers restants puis réessayez.`;
+      : `${summary?.imported ?? 0} sur ${summary?.total ?? 0} fichier${(summary?.total ?? 0) > 1 ? "s" : ""} publié${(summary?.total ?? 0) > 1 ? "s" : ""}. Corrigez les fichiers restants puis réessayez.`;
 
   // Focus sur le resultat a l'arrivee sur cette etape : le formulaire disparait et, sans cela,
   // le focus retombait sur `body` (#171).
