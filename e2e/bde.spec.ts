@@ -25,7 +25,7 @@ test("un membre BDE se connecte et publie une epreuve avec son fichier", async (
 
   await page.getByLabel("Année académique").selectOption({ index: 1 });
 
-  await page.getByRole("button", { name: "Publier l'Épreuve" }).click();
+  await page.getByRole("button", { name: "Verser l'épreuve" }).click();
 
   // L'etape "Publication en cours..." a aussi role="status" : laisser le temps a l'upload
   // (fichier + verification de doublon) de finir avant que le resultat ne la remplace.
