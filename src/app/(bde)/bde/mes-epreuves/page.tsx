@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import { createClient } from "@/lib/supabase/server";
 import CatalogueEpreuveSection from "@/components/catalogue/CatalogueEpreuveSection";
 import Research from "@/components/exams/Research";
+
+export const metadata: Metadata = { title: "Mes versements · Espace BDE" };
 
 /**
  * Historique complet des versements du membre connecte (#174) : "Voir tous mes versements" sur

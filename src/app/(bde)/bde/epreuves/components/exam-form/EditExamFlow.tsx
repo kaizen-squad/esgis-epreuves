@@ -220,7 +220,7 @@ export default function EditExamFlow({
           className="flex flex-col gap-10"
         >
           <section className="flex flex-col gap-3">
-            <h3 className="section-title">Fichier de l&apos;épreuve</h3>
+            <h2 className="section-title">Fichier de l&apos;épreuve</h2>
             {/* Plus de cadre en pointilles (zone de depot) : le fichier n'est pas deposable ici,
                 seulement consultable (#171). */}
             <p className="text-text-paragraph mb-0 text-sm">
@@ -261,9 +261,9 @@ export default function EditExamFlow({
 
           <section className="flex flex-col gap-5">
             <div>
-              <h3 className="section-title">
+              <h2 className="section-title">
                 Modifiez les données de l&apos;épreuve
-              </h3>
+              </h2>
               <p className="text-text-paragraph mb-0 text-sm">
                 Tous les champs marqués * sont obligatoires. Le titre et
                 l&apos;année académique se modifient sur la carte du fichier

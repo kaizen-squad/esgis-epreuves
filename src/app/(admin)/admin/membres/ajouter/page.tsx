@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import AdminPageHeader from "../../../components/AdminPageHeader";
 import { requireAdminSession } from "../../../lib/requireAdminSession";
 import MemberForm from "../components/MemberForm";
+
+export const metadata: Metadata = { title: "Ajouter un membre · Admin" };
 
 export default async function AddMemberPage() {
   await requireAdminSession();

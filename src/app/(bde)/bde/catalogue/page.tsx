@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import CatalogueEpreuveSection from "@/components/catalogue/CatalogueEpreuveSection";
 import Research from "@/components/exams/Research";
+
+export const metadata: Metadata = {
+  title: "Catalogue des épreuves · Espace BDE",
+};
 
 export default async function BDECataloguePage({
   searchParams,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   createOption,
   setOptionActive,
@@ -12,6 +13,8 @@ import AdminPageHeader from "../../../components/AdminPageHeader";
 import { requireAdminSession } from "../../../lib/requireAdminSession";
 import ReferentialManager from "../components/ReferentialManager";
 import ReferentialTabs from "../components/ReferentialTabs";
+
+export const metadata: Metadata = { title: "Options · Référentiels · Admin" };
 
 export default async function OptionsPage() {
   await requireAdminSession();

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { FiUserCheck, FiUserX } from "react-icons/fi";
 import {
   countActiveBdeMembers,
@@ -13,6 +14,8 @@ import MembersTable from "../components/MembersTable";
 import MemberSearch from "../components/MemberSearch";
 import Pagination from "../components/Pagination";
 import { requireAdminSession } from "../lib/requireAdminSession";
+
+export const metadata: Metadata = { title: "Dashboard · Admin" };
 
 export default async function AdminDashboardPage({
   searchParams,

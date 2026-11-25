@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setBdeMemberActive } from "@/features/members/actions";
 import { getBdeMember } from "@/features/members/queries";
@@ -5,6 +6,14 @@ import AdminPageHeader from "../../../../components/AdminPageHeader";
 import ActiveToggleButton from "../../../../components/ActiveToggleButton";
 import { requireAdminSession } from "../../../../lib/requireAdminSession";
 import MemberForm from "../../components/MemberForm";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/admin/membres/[id]/modifier">): Promise<Metadata> {
+  const member = await getBdeMember((await params).id);
+  const name = member ? member.fullName || member.email : "membre introuvable";
+  return { title: `Modifier ${name} · Admin` };
+}
 
 export default async function EditMemberPage({
   params,

@@ -37,7 +37,7 @@ export default async function MyRecentUploads() {
   if (exams.length === 0) {
     return (
       <div className="mx-auto mb-16 max-w-7xl">
-        <h3 className="section-title">Mes derniers versements</h3>
+        <h2 className="section-title">Mes derniers versements</h2>
         <p className="text-text-paragraph">
           Vous n&apos;avez pas encore versé d&apos;épreuve.
         </p>
@@ -54,12 +54,12 @@ export default async function MyRecentUploads() {
   return (
     <div className="mx-auto mb-16 max-w-7xl">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="section-title mb-0">
+        <h2 className="section-title mb-0">
           Mes derniers versements{" "}
           <span className="text-text-paragraph text-base font-normal">
             ({total})
           </span>
-        </h3>
+        </h2>
         <Link
           href="/bde/mes-epreuves"
           className="text-text-default flex items-center gap-1 text-sm font-medium hover:underline"

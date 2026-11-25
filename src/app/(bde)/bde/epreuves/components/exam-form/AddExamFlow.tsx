@@ -274,7 +274,7 @@ export default function AddExamFlow({
           className="flex flex-col gap-10"
         >
           <section className="flex flex-col gap-3">
-            <h3 className="section-title">Téléverser votre(vos) fichiers</h3>
+            <h2 className="section-title">Téléverser votre(vos) fichiers</h2>
             <ExamDropzone
               multiple
               hint={`${MAX_BATCH_FILES} fichiers maximum, ${MAX_FILE_SIZE_LABEL} maximum par fichier`}
@@ -351,9 +351,9 @@ export default function AddExamFlow({
 
           <section className="flex flex-col gap-5">
             <div>
-              <h3 className="section-title">
+              <h2 className="section-title">
                 Entrez les données de(s) l&apos;épreuve(s)
-              </h3>
+              </h2>
               <p className="text-text-paragraph mb-0 text-sm">
                 Tous les champs marqués * sont obligatoires. Le titre et
                 l&apos;année académique se renseignent sur chaque fichier

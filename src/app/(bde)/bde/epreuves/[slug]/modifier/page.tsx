@@ -1,6 +1,7 @@
+import type { Metadata } from "next";
 import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import { notFound } from "next/navigation";
-import { getExamBySlug } from "@/features/exams/queries";
+import { getExamCached } from "@/features/exams/queries";
 import {
   getFields,
   getLevels,
@@ -10,13 +11,22 @@ import {
 import ExamWelcomeSection from "../../components/ExamWelcomeSection";
 import EditExamFlow from "../../components/exam-form/EditExamFlow";
 
+export async function generateMetadata({
+  params,
+}: PageProps<"/bde/epreuves/[slug]/modifier">): Promise<Metadata> {
+  const exam = await getExamCached((await params).slug);
+  return {
+    title: `Modifier ${exam?.title ?? "une épreuve introuvable"} · Espace BDE`,
+  };
+}
+
 export default async function ModifierEpreuvePage({
   params,
 }: PageProps<"/bde/epreuves/[slug]/modifier">) {
   await requireBdeSession();
   const { slug } = await params;
   const [exam, fields, levels, subjects, options] = await Promise.all([
-    getExamBySlug(slug),
+    getExamCached(slug),
     getFields(),
     getLevels(),
     getSubjects(),

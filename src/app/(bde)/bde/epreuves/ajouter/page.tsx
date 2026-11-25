@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import {
   getFields,
@@ -7,6 +8,8 @@ import {
 } from "@/features/referentials/queries";
 import ExamWelcomeSection from "../components/ExamWelcomeSection";
 import AddExamFlow from "../components/exam-form/AddExamFlow";
+
+export const metadata: Metadata = { title: "Ajouter une épreuve · Espace BDE" };
 
 export default async function AjouterEpreuvePage({
   searchParams,
