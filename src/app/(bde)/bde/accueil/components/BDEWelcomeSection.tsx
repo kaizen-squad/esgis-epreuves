@@ -12,7 +12,7 @@ const ACTION_CLASS =
 const BDEWelcomeSection = ({ gapCount }: { gapCount: number }) => {
   return (
     <div className="mb-10 w-full px-6 text-center">
-      <h1 className="head-title mb-2">Bienvenue sur Alexandria</h1>
+      <h1 className="head-title mb-2">Gérer les épreuves</h1>
       <h2 className="sub-title">Versez vos épreuves</h2>
 
       <div className="mx-auto flex max-w-md flex-col gap-3">
