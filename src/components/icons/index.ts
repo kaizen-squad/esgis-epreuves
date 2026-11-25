@@ -21,6 +21,7 @@ export {
   FiFolder,
   FiHome,
   FiLayers,
+  FiMenu,
   FiLinkedin,
   FiMoreVertical,
   FiRefreshCw,

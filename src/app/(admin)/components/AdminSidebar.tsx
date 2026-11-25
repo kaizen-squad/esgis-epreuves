@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 import type { IconType } from "react-icons";
 import { FiList, FiMenu, FiUsers, FiUserPlus, FiX } from "react-icons/fi";
 import LogoutButton from "@/components/layout/LogoutButton";
+import { useMobileDrawer } from "@/components/layout/useMobileDrawer";
 
 type AdminLink = {
   name: string;
@@ -51,82 +51,8 @@ const SIDEBAR_ID = "admin-sidebar";
  */
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const asideRef = useRef<HTMLDivElement>(null);
-  const openButtonRef = useRef<HTMLButtonElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Rend le focus au bouton d'ouverture seulement en refermant le tiroir (transition true ->
-  // false), jamais au premier rendu (ou `open` vaut deja `false`) : sinon chaque chargement d'une
-  // page Admin sous `lg` volait le focus a ce bouton des le montage.
-  const previousOpenRef = useRef(open);
-  useEffect(() => {
-    if (previousOpenRef.current && !open) openButtonRef.current?.focus();
-    previousOpenRef.current = open;
-  }, [open]);
-
-  // Tiroir mobile accessible (#163) : verrouille le defilement de la page, ferme sur Echap, piege
-  // Tab/Shift+Tab a l'interieur et se referme si la fenetre passe a `lg` pendant qu'il est ouvert
-  // (sinon le defilement resterait bloque sans aucun moyen visible de le refermer au-dela de ce
-  // point de rupture). Focus deplace dedans a l'ouverture.
-  useEffect(() => {
-    if (!open) return;
-    document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
-
-    const desktopQuery = window.matchMedia("(min-width: 1024px)");
-    const onDesktopChange = () => {
-      if (desktopQuery.matches) setOpen(false);
-    };
-    desktopQuery.addEventListener("change", onDesktopChange);
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusable = Array.from(
-        asideRef.current?.querySelectorAll<HTMLElement>(
-          "a[href], button:not([disabled])",
-        ) ?? [],
-      );
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (!first || !last) return;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.style.overflow = "";
-      desktopQuery.removeEventListener("change", onDesktopChange);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  // `inert` retire les liens du tiroir ferme de l'ordre de tabulation sans dupliquer la logique
-  // en CSS : au-dela de `lg`, le tiroir est toujours visible, `inert` ne s'applique donc qu'en
-  // dessous via la media query du navigateur elle-meme.
-  useEffect(() => {
-    const aside = asideRef.current;
-    if (!aside) return;
-    const isMobileDrawerClosed = () =>
-      !open && !window.matchMedia("(min-width: 1024px)").matches;
-    const sync = () => {
-      if (isMobileDrawerClosed()) aside.setAttribute("inert", "");
-      else aside.removeAttribute("inert");
-    };
-    sync();
-    window.addEventListener("resize", sync);
-    return () => window.removeEventListener("resize", sync);
-  }, [open]);
+  const { open, setOpen, asideRef, openButtonRef, closeButtonRef } =
+    useMobileDrawer();
 
   return (
     <>
