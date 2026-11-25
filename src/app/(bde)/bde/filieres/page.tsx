@@ -3,7 +3,7 @@ import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import { getFields } from "@/features/referentials/queries";
 import FieldCoverageMatrix from "@/components/fields/FieldCoverageMatrix";
 
-export const metadata: Metadata = { title: "Lacunes du fonds · Espace BDE" };
+export const metadata: Metadata = { title: "Épreuves manquantes · Espace BDE" };
 
 const BDEFilieresPage = async () => {
   await requireBdeSession();
@@ -12,7 +12,7 @@ const BDEFilieresPage = async () => {
   return (
     <div className="mx-auto mb-16 max-w-7xl px-6">
       <div className="mb-8 text-center">
-        <h1 className="section-title">Lacunes du fonds</h1>
+        <h1 className="section-title">Épreuves manquantes</h1>
         <p className="text-text-paragraph">
           Les matières sans épreuve archivée, filière par filière.
         </p>
