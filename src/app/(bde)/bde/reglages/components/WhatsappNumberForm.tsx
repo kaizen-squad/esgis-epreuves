@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useRef, useState, type SubmitEvent } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type SubmitEvent,
+} from "react";
 import { CgSpinner } from "react-icons/cg";
 import {
   FaWhatsapp,
@@ -37,9 +43,6 @@ export default function WhatsappNumberForm({
   const formRef = useRef<HTMLFormElement>(null);
   // Court-circuite la confirmation une seule fois, pour le resoumis declenche par `confirmClear`.
   const bypassConfirmRef = useRef(false);
-  const [lastConfirmState, setLastConfirmState] = useState<State | undefined>(
-    undefined,
-  );
 
   const [state, dispatch, pending] = useActionState<State, FormData>(
     async (previous, formData) => {
@@ -108,12 +111,16 @@ export default function WhatsappNumberForm({
   };
 
   // Ferme le dialogue de confirmation une fois l'envoi resolu (seul declencheur possible d'un
-  // changement de `state` pendant qu'il est ouvert, voir confirmClear). Ajuste pendant le rendu
-  // plutot que dans un effet (pas de rendu intermediaire avec un dialogue perime).
-  if (state !== lastConfirmState) {
-    if (confirmClearOpen) setConfirmClearOpen(false);
-    setLastConfirmState(state);
-  }
+  // changement de `state` pendant qu'il est ouvert, voir confirmClear). Un ajustement pendant le
+  // rendu (plutot qu'un effet) provoquait une boucle de rendu infinie au SSR : `useActionState`
+  // n'y preserve pas l'identite de son etat entre les tentatives de rendu synchrones declenchees
+  // par un `setState` appele pendant le rendu lui-meme.
+  useEffect(() => {
+    // Ferme une modale a la fin d'une requete, jamais une boucle : `false` ne change rien si deja
+    // ferme (bail-out React).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setConfirmClearOpen(false);
+  }, [state]);
 
   return (
     <form
