@@ -19,6 +19,7 @@ export {
   FiEye,
   FiFileText,
   FiFolder,
+  FiHome,
   FiLayers,
   FiLinkedin,
   FiMoreVertical,

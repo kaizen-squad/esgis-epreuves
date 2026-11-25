@@ -8,6 +8,7 @@ import { FiMenu } from "react-icons/fi";
 import {
   FiAlertCircle,
   FiFolder,
+  FiHome,
   FiSettings,
   FiUpload,
   FiX,
@@ -30,6 +31,12 @@ type BdeLink = {
 };
 
 const BDE_LINKS: BdeLink[] = [
+  {
+    name: "Accueil",
+    href: "/bde/accueil",
+    icon: FiHome,
+    isActive: (pathname) => pathname === "/bde/accueil",
+  },
   {
     // Vocabulaire deja etabli par l'accueil BDE (« Verser une epreuve », BDEWelcomeSection),
     // repris ici plutot qu'un nouveau synonyme. Priorite la plus haute : l'action principale.
