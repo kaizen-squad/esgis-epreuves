@@ -123,8 +123,7 @@ export default function MembersTable({
                       {member.examCount > 1 ? "s" : ""}
                       {member.lastDepositAt ? (
                         <>
-                          {" "}
-                          ·{" "}
+                          {", dernier dépôt le "}
                           <time dateTime={member.lastDepositAt}>
                             {dateFormat.format(new Date(member.lastDepositAt))}
                           </time>
