@@ -80,9 +80,6 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
   const [confirmEmailOpen, setConfirmEmailOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const pendingFormDataRef = useRef<FormData | null>(null);
-  const [lastConfirmState, setLastConfirmState] = useState<
-    SubmitState | undefined
-  >(undefined);
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
@@ -168,12 +165,14 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
   };
 
   // Ferme le dialogue de confirmation d'email une fois l'envoi resolu (seul declencheur possible
-  // d'un changement de `state` pendant qu'il est ouvert, voir confirmEmailChange). Ajuste pendant
-  // le rendu plutot que dans un effet (pas de rendu intermediaire avec un dialogue perime).
-  if (state !== lastConfirmState) {
-    if (confirmEmailOpen) setConfirmEmailOpen(false);
-    setLastConfirmState(state);
-  }
+  // d'un changement de `state` pendant qu'il est ouvert, voir confirmEmailChange). Un ajustement
+  // pendant le rendu (plutot qu'un effet) provoquait une boucle de rendu infinie au SSR :
+  // `useActionState` n'y preserve pas l'identite de son etat entre les tentatives de rendu
+  // synchrones declenchees par un `setState` appele pendant le rendu lui-meme.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setConfirmEmailOpen(false);
+  }, [state]);
 
   // Deplace le focus sur le premier champ en erreur apres un envoi invalide (serveur ou client),
   // au lieu de le laisser retomber sur `body` (bureau) ou sur le bouton de soumission (mobile).
