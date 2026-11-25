@@ -65,7 +65,7 @@ export default async function FieldCoverageMatrix({
         <h2 className="text-text-secondary text-xl font-semibold">{heading}</h2>
         {gaps === 0 ? (
           <p className="flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-green-700">
-            <FiCheckCircle size={16} /> Fonds complet
+            <FiCheckCircle size={16} /> Tout est couvert
           </p>
         ) : (
           <p className="text-text-paragraph text-sm">

@@ -47,7 +47,7 @@ const BDE_LINKS: BdeLink[] = [
         pathname !== "/bde/epreuves/ajouter"),
   },
   {
-    name: "Lacunes du fonds",
+    name: "Épreuves manquantes",
     href: BDE_FILIERES_HREF,
     icon: FiAlertCircle,
     isActive: (pathname) => pathname.startsWith(BDE_FILIERES_HREF),

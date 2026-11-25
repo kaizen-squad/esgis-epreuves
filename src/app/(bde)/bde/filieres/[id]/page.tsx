@@ -12,7 +12,7 @@ export async function generateMetadata({
 }: PageProps<"/bde/filieres/[id]">): Promise<Metadata> {
   const field = await getFieldByIdCached((await params).id);
   return {
-    title: `Lacunes du fonds · ${field ? fieldDisplayName(field.name) : "filière introuvable"} · Espace BDE`,
+    title: `Épreuves manquantes · ${field ? fieldDisplayName(field.name) : "filière introuvable"} · Espace BDE`,
   };
 }
 
@@ -28,7 +28,7 @@ export default async function BDEFilierePage({
     <div className="mx-auto mb-16 max-w-7xl px-6">
       <FieldBreadcrumb fieldName={field.name} basePath={BDE_BASE_PATH} />
       <h1 className="section-title mb-6 text-center">
-        Lacunes du fonds : {fieldDisplayName(field.name)}
+        Épreuves manquantes : {fieldDisplayName(field.name)}
       </h1>
       <FieldCoverageMatrix fieldId={field.id} fieldName={field.name} />
     </div>
