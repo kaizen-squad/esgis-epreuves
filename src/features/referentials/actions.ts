@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { actionError, actionOk, type ActionResult } from "@/lib/action-result";
 import {
@@ -50,6 +51,9 @@ async function insertReferential(
       `Impossible d'enregistrer ${itemLabel}. Réessayez dans un instant.`,
     );
   }
+  // Un nouveau referentiel actif apparait dans les listes publiques (menu, filtres, formulaire de
+  // depot) : les pages publiques en ISR (revalidate=60) ne le verraient sinon qu'apres jusqu'a 60s.
+  revalidatePath("/", "layout");
   return actionOk({ id: data.id });
 }
 
@@ -83,6 +87,8 @@ async function updateReferential(
   if (!data || data.length === 0) {
     return actionError(`Impossible de trouver ${itemLabel}.`);
   }
+  // Le nom modifie apparait dans les listes publiques : voir le commentaire d'insertReferential.
+  revalidatePath("/", "layout");
   return actionOk(null);
 }
 
@@ -115,6 +121,9 @@ async function setReferentialActive(
   if (!data || data.length === 0) {
     return actionError(`Impossible de trouver ${itemLabel}.`);
   }
+  // Desactiver/reactiver change ce qui apparait dans les listes publiques : voir le commentaire
+  // d'insertReferential.
+  revalidatePath("/", "layout");
   return actionOk(null);
 }
 
