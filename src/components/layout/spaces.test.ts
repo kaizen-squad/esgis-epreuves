@@ -11,6 +11,10 @@ describe("isNavLinkActive", () => {
     expect(isNavLinkActive("", "/")).toBe(true);
   });
 
+  it("l'accueil reste actif sur /index (regeneration ISR en prod Vercel, x-matched-path)", () => {
+    expect(isNavLinkActive("/index", "/")).toBe(true);
+  });
+
   it("une rubrique reste active sur ses sous-pages", () => {
     expect(isNavLinkActive("/filieres", "/filieres")).toBe(true);
     expect(isNavLinkActive("/filieres/irt", "/filieres")).toBe(true);
