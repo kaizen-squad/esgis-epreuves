@@ -35,8 +35,18 @@ export function publicExamPath(slug: string): string {
  * `usePathname()` resout la racine `/` en chaine vide `""` (pas `"/"`) sur un rendu statique fige
  * au build (ISR), contrairement aux autres routes : `/` restait donc jamais mise en avant au
  * premier chargement direct (hors navigation cote client, qui la resout correctement).
+ *
+ * `/index` s'y ajoute (#189 bis) : en prod sur Vercel, la route racine est invoquee en interne
+ * via l'en-tete `x-matched-path: /index` (nom de la fonction serverless, visible dans
+ * `vercel inspect` : `λ index`) ; Next normalise `/index` en `/` seulement sur une requete HTTP
+ * directe passant par ce chemin (voir `node_modules/next/dist/server/base-server.js`,
+ * "ensure /index path is normalized for prerender in minimal mode"), pas lors de la
+ * regeneration ISR en tache de fond, qui recree alors une page statique ou l'onglet Accueil
+ * n'est jamais actif. Non reproductible avec `next build && next start` (ce mecanisme n'existe
+ * qu'en mode minimal de Vercel).
  */
 export function isNavLinkActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/" || pathname === "";
+  if (href === "/")
+    return pathname === "/" || pathname === "" || pathname === "/index";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
