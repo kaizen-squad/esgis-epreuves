@@ -20,9 +20,9 @@ function initials(fullName: string) {
 }
 
 /**
- * Liste des membres BDE : nom, email, date d'ajout, statut écrit en toutes lettres et actions
- * (modifier, activer / désactiver). Les membres désactivés arrivent en bas (tri de la requête)
- * et sont grisés.
+ * Liste des membres BDE : nom, email, date d'ajout, activité (#166), statut écrit en toutes
+ * lettres et actions (modifier, activer / désactiver). Les membres désactivés arrivent en bas
+ * (tri de la requête) et sont grisés.
  */
 export default function MembersTable({
   members,
@@ -51,6 +51,9 @@ export default function MembersTable({
                 Date d&apos;ajout
               </th>
               <th scope="col" className="px-5 py-3 font-medium">
+                Activité
+              </th>
+              <th scope="col" className="px-5 py-3 font-medium">
                 Statut
               </th>
               <th scope="col" className="px-5 py-3 text-right font-medium">
@@ -62,7 +65,7 @@ export default function MembersTable({
             {members.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="text-text-paragraph px-5 py-12 text-center"
                 >
                   Aucun membre ne correspond à « {search} ».{" "}
@@ -112,6 +115,21 @@ export default function MembersTable({
                       <time dateTime={member.createdAt}>
                         {dateFormat.format(new Date(member.createdAt))}
                       </time>
+                    </td>
+                    <td
+                      className={`px-5 py-3 whitespace-nowrap ${member.isActive ? "text-text-paragraph" : ""}`}
+                    >
+                      {member.examCount} épreuve
+                      {member.examCount > 1 ? "s" : ""}
+                      {member.lastDepositAt ? (
+                        <>
+                          {" "}
+                          ·{" "}
+                          <time dateTime={member.lastDepositAt}>
+                            {dateFormat.format(new Date(member.lastDepositAt))}
+                          </time>
+                        </>
+                      ) : null}
                     </td>
                     <td className="px-5 py-3">
                       {member.isActive ? (

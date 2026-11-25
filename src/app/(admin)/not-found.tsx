@@ -14,7 +14,7 @@ export default function AdminNotFound() {
         href="/admin"
         className="bg-background-accent text-text-primary rounded-control px-4 py-2"
       >
-        Retour au tableau de bord
+        Retour aux membres
       </Link>
     </div>
   );

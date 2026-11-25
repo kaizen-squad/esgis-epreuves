@@ -15,9 +15,9 @@ import MemberSearch from "../components/MemberSearch";
 import Pagination from "../components/Pagination";
 import { requireAdminSession } from "../lib/requireAdminSession";
 
-export const metadata: Metadata = { title: "Dashboard · Admin" };
+export const metadata: Metadata = { title: "Membres · Admin" };
 
-export default async function AdminDashboardPage({
+export default async function AdminMembersPage({
   searchParams,
 }: PageProps<"/admin">) {
   await requireAdminSession();
@@ -37,7 +37,7 @@ export default async function AdminDashboardPage({
   return (
     <>
       <AdminPageHeader
-        title="Dashboard"
+        title="Membres"
         description="Gérez les comptes des membres du BDE."
       />
 

@@ -32,7 +32,7 @@ export default function AdminError({
           href="/admin"
           className="text-text-default rounded-control border border-gray-300 px-4 py-2 hover:bg-gray-50"
         >
-          Retour au tableau de bord
+          Retour aux membres
         </Link>
       </div>
     </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { IconType } from "react-icons";
-import { FiGrid, FiList, FiMenu, FiUserPlus, FiX } from "react-icons/fi";
+import { FiList, FiMenu, FiUsers, FiUserPlus, FiX } from "react-icons/fi";
 import LogoutButton from "@/components/layout/LogoutButton";
 
 type AdminLink = {
@@ -16,9 +16,11 @@ type AdminLink = {
 
 const ADMIN_LINKS: AdminLink[] = [
   {
-    name: "Dashboard",
+    // Renomme de "Dashboard" (#166) : cet ecran ne gere que les comptes BDE, pas un tableau de
+    // bord du fonds, et son nom doit le dire.
+    name: "Membres",
     href: "/admin",
-    icon: FiGrid,
+    icon: FiUsers,
     isActive: (pathname) => pathname === "/admin",
   },
   {

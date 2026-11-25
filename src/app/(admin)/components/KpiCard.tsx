@@ -6,7 +6,7 @@ const TONE_CLASS = {
   negative: "bg-red-50 text-red-600",
 } as const;
 
-/** Indicateur du tableau de bord : libelle, valeur et precision. */
+/** Indicateur de la page Membres : libelle, valeur et precision. */
 export default function KpiCard({
   label,
   value,

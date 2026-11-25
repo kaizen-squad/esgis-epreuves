@@ -7,6 +7,12 @@ import ActiveToggleButton from "../../../../components/ActiveToggleButton";
 import { requireAdminSession } from "../../../../lib/requireAdminSession";
 import MemberForm from "../../components/MemberForm";
 
+const dateFormat = new Intl.DateTimeFormat("fr-FR", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+
 export async function generateMetadata({
   params,
 }: PageProps<"/admin/membres/[id]/modifier">): Promise<Metadata> {
@@ -24,12 +30,15 @@ export default async function EditMemberPage({
   if (!member) notFound();
 
   const name = member.fullName || member.email;
+  const activity = member.lastDepositAt
+    ? `${member.examCount} épreuve${member.examCount > 1 ? "s" : ""} versée${member.examCount > 1 ? "s" : ""}, dernier dépôt le ${dateFormat.format(new Date(member.lastDepositAt))}.`
+    : "Aucune épreuve versée pour l'instant.";
 
   return (
     <>
       <AdminPageHeader
         title="Modifier un membre du BDE"
-        description={`Mettez à jour le compte de ${name}.`}
+        description={`Mettez à jour le compte de ${name}. ${activity}`}
         action={
           <div className="flex items-center gap-3">
             <span
