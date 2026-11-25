@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   startTransition,
   useActionState,
+  useEffect,
+  useRef,
   useState,
   type InputHTMLAttributes,
   type SubmitEvent,
@@ -13,9 +15,11 @@ import {
   FiAlertCircle,
   FiArrowRight,
   FiCheckCircle,
+  FiCopy,
   FiEye,
   FiEyeOff,
 } from "react-icons/fi";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { createBdeMember, updateBdeMember } from "@/features/members/actions";
 import {
   MIN_PASSWORD_LENGTH,
@@ -67,6 +71,18 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
   const [values, setValues] = useState<Values>(initial);
   const [showPassword, setShowPassword] = useState(false);
   const [dismissedId, setDismissedId] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+  // Email deja confirme pour le changement d'email en cours (normalise, comme a l'envoi) : evite
+  // de redemander a chaque soumission si l'utilisateur a deja valide ce changement precis.
+  const [confirmedEmail, setConfirmedEmail] = useState(
+    initial.email.trim().toLowerCase(),
+  );
+  const [confirmEmailOpen, setConfirmEmailOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const pendingFormDataRef = useRef<FormData | null>(null);
+  const [lastConfirmState, setLastConfirmState] = useState<
+    SubmitState | undefined
+  >(undefined);
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
@@ -114,15 +130,60 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
   const set = (field: MemberFormField, value: string) =>
     setValues((current) => ({ ...current, [field]: value }));
 
+  const submitFormData = (formData: FormData) =>
+    startTransition(() => dispatch(formData));
+
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    startTransition(() => dispatch(formData));
+    const newEmail = values.email.trim().toLowerCase();
+    // La confirmation ne doit porter que sur une saisie valide : sinon on avertit d'un changement
+    // d'email qui ne pourra pas s'envoyer (ex. domaine manquant), avant meme l'erreur de validation.
+    const validEmailChange =
+      member &&
+      newEmail !== member.email.toLowerCase() &&
+      newEmail !== confirmedEmail &&
+      (isEdit ? memberUpdateSchema : memberCreateSchema).safeParse(
+        Object.fromEntries(formData),
+      ).success;
+    if (validEmailChange) {
+      pendingFormDataRef.current = formData;
+      setConfirmEmailOpen(true);
+      return;
+    }
+    submitFormData(formData);
+  };
+
+  const confirmEmailChange = () => {
+    // Le dialogue reste ouvert (pending) jusqu'a la fin de l'envoi, comme `ActiveToggleButton` :
+    // le fermer tout de suite rendrait le focus a un bouton de soumission deja desactive par
+    // `pending`, qui retomberait alors sur `body`.
+    setConfirmedEmail(values.email.trim().toLowerCase());
+    if (pendingFormDataRef.current) submitFormData(pendingFormDataRef.current);
+    pendingFormDataRef.current = null;
   };
 
   const dismiss = () => {
     if (state.status === "done") setDismissedId(state.id);
   };
+
+  // Ferme le dialogue de confirmation d'email une fois l'envoi resolu (seul declencheur possible
+  // d'un changement de `state` pendant qu'il est ouvert, voir confirmEmailChange). Ajuste pendant
+  // le rendu plutot que dans un effet (pas de rendu intermediaire avec un dialogue perime).
+  if (state !== lastConfirmState) {
+    if (confirmEmailOpen) setConfirmEmailOpen(false);
+    setLastConfirmState(state);
+  }
+
+  // Deplace le focus sur le premier champ en erreur apres un envoi invalide (serveur ou client),
+  // au lieu de le laisser retomber sur `body` (bureau) ou sur le bouton de soumission (mobile).
+  useEffect(() => {
+    if (state.status !== "invalid" && !failure) return;
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   if (showSuccess) {
     return (
@@ -155,12 +216,31 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
             </>
           )}
         </p>
+        {!isEdit ? (
+          <button
+            type="button"
+            onClick={() => {
+              const email = values.email.trim().toLowerCase();
+              navigator.clipboard
+                ?.writeText(`${email} / ${values.password}`)
+                .then(() => {
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                })
+                .catch(() => {});
+            }}
+            className="text-text-default mb-6 flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50"
+          >
+            <FiCopy size={14} />
+            {copied ? "Identifiants copiés" : "Copier les identifiants"}
+          </button>
+        ) : null}
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link
             href="/admin"
             className="text-text-default rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
           >
-            Retour au dashboard
+            Retour à la liste des membres
           </Link>
           <button
             type="button"
@@ -171,7 +251,7 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
             }}
             className="bg-background-accent text-text-primary cursor-pointer rounded-lg px-4 py-2 text-sm font-medium"
           >
-            {isEdit ? "Modifier à nouveau" : "Ajouter un autre membre"}
+            {isEdit ? "Continuer la modification" : "Ajouter un autre membre"}
           </button>
         </div>
       </div>
@@ -182,6 +262,7 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
     name: MemberFormField,
     label: string,
     props: InputHTMLAttributes<HTMLInputElement> = {},
+    required = true,
   ) => (
     <div className="flex flex-col gap-1">
       <label htmlFor={name} className="font-medium">
@@ -192,6 +273,8 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
         name={name}
         value={values[name]}
         onChange={(event) => set(name, event.target.value)}
+        required={required}
+        aria-required={required}
         aria-invalid={errors[name] ? true : undefined}
         aria-describedby={errors[name] ? `${name}-error` : undefined}
         className={`${INPUT_CLASS} ${errors[name] ? "border-red-400" : "border-gray-300"}`}
@@ -207,6 +290,7 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       noValidate
       className="bg-background-primary flex max-w-2xl flex-col gap-8 rounded-xl border border-gray-200 p-6 shadow-sm md:p-8"
@@ -220,6 +304,11 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
           {failure.error}
         </div>
       ) : null}
+
+      <p className="text-text-paragraph mb-0 text-sm">
+        Les champs marqués <span aria-hidden="true">*</span>
+        <span className="sr-only">(astérisque)</span> sont obligatoires.
+      </p>
 
       <fieldset className="flex flex-col gap-5">
         <legend className="text-text-secondary mb-4 text-lg font-semibold">
@@ -259,9 +348,13 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
               value={values.password}
               onChange={(event) => set("password", event.target.value)}
               autoComplete="new-password"
+              required={!isEdit}
+              aria-required={!isEdit}
               aria-invalid={errors.password ? true : undefined}
               aria-describedby={
-                errors.password ? "password-error" : "password-hint"
+                errors.password
+                  ? "password-error password-hint"
+                  : "password-hint"
               }
               className={`${INPUT_CLASS} pr-11 ${errors.password ? "border-red-400" : "border-gray-300"}`}
             />
@@ -282,13 +375,12 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
             <p id="password-error" className="mb-0 text-sm text-red-600">
               {errors.password}
             </p>
-          ) : (
-            <p id="password-hint" className="text-text-paragraph mb-0 text-sm">
-              {isEdit
-                ? "Laissez vide pour conserver le mot de passe actuel."
-                : `${MIN_PASSWORD_LENGTH} caractères minimum. Communiquez-le au membre après la création.`}
-            </p>
-          )}
+          ) : null}
+          <p id="password-hint" className="text-text-paragraph mb-0 text-sm">
+            {isEdit
+              ? "Laissez vide pour conserver le mot de passe actuel."
+              : `${MIN_PASSWORD_LENGTH} caractères minimum. Communiquez-le au membre après la création.`}
+          </p>
         </div>
       </fieldset>
 
@@ -308,6 +400,25 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
           {pending ? <CgSpinner className="animate-spin" /> : <FiArrowRight />}
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmEmailOpen}
+        title="Changer l'email du membre ?"
+        description={
+          <p className="mb-0">
+            <strong>{values.email.trim().toLowerCase()}</strong> deviendra son
+            nouvel identifiant de connexion : il ne pourra plus se connecter
+            avec l&apos;ancien email.
+          </p>
+        }
+        confirmLabel="Changer l'email"
+        pending={pending}
+        onConfirm={confirmEmailChange}
+        onCancel={() => {
+          setConfirmEmailOpen(false);
+          pendingFormDataRef.current = null;
+        }}
+      />
     </form>
   );
 }

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -26,7 +27,60 @@ function toMember(row: MemberRow): BdeMember {
     email: row.email,
     createdAt: row.created_at,
     isActive: row.is_active,
+    examCount: 0,
+    lastDepositAt: null,
   };
+}
+
+/**
+ * Complete chaque membre avec son nombre d'epreuves versees et la date de son dernier depot
+ * (#166), pour decider une desactivation en connaissance de cause. `exams` est lisible par tous
+ * (`exams_select_public`), pas besoin du client admin.
+ *
+ * Une requete par membre (comptage exact + derniere date), jamais une lecture de toutes les
+ * lignes de `exams` : PostgREST plafonne une reponse a `max_rows` (1000, voir
+ * `supabase/config.toml`), ce qu'un membre actif qui verse par lots finit par depasser, faussant
+ * silencieusement le compte et la derniere date sans la moindre erreur.
+ */
+async function attachActivity(members: BdeMember[]): Promise<BdeMember[]> {
+  if (members.length === 0) return members;
+
+  const supabase = await createClient();
+  const activity = await Promise.all(
+    members.map(async (member) => {
+      const [{ count, error: countError }, { data: last, error: lastError }] =
+        await Promise.all([
+          supabase
+            .from("exams")
+            .select("id", { count: "exact", head: true })
+            .eq("created_by", member.id),
+          supabase
+            .from("exams")
+            .select("created_at")
+            .eq("created_by", member.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
+      if (countError) throw countError;
+      if (lastError) throw lastError;
+      return {
+        id: member.id,
+        count: count ?? 0,
+        lastAt: last?.created_at ?? null,
+      };
+    }),
+  );
+
+  const byId = new Map(activity.map((entry) => [entry.id, entry]));
+  return members.map((member) => {
+    const entry = byId.get(member.id);
+    return {
+      ...member,
+      examCount: entry?.count ?? 0,
+      lastDepositAt: entry?.lastAt ?? null,
+    };
+  });
 }
 
 /**
@@ -85,8 +139,8 @@ export async function getCurrentProfileStatus(): Promise<{
 }
 
 /**
- * Membres BDE pour le tableau de bord Admin, actifs d'abord puis desactives, chacun du plus recent
- * au plus ancien, filtres par nom ou
+ * Membres BDE pour la page Membres de l'Admin, actifs d'abord puis desactives, chacun du plus
+ * recent au plus ancien, filtres par nom ou
  * email (`search`) et pagines (`MEMBERS_PAGE_SIZE`). Une page au-dela de la derniere est ramenee
  * a la derniere. Lecture protegee par la RLS (ADMIN uniquement).
  */
@@ -123,11 +177,12 @@ export async function getBdeMembers({
     ({ rows, total } = await fetchPage(current));
   }
 
-  return { members: rows.map(toMember), total, page: current, pageCount };
+  const members = await attachActivity(rows.map(toMember));
+  return { members, total, page: current, pageCount };
 }
 
 /**
- * Nombre total de comptes BDE, desactives compris : decide de l'etat vide du tableau de bord.
+ * Nombre total de comptes BDE, desactives compris : decide de l'etat vide de la page Membres.
  * Ne compter que les actifs cacherait la liste, et donc le bouton de reactivation, des que le
  * dernier compte actif est desactive.
  */
@@ -135,7 +190,7 @@ export async function countBdeMembers(): Promise<number> {
   return countBde(false);
 }
 
-/** Nombre de comptes BDE actifs (indicateur "Membres du BDE" du tableau de bord). */
+/** Nombre de comptes BDE actifs (indicateur "Membres actifs" de la page Membres). */
 export async function countActiveBdeMembers(): Promise<number> {
   return countBde(true);
 }
@@ -172,7 +227,8 @@ export async function getBdeMember(
   if (error) throw error;
   if (!data) return null;
 
-  const member = toMember(data);
+  const [member] = await attachActivity([toMember(data)]);
+  if (!member) return null;
   const admin = createAdminClient();
   const metadata = admin
     ? (await admin.auth.admin.getUserById(id)).data.user?.user_metadata
@@ -192,3 +248,6 @@ export async function getBdeMember(
   const [lastName = "", ...rest] = member.fullName.split(" ");
   return { ...member, lastName, firstNames: rest.join(" ") };
 }
+
+/** `getBdeMember` memoisee par requete : partagee entre `generateMetadata` et la page. */
+export const getBdeMemberCached = cache(getBdeMember);

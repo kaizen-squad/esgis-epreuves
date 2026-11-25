@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { Field, Level, Option, Subject } from "./types";
@@ -52,6 +53,9 @@ export async function getFieldById(id: string): Promise<Field | null> {
     isActive: data.is_active,
   };
 }
+
+/** `getFieldById` memoisee par requete : partagee entre `generateMetadata` et la page. */
+export const getFieldByIdCached = cache(getFieldById);
 
 /** Niveau par id, pour le titre de la page d'une filiere filtree sur un niveau. `null` si absent ou si l'id n'est pas un uuid. */
 export async function getLevelById(id: string): Promise<Level | null> {

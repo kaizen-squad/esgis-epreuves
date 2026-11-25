@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState, type SubmitEvent } from "react";
 import { CgSpinner } from "react-icons/cg";
 import {
   FaWhatsapp,
@@ -8,6 +8,7 @@ import {
   FiCheckCircle,
   FiExternalLink,
 } from "@/components/icons";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { updateBdeWhatsappNumber } from "@/features/contact/actions";
 import { whatsappNumberSchema } from "@/features/contact/schemas";
 import { whatsappHref } from "@/features/contact/whatsapp";
@@ -32,6 +33,13 @@ export default function WhatsappNumberForm({
   initialNumber: string | null;
 }) {
   const [value, setValue] = useState(initialNumber ?? "");
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  // Court-circuite la confirmation une seule fois, pour le resoumis declenche par `confirmClear`.
+  const bypassConfirmRef = useRef(false);
+  const [lastConfirmState, setLastConfirmState] = useState<State | undefined>(
+    undefined,
+  );
 
   const [state, dispatch, pending] = useActionState<State, FormData>(
     async (previous, formData) => {
@@ -78,9 +86,40 @@ export default function WhatsappNumberForm({
     { saved: initialNumber },
   );
 
+  // Vider le champ retire un numero deja en ligne sur le site public (#177) : confirmation
+  // explicite avant d'envoyer, sauf pour le resoumis declenche par la confirmation elle-meme.
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    if (bypassConfirmRef.current) {
+      bypassConfirmRef.current = false;
+      return;
+    }
+    if (value.trim() === "" && state.saved) {
+      event.preventDefault();
+      setConfirmClearOpen(true);
+    }
+  };
+
+  const confirmClear = () => {
+    // Le dialogue reste ouvert (pending) jusqu'a la fin de l'envoi, comme `ActiveToggleButton` :
+    // le fermer tout de suite rendrait le focus au bouton d'enregistrement deja desactive par
+    // `pending`, qui retomberait alors sur `body`.
+    bypassConfirmRef.current = true;
+    formRef.current?.requestSubmit();
+  };
+
+  // Ferme le dialogue de confirmation une fois l'envoi resolu (seul declencheur possible d'un
+  // changement de `state` pendant qu'il est ouvert, voir confirmClear). Ajuste pendant le rendu
+  // plutot que dans un effet (pas de rendu intermediaire avec un dialogue perime).
+  if (state !== lastConfirmState) {
+    if (confirmClearOpen) setConfirmClearOpen(false);
+    setLastConfirmState(state);
+  }
+
   return (
     <form
+      ref={formRef}
       action={dispatch}
+      onSubmit={handleSubmit}
       noValidate
       className="bg-background-primary rounded-card flex flex-col gap-6 border border-gray-200 p-5 shadow-(--shadow-card) sm:p-6 md:p-8"
     >
@@ -115,7 +154,7 @@ export default function WhatsappNumberForm({
           inputMode="tel"
           autoComplete="off"
           spellCheck={false}
-          placeholder="+229 01 23 45 67 89…"
+          placeholder="+229 01 23 45 67 89"
           value={value}
           onChange={(event) => setValue(event.target.value)}
           aria-invalid={state.fieldError ? true : undefined}
@@ -189,6 +228,23 @@ export default function WhatsappNumberForm({
           ) : null}
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmClearOpen}
+        title="Retirer le numéro WhatsApp ?"
+        description={
+          <p className="mb-0">
+            Le bouton « Nous contacter » du site public ouvrira WhatsApp sans
+            destinataire jusqu&apos;à ce qu&apos;un numéro soit renseigné à
+            nouveau.
+          </p>
+        }
+        confirmLabel="Retirer le numéro"
+        tone="danger"
+        pending={pending}
+        onConfirm={confirmClear}
+        onCancel={() => setConfirmClearOpen(false)}
+      />
     </form>
   );
 }

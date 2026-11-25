@@ -119,7 +119,7 @@ export default function AddExamResult({
       ? summary.total > 1
         ? `Les ${summary.total} épreuves sont désormais disponibles dans le catalogue.`
         : "L'épreuve est désormais disponible dans le catalogue."
-      : `${summary?.imported ?? 0} sur ${summary?.total ?? 0} fichier(s) publié(s). Corrigez les fichiers restants puis réessayez.`;
+      : `${summary?.imported ?? 0} sur ${summary?.total ?? 0} fichier${(summary?.total ?? 0) > 1 ? "s" : ""} publié${(summary?.total ?? 0) > 1 ? "s" : ""}. Corrigez les fichiers restants puis réessayez.`;
 
   // Focus sur le resultat a l'arrivee sur cette etape : le formulaire disparait et, sans cela,
   // le focus retombait sur `body` (#171).
@@ -141,7 +141,7 @@ export default function AddExamResult({
         className="flex flex-col items-center gap-4"
       >
         <Icon className={iconClass} size={56} aria-hidden="true" />
-        <h3 className="text-text-secondary text-2xl font-semibold">{title}</h3>
+        <h2 className="text-text-secondary text-2xl font-semibold">{title}</h2>
         <p className="text-text-paragraph mb-2 max-w-lg">{description}</p>
       </div>
 
@@ -167,7 +167,7 @@ export default function AddExamResult({
               onClick={onRestart}
               className="bg-background-accent text-text-primary cursor-pointer rounded-lg px-4 py-2"
             >
-              Ajouter d&apos;autres épreuves
+              Verser d&apos;autres épreuves
             </button>
           </>
         ) : (

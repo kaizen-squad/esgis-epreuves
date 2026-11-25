@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   createField,
   setFieldActive,
@@ -11,6 +12,8 @@ import AdminPageHeader from "../../../components/AdminPageHeader";
 import { requireAdminSession } from "../../../lib/requireAdminSession";
 import ReferentialManager from "../components/ReferentialManager";
 import ReferentialTabs from "../components/ReferentialTabs";
+
+export const metadata: Metadata = { title: "Filières · Référentiels · Admin" };
 
 export default async function FilieresPage() {
   await requireAdminSession();

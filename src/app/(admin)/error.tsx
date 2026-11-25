@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 export default function AdminError({
@@ -19,13 +20,21 @@ export default function AdminError({
       <p className="text-text-paragraph">
         Impossible de charger cette page pour le moment.
       </p>
-      <button
-        type="button"
-        onClick={reset}
-        className="bg-background-accent text-text-primary rounded-control px-4 py-2"
-      >
-        Réessayer
-      </button>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={reset}
+          className="bg-background-accent text-text-primary rounded-control px-4 py-2 transition-opacity hover:opacity-90"
+        >
+          Réessayer
+        </button>
+        <Link
+          href="/admin"
+          className="text-text-default rounded-control border border-gray-300 px-4 py-2 hover:bg-gray-50"
+        >
+          Retour aux membres
+        </Link>
+      </div>
     </div>
   );
 }

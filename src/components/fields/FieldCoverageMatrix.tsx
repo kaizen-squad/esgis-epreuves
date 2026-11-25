@@ -51,7 +51,7 @@ export default async function FieldCoverageMatrix({
   if (coverage.length === 0) {
     return (
       <div className="mb-10">
-        <h3 className="text-text-secondary text-xl font-semibold">{heading}</h3>
+        <h2 className="text-text-secondary text-xl font-semibold">{heading}</h2>
         <p className="text-text-paragraph text-sm">
           Aucune matière active pour cette filière.
         </p>
@@ -62,7 +62,7 @@ export default async function FieldCoverageMatrix({
   return (
     <div className="mb-10">
       <div className="mb-3 flex items-center justify-between gap-4">
-        <h3 className="text-text-secondary text-xl font-semibold">{heading}</h3>
+        <h2 className="text-text-secondary text-xl font-semibold">{heading}</h2>
         {gaps === 0 ? (
           <p className="flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-green-700">
             <FiCheckCircle size={16} /> Fonds complet

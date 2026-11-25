@@ -1,7 +1,7 @@
 import { FiUsers } from "react-icons/fi";
 import AddMemberLink from "./AddMemberLink";
 
-/** Tableau de bord sans aucun membre BDE : invite a creer le premier compte. */
+/** Page Membres sans aucun compte : invite a creer le premier compte. */
 export default function MembersEmptyState() {
   return (
     <div className="flex flex-col items-center px-6 py-16 text-center">

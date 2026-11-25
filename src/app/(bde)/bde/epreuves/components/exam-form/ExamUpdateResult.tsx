@@ -52,9 +52,9 @@ export default function ExamUpdateResult({
           size={56}
           aria-hidden="true"
         />
-        <h3 className="text-text-secondary text-2xl font-semibold">
+        <h2 className="text-text-secondary text-2xl font-semibold">
           {result.ok ? successTitle : failureTitle}
-        </h3>
+        </h2>
         <p className="text-text-paragraph mb-0 max-w-lg">
           {result.ok ? successMessage(result.data.slug) : result.error}
         </p>

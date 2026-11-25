@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const MEMBERS_PAGE_SIZE = 10;
 export const MIN_PASSWORD_LENGTH = 8;
+export const MAX_PASSWORD_LENGTH = 72;
 
 const nameSchema = (label: string) =>
   z
@@ -16,7 +17,10 @@ const passwordSchema = z
     MIN_PASSWORD_LENGTH,
     `Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`,
   )
-  .max(72, "Le mot de passe est trop long (72 caractères maximum).");
+  .max(
+    MAX_PASSWORD_LENGTH,
+    `Le mot de passe est trop long (${MAX_PASSWORD_LENGTH} caractères maximum).`,
+  );
 
 const memberBaseSchema = z.object({
   lastName: nameSchema("Le nom"),

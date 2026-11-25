@@ -17,6 +17,7 @@ const from = vi.fn(() => ({ insert, update }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ from }),
 }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const {
   createField,

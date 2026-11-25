@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireBdeSession } from "@/app/(bde)/lib/requireBdeSession";
 import { Suspense } from "react";
 import BDEWelcomeSection from "./components/BDEWelcomeSection";
@@ -12,6 +13,8 @@ import { getTotalSubjectGapCount } from "@/features/exams/queries";
 import { BDE_BASE_PATH, catalogueHref } from "@/components/layout/spaces";
 
 const BDE_CATALOGUE_HREF = catalogueHref(BDE_BASE_PATH);
+
+export const metadata: Metadata = { title: "Accueil · Espace BDE" };
 
 const BDEAccueil = async () => {
   await requireBdeSession();

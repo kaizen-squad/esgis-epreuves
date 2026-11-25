@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   createSubject,
   setSubjectActive,
@@ -13,6 +14,8 @@ import AdminPageHeader from "../../../components/AdminPageHeader";
 import { requireAdminSession } from "../../../lib/requireAdminSession";
 import ReferentialManager from "../components/ReferentialManager";
 import ReferentialTabs from "../components/ReferentialTabs";
+
+export const metadata: Metadata = { title: "Matières · Référentiels · Admin" };
 
 /** `#ajouter` ouvre directement sur le formulaire de création, pour un lien marque-page. */
 export default async function MatieresPage() {
