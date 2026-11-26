@@ -34,5 +34,9 @@ export const E2E_USERS = [e2eBde, e2eAdmin, e2eMember];
 /** Matiere du seed de dev (`supabase/seed.sql`), titre sans chevauchement avec une autre matiere. */
 export const SEARCHABLE_EXAM_TITLE = "Fiscalité";
 
-/** Matiere du seed de dev pour le formulaire d'ajout (#114, parcours BDE). */
-export const ADD_EXAM_SUBJECT = "Routage IP";
+/**
+ * Matiere du seed de dev pour le formulaire d'ajout (#114, parcours BDE). "Routage IP"
+ * (fictive) a disparu avec le remplacement des referentiels par les vrais programmes IRT/Gestion
+ * (#195) ; cette matiere reelle existe et reste unique parmi les ~200 seedees.
+ */
+export const ADD_EXAM_SUBJECT = "Algorithmique de base";

@@ -58,7 +58,7 @@ export function optionDisplayName(name: string): string {
 }
 
 /**
- * Titre de la page d'une filiere : "L1 IRT : Tronc commun" en L1, "L3 IRT : AL / SRS" ensuite
+ * Titre de la page d'une filiere : "L1 IRT : Tronc commun" en L1, "L3 IRT : AL / SI / SRC" ensuite
  * (options presentes dans les epreuves du niveau). Un niveau mixte (L2 du programme reel #195, a
  * la fois tronc commun au S3 et scinde par option au S4) affiche les options : la page sans
  * filtre d'option montre deja les deux, le titre les nomme plutot que de pretendre a tort qu'il
