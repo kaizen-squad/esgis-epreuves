@@ -2,23 +2,17 @@ import type { SpaceBasePath } from "@/components/layout/spaces";
 import type { FieldLevelSummary } from "@/features/exams/types";
 import type { FiliereCardData } from "@/components/fields/FiliereCard";
 
-/** Abreviations d'affichage des filieres dont le nom complet est trop long pour une carte. */
-const FIELD_ABBREVIATIONS: Record<string, string> = {
-  "informatique, reseaux et telecommunication": "IRT",
-};
-
-function normalize(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/s$/, "");
-}
-
-/** Nom affiche d'une filiere : "Informatique, Réseaux et Télécommunications" devient "IRT", les autres restent tels quels. */
-export function fieldDisplayName(name: string): string {
-  return FIELD_ABBREVIATIONS[normalize(name)] ?? name;
+/**
+ * Nom affiche d'une filiere : son sigle (#198, `fields.short_name`, modifiable depuis l'Admin)
+ * quand il est renseigne, sinon son nom complet. Remplace l'ancienne table en dur ad hoc
+ * ("Informatique, Réseaux et Télécommunications" -> "IRT"), qui ne couvrait que cette filiere et
+ * ne pouvait jamais etre corrigee sans toucher au code.
+ */
+export function fieldDisplayName(
+  name: string,
+  shortName?: string | null,
+): string {
+  return shortName ?? name;
 }
 
 /** Donnees d'une FiliereCard (niveau "L1", filiere "IRT", nombre d'epreuves, lien vers la page de la filiere filtree sur le niveau). */
@@ -28,7 +22,7 @@ export function toFiliereCardData(
 ): FiliereCardData {
   return {
     level: summary.levelName,
-    field: fieldDisplayName(summary.fieldName),
+    field: fieldDisplayName(summary.fieldName, summary.fieldShortName),
     examCount: summary.examCount,
     href: `${basePath}/filieres/${summary.fieldId}?levelId=${summary.levelId}`,
   };
@@ -66,10 +60,11 @@ export function optionDisplayName(name: string): string {
  */
 export function fieldPageTitle(
   fieldName: string,
+  fieldShortName: string | null,
   levelName: string | null,
   optionNames: string[],
 ): string {
-  const field = fieldDisplayName(fieldName);
+  const field = fieldDisplayName(fieldName, fieldShortName);
   if (!levelName) return field;
 
   const suffix = COMMON_CORE_LEVELS.includes(levelName)

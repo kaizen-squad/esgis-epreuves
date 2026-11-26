@@ -19,7 +19,7 @@ import type {
 } from "./types";
 
 const EXAM_CATALOG_SELECT =
-  "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, level_id, level_name, subject_id, subject_name, option_id, option_name, created_by";
+  "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, field_short_name, level_id, level_name, subject_id, subject_name, option_id, option_name, created_by";
 
 /** PostgREST : decalage hors bornes avec un count exact (page trop loin apres un filtre qui reduit le total). */
 const RANGE_NOT_SATISFIABLE = "PGRST103";
@@ -30,13 +30,14 @@ type CatalogRow = {
   id: string;
   title: string;
   slug: string;
-  academic_year: string;
+  academic_year: string | null;
   session: Exam["session"];
   exam_type: Exam["examType"];
   file_size: number;
   created_at: string;
   field_id: string;
   field_name: string;
+  field_short_name: string | null;
   level_id: string;
   level_name: string;
   subject_id: string;
@@ -97,6 +98,7 @@ function toExam(row: CatalogRow, file: ExamFile | undefined): Exam {
     session: row.session,
     examType: row.exam_type,
     field: row.field_name,
+    fieldShortName: row.field_short_name,
     fieldId: row.field_id,
     level: row.level_name,
     levelId: row.level_id,
@@ -265,7 +267,7 @@ type FieldLevelCouple = Omit<FieldLevelSummary, "examCount">;
 type SubjectCoupleRow = {
   field_id: string;
   level_id: string;
-  fields: { name: string };
+  fields: { name: string; short_name: string | null };
   levels: { name: string };
 };
 
@@ -275,7 +277,9 @@ async function getFieldLevelCouples(
 ): Promise<FieldLevelCouple[]> {
   const { data, error } = await supabase
     .from("subjects")
-    .select("field_id, level_id, fields!inner(name), levels!inner(name)")
+    .select(
+      "field_id, level_id, fields!inner(name, short_name), levels!inner(name)",
+    )
     .eq("is_active", true)
     .eq("fields.is_active", true)
     .eq("levels.is_active", true);
@@ -289,6 +293,7 @@ async function getFieldLevelCouples(
     couples.set(key, {
       fieldId: row.field_id,
       fieldName: row.fields.name,
+      fieldShortName: row.fields.short_name,
       levelId: row.level_id,
       levelName: row.levels.name,
     });

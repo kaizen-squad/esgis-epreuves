@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { z } from "zod";
+import { examTitle } from "@/components/exams/examCote";
 import { checkExamDuplicate } from "./duplicate";
 import {
   EXAM_TYPES,
@@ -97,16 +98,15 @@ export function csvToRows(content: string): Record<string, string>[] {
 }
 
 /**
- * `titre`/`annee_academique` reutilisent les memes bornes que `examFieldsSchema` (donc que
- * `examUploadSchema`/`examMetadataSchema`), au lieu d'une seconde copie : un titre de plus de 200
- * caracteres importe ici bloquerait ensuite toute modification par `updateExamMetadata`, qui
- * revalide avec la meme limite. `annee_academique`/`session` sont facultatives (#196, vieille
- * epreuve dont elles sont inconnues) : une cellule vide du CSV devient `undefined`, comme `option`.
+ * Plus de colonne `titre` depuis #198 : le titre est toujours calcule depuis la matiere, le type
+ * et la session (`examTitle`), jamais saisi dans le gabarit. `annee_academique`/`session`
+ * reutilisent les memes bornes que `examFieldsSchema` (donc que `examUploadSchema`), au lieu d'une
+ * seconde copie, et sont facultatives (#196, vieille epreuve dont elles sont inconnues) : une
+ * cellule vide du CSV devient `undefined`, comme `option`.
  */
 export const seedRowSchema = z
   .object({
     fichier: z.string().min(1, "Chemin de fichier manquant."),
-    titre: examFieldsSchema.shape.title,
     filiere: z.string().min(1, "Filiere manquante."),
     niveau: z.string().min(1, "Niveau manquant."),
     matiere: z.string().min(1, "Matiere manquante."),
@@ -245,7 +245,11 @@ export function resolveSeedRow(
       levelId,
       subjectId,
       optionId,
-      title: row.titre,
+      title: examTitle({
+        subject: row.matiere,
+        examType: row.type_epreuve,
+        session: row.session ?? null,
+      }),
       academicYear: row.annee_academique ?? null,
       session: row.session ?? null,
       examType: row.type_epreuve,

@@ -50,6 +50,7 @@ export function buildFieldDirectory(
     const field = fields.get(summary.fieldId) ?? {
       fieldId: summary.fieldId,
       fieldName: summary.fieldName,
+      fieldShortName: summary.fieldShortName,
       examCount: 0,
       subjectCount: 0,
       years: null,

@@ -23,7 +23,20 @@ const update = vi.fn<(row: Record<string, unknown>) => { eq: typeof updateEq }>(
   () => ({ eq: updateEq }),
 );
 
-const from = vi.fn(() => ({ insert, delete: del, select, update }));
+/**
+ * `subjects` a sa propre chaine de mocks (#198, `getSubjectName`) : partager `maybeSingle` avec
+ * les lectures d'epreuve de `updateExamMetadata`/`replaceExamFile` ferait retomber un test qui
+ * configure l'un sur la valeur par defaut de l'autre, sans rapport avec ce qu'il verifie vraiment.
+ */
+const subjectMaybeSingle = vi.fn();
+const subjectSelectEq = vi.fn(() => ({ maybeSingle: subjectMaybeSingle }));
+const subjectSelect = vi.fn(() => ({ eq: subjectSelectEq }));
+
+const from = vi.fn((table: string) =>
+  table === "subjects"
+    ? { select: subjectSelect }
+    : { insert, delete: del, select, update },
+);
 const putExamFile = vi.fn();
 const deleteExamFile = vi.fn();
 const checkExamDuplicate = vi.fn();
@@ -144,6 +157,9 @@ beforeEach(() => {
     error: null,
   });
   maybeSingle.mockReset().mockResolvedValue({ data: null, error: null });
+  subjectMaybeSingle
+    .mockReset()
+    .mockResolvedValue({ data: { name: "Algorithmique" }, error: null });
   updateEq.mockReset().mockImplementation(() => ({ select: updateSelect }));
   updateSelect
     .mockReset()
@@ -153,6 +169,8 @@ beforeEach(() => {
   del.mockClear();
   select.mockClear();
   selectEq.mockClear();
+  subjectSelect.mockClear();
+  subjectSelectEq.mockClear();
   update.mockClear();
   from.mockClear();
   putExamFile.mockReset().mockResolvedValue(undefined);
@@ -263,7 +281,8 @@ describe("uploadExam", () => {
     expect(result).toEqual({ ok: true, data: { slug: expect.any(String) } });
     expect(insert).toHaveBeenCalledTimes(1);
     expect(insert.mock.calls[0]![0]).toEqual({
-      title: "Algorithmique S1",
+      // Titre genere depuis la matiere (#198), jamais le titre libre envoye par uploadForm().
+      title: "Algorithmique : Contrôle terminal, session normale",
       slug: expect.any(String),
       academic_year: "2024-2025",
       session: "Session Normale",
@@ -287,6 +306,24 @@ describe("uploadExam", () => {
     expect(insert.mock.calls[0]![0]).not.toHaveProperty("field_id");
     expect(insert.mock.calls[0]![0]).not.toHaveProperty("level_id");
     expect(insert.mock.calls[0]![0]).not.toHaveProperty("option_id");
+  });
+
+  it("ignore un titre libre envoye par le front : le titre insere est toujours genere (#198)", async () => {
+    await uploadExam(uploadForm({ title: "Un titre choisi par erreur" }));
+
+    expect(insert.mock.calls[0]![0].title).toBe(
+      "Algorithmique : Contrôle terminal, session normale",
+    );
+  });
+
+  it("renvoie une erreur quand la matiere est introuvable, sans ecrire en base ni sur R2", async () => {
+    subjectMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+    const result = await uploadExam(uploadForm());
+
+    expect(result).toEqual({ ok: false, error: "Matiere introuvable." });
+    expect(insert).not.toHaveBeenCalled();
+    expect(putExamFile).not.toHaveBeenCalled();
   });
 
   it("traite une violation d'unicite sur le hash a l'insertion comme un doublon, sans toucher a R2", async () => {
@@ -416,7 +453,7 @@ describe("updateExamMetadata", () => {
 
     expect(result).toEqual({ ok: true, data: { slug: CURRENT_EXAM.slug } });
     expect(update).toHaveBeenCalledWith({
-      title: "Algorithmique S1",
+      title: "Algorithmique : Contrôle terminal, session normale",
       academic_year: "2024-2025",
       session: "Session Normale",
       exam_type: "Contrôle Terminal",
@@ -1047,8 +1084,9 @@ describe("uploadExamsBatch", () => {
     expect(second?.status).toBe("imported");
     expect(second?.status === "imported" ? second.warning : undefined).toEqual({
       examId: "exam-1",
-      slug: expect.stringContaining("algo-a"),
-      title: "Algo A",
+      slug: expect.stringContaining("algorithmique"),
+      // Titre genere depuis la matiere (#198), jamais le titre libre envoye par batchForm().
+      title: "Algorithmique : Contrôle terminal, session normale",
     });
   });
 

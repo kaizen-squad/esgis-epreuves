@@ -57,8 +57,27 @@ describe("createField", () => {
     const result = await createField(form({ name: "Informatique" }));
 
     expect(from).toHaveBeenCalledWith("fields");
-    expect(insert).toHaveBeenCalledWith({ name: "Informatique" });
+    expect(insert).toHaveBeenCalledWith({
+      name: "Informatique",
+      short_name: null,
+    });
     expect(result).toEqual({ ok: true, data: { id: FIELD_UUID } });
+  });
+
+  it("insere le sigle d'affichage quand il est fourni (#198)", async () => {
+    insertSingle.mockResolvedValue({ data: { id: FIELD_UUID }, error: null });
+
+    await createField(
+      form({
+        name: "Informatique, Réseaux et Télécommunications",
+        shortName: "IRT",
+      }),
+    );
+
+    expect(insert).toHaveBeenCalledWith({
+      name: "Informatique, Réseaux et Télécommunications",
+      short_name: "IRT",
+    });
   });
 
   it("renvoie un message de doublon sur une violation d'unicite (23505)", async () => {
@@ -97,7 +116,7 @@ describe("updateField", () => {
 
     const result = await updateField(FIELD_UUID, form({ name: "Gestion" }));
 
-    expect(update).toHaveBeenCalledWith({ name: "Gestion" });
+    expect(update).toHaveBeenCalledWith({ name: "Gestion", short_name: null });
     expect(updateEq).toHaveBeenCalledWith("id", FIELD_UUID);
     expect(result).toEqual({ ok: true, data: null });
   });

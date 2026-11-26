@@ -53,6 +53,7 @@ export default async function FieldExamsView({
   ]);
   const title = fieldPageTitle(
     result.field.name,
+    result.field.shortName,
     level?.name ?? null,
     optionNames,
   );
@@ -62,7 +63,11 @@ export default async function FieldExamsView({
   return (
     <>
       <div>
-        <FieldBreadcrumb fieldName={result.field.name} basePath={basePath} />
+        <FieldBreadcrumb
+          fieldName={result.field.name}
+          fieldShortName={result.field.shortName}
+          basePath={basePath}
+        />
         <h1 className="head-title text-center">Épreuves : {title}</h1>
         <p className="mb-6 text-center">
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en

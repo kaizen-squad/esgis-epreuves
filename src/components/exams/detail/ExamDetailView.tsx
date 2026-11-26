@@ -115,6 +115,7 @@ export default async function ExamDetailView({
         </h1>
         <Cote
           field={exam.field}
+          fieldShortName={exam.fieldShortName}
           fieldId={exam.fieldId}
           level={exam.level}
           levelId={exam.levelId}

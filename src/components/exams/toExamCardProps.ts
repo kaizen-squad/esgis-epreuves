@@ -15,6 +15,7 @@ export function toExamCardProps(exam: Exam): ExamCardProps {
     levelId: exam.levelId,
     option: exam.option,
     field: exam.field,
+    fieldShortName: exam.fieldShortName,
     fieldId: exam.fieldId,
     academicYear: exam.academicYear,
     type: exam.examType,

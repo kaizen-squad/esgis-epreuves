@@ -10,6 +10,7 @@ const summary = (
 ): FieldLevelSummary => ({
   fieldId,
   fieldName: fieldId === "irt" ? "IRT" : "Gestion",
+  fieldShortName: null,
   levelId,
   levelName,
   examCount,

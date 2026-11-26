@@ -130,7 +130,10 @@ async function setReferentialActive(
 export async function createField(
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
-  const parsed = fieldSchema.safeParse({ name: formData.get("name") });
+  const parsed = fieldSchema.safeParse({
+    name: formData.get("name"),
+    shortName: formData.get("shortName") || undefined,
+  });
   if (!parsed.success) {
     return actionError(
       "Données invalides.",
@@ -142,7 +145,7 @@ export async function createField(
     "cette filière",
     "fields",
     "Cette filière existe déjà.",
-    parsed.data,
+    { name: parsed.data.name, short_name: parsed.data.shortName },
   );
 }
 
@@ -150,7 +153,10 @@ export async function updateField(
   id: string,
   formData: FormData,
 ): Promise<ActionResult<null>> {
-  const parsed = fieldSchema.safeParse({ name: formData.get("name") });
+  const parsed = fieldSchema.safeParse({
+    name: formData.get("name"),
+    shortName: formData.get("shortName") || undefined,
+  });
   if (!parsed.success) {
     return actionError(
       "Données invalides.",
@@ -163,7 +169,7 @@ export async function updateField(
     "fields",
     id,
     "Cette filière existe déjà.",
-    parsed.data,
+    { name: parsed.data.name, short_name: parsed.data.shortName },
   );
 }
 
