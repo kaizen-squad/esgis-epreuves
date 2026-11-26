@@ -111,14 +111,39 @@ describe("createField", () => {
 });
 
 describe("updateField", () => {
-  it("modifie la filiere existante", async () => {
+  it("modifie la filiere existante, sans toucher short_name si le formulaire ne l'envoie pas", async () => {
     updateSelect.mockResolvedValue({ data: [{ id: FIELD_UUID }], error: null });
 
     const result = await updateField(FIELD_UUID, form({ name: "Gestion" }));
 
-    expect(update).toHaveBeenCalledWith({ name: "Gestion", short_name: null });
+    expect(update).toHaveBeenCalledWith({ name: "Gestion" });
     expect(updateEq).toHaveBeenCalledWith("id", FIELD_UUID);
     expect(result).toEqual({ ok: true, data: null });
+  });
+
+  it("met a jour short_name quand le formulaire l'envoie (#198)", async () => {
+    updateSelect.mockResolvedValue({ data: [{ id: FIELD_UUID }], error: null });
+
+    await updateField(
+      FIELD_UUID,
+      form({
+        name: "Informatique, Réseaux et Télécommunications",
+        shortName: "IRT",
+      }),
+    );
+
+    expect(update).toHaveBeenCalledWith({
+      name: "Informatique, Réseaux et Télécommunications",
+      short_name: "IRT",
+    });
+  });
+
+  it("efface short_name quand le formulaire l'envoie vide", async () => {
+    updateSelect.mockResolvedValue({ data: [{ id: FIELD_UUID }], error: null });
+
+    await updateField(FIELD_UUID, form({ name: "Gestion", shortName: "" }));
+
+    expect(update).toHaveBeenCalledWith({ name: "Gestion", short_name: null });
   });
 
   it("renvoie Introuvable sur un id qui n'est pas un uuid, sans toucher la base", async () => {

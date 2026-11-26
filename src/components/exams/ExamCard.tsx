@@ -18,7 +18,7 @@ export interface ExamCardProps {
   subjectId: string;
   class: string;
   levelId: string;
-  /** Absente des niveaux de tronc commun (L1/L2). */
+  /** Absente d'une matiere de tronc commun (L1, ou une matiere de L2 anterieure a l'option, #195). */
   option: string | null;
   field: string;
   /** Sigle d'affichage de la filiere (#198), prefere au nom complet quand renseigne. */

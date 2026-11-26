@@ -832,6 +832,7 @@ function makeCheckFakeSupabase(config: {
         return builder;
       },
       limit: () => builder,
+      range: () => builder,
       maybeSingle: () => {
         const found = exams.find((row) => matches(row, filters)) ?? null;
         return Promise.resolve({ data: found, error: null });

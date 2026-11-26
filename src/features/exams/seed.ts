@@ -664,6 +664,26 @@ const EXAM_ROW_SELECT =
   "id, slug, subject_id, academic_year, session, exam_type, r2_key";
 
 /**
+ * Toutes les epreuves en base, page par page (`POSTGREST_MAX_ROWS` a la fois) : contrairement aux
+ * referentiels (`fetchTable`, suppose petit), `exams` grossit avec la collecte (#23) et
+ * depasserait silencieusement `max_rows` au-dela de 1000 lignes, faisant echouer `checkSeed` au
+ * moment precis ou l'audit sert. Constat de revue, lot metadonnees 2026-11-26.
+ */
+async function fetchAllExams(client: SeedSupabaseClient): Promise<ExamRow[]> {
+  const rows: ExamRow[] = [];
+  for (let from = 0; ; from += POSTGREST_MAX_ROWS) {
+    const { data, error } = await client
+      .from("exams")
+      .select(EXAM_ROW_SELECT)
+      .range(from, from + POSTGREST_MAX_ROWS - 1);
+    if (error) throw error;
+    rows.push(...((data ?? []) as ExamRow[]));
+    if (!data || data.length < POSTGREST_MAX_ROWS) break;
+  }
+  return rows;
+}
+
+/**
  * Compare la ligne resolue du CSV a l'epreuve trouvee en base, champ par champ : matiere (par
  * nom, `subjectNames` resout `subject_id` -> nom), annee academique, session, type. Les trois
  * dernieres colonnes se comparent directement (deja des chaines ou `null`), jamais via `subjectId`
@@ -892,11 +912,7 @@ export async function checkSeed(
     entries.push({ file: row.filePath, status: "absente" });
   }
 
-  const allExams = await fetchTable<ExamRow>(
-    deps.supabase,
-    "exams",
-    EXAM_ROW_SELECT,
-  );
+  const allExams = await fetchAllExams(deps.supabase);
   const orphanExams = allExams
     .filter((exam) => !matchedExamIds.has(exam.id))
     .map((exam) => ({ slug: exam.slug }));
