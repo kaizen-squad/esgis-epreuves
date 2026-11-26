@@ -70,8 +70,14 @@ export default async function ExamDetailView({
     { label: "Niveau", value: exam.level },
     ...(exam.option ? [{ label: "Option", value: exam.option }] : []),
     { label: "Matière", value: exam.subject },
-    { label: "Année académique", value: exam.academicYear },
-    { label: "Session", value: exam.session },
+    { label: "Année académique", value: exam.academicYear ?? "Inconnue" },
+    // Un Controle Continu n'a jamais de session (#196) : la ligne n'a pas lieu d'etre, plutot
+    // qu'afficher "Inconnue" pour un champ qui ne s'applique structurellement pas.
+    ...(exam.session
+      ? [{ label: "Session", value: exam.session }]
+      : exam.examType === "Contrôle Continu"
+        ? []
+        : [{ label: "Session", value: "Inconnue" }]),
     { label: "Type", value: exam.examType },
     {
       label: "Format",

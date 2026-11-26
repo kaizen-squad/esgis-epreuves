@@ -12,7 +12,8 @@ export interface ExamCardProps {
   /** Haut de la premiere page du fichier (`/api/exams/[slug]/preview`). */
   preview_src: string;
   name: string;
-  year: number;
+  /** Inconnue sur une vieille epreuve deposee sans annee academique (#196). */
+  year: number | null;
   matter: string;
   subjectId: string;
   class: string;
@@ -21,7 +22,8 @@ export interface ExamCardProps {
   option: string | null;
   field: string;
   fieldId: string;
-  academicYear: string;
+  /** Inconnue sur une vieille epreuve deposee sans cette information (#196). */
+  academicYear: string | null;
   type: string;
   slug?: string;
   /** Taille reelle du fichier, en octets. */

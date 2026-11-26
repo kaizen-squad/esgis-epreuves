@@ -27,17 +27,25 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000
 -- Numero stable par matiere, pour deriver des epreuves factices variees sans recalculer
 -- row_number() plusieurs fois (meme fenetre repetee, mais illisible et fragile aux retouches).
 -- L'option (#197) vient directement de `subjects.option_id`, plus d'une table a part a tenir
--- alignee a la main.
+-- alignee a la main. exam_type calcule a part : un Controle Continu n'a jamais de session (#196),
+-- la session en depend.
 with numbered_subjects as (
   select s.*, l.name as level_name, f.name as field_name,
          row_number() over (order by s.id) as n
   from public.subjects s
   join public.levels l on l.id = s.level_id
   join public.fields f on f.id = s.field_id
+),
+typed_subjects as (
+  select ns.*,
+    case when (ns.n / 2) % 2 = 0 then 'Contrôle Terminal' else 'Contrôle Continu' end as exam_type
+  from numbered_subjects ns
 )
 -- Epreuves factices : une par matiere ci-dessus, combinaisons session/type/annee decorrelees
 -- (periodes 2/4/3 sur n) pour couvrir plusieurs croisements de filtres, toutes pointant vers
 -- 1 des 2 PDF d'exemple du bucket dev (objets a deposer manuellement sur R2, hors seed SQL).
+-- Une annee academique sur 7 est volontairement laissee inconnue (#196), pour exercer l'affichage
+-- "Inconnue" en dev sans fausser les autres croisements de filtres.
 -- `field_id`/`level_id`/`option_id` ne sont plus fournis : le trigger `exams_set_classification`
 -- (#197) les deduit de `subject_id`.
 insert into public.exams (
@@ -46,15 +54,19 @@ insert into public.exams (
   file_hash, file_mime_type, file_size, r2_key
 )
 select
-  ns.name,
-  lower(ns.level_name) || '-' || (case when ns.field_name = 'Gestion' then 'gestion' else 'irt' end)
-    || '-' || ns.n,
-  case (ns.n % 3) when 0 then '2022-2023' when 1 then '2023-2024' else '2024-2025' end,
-  case when ns.n % 2 = 0 then 'Session Normale' else 'Rattrapage' end,
-  case when (ns.n / 2) % 2 = 0 then 'Contrôle Terminal' else 'Contrôle Continu' end,
-  ns.id,
-  lpad(ns.n::text, 64, '0'),
+  ts.name,
+  lower(ts.level_name) || '-' || (case when ts.field_name = 'Gestion' then 'gestion' else 'irt' end)
+    || '-' || ts.n,
+  case when ts.n % 7 = 0 then null
+    else case (ts.n % 3) when 0 then '2022-2023' when 1 then '2023-2024' else '2024-2025' end
+  end,
+  case when ts.exam_type = 'Contrôle Continu' then null
+    when ts.n % 2 = 0 then 'Session Normale' else 'Rattrapage'
+  end,
+  ts.exam_type,
+  ts.id,
+  lpad(ts.n::text, 64, '0'),
   'application/pdf',
   524288,
-  case when ns.n % 2 = 0 then 'dev/exemple-1.pdf' else 'dev/exemple-2.pdf' end
-from numbered_subjects ns;
+  case when ts.n % 2 = 0 then 'dev/exemple-1.pdf' else 'dev/exemple-2.pdf' end
+from typed_subjects ts;

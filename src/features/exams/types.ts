@@ -8,8 +8,10 @@ export type Exam = {
   id: string;
   title: string;
   slug: string;
-  academicYear: string;
-  session: ExamSession;
+  /** Inconnue sur une vieille epreuve deposee sans cette information (#196). */
+  academicYear: string | null;
+  /** Toujours absente pour un Controle Continu (#196), et facultative sur une vieille epreuve. */
+  session: ExamSession | null;
   examType: ExamType;
   field: string;
   fieldId: string;

@@ -58,11 +58,13 @@ const ACTION_LINK_CLASS =
 function initialValues(exam: Exam): EditValues {
   return {
     title: exam.title,
-    academicYear: exam.academicYear,
+    // Inconnues possibles sur une vieille epreuve (#196) : la case part vide plutot que de
+    // planter, a remplir par le BDE si besoin (formulaire aligne par #202).
+    academicYear: exam.academicYear ?? "",
     fieldId: exam.fieldId,
     levelId: exam.levelId,
     subjectId: exam.subjectId,
-    session: exam.session,
+    session: exam.session ?? "",
     examType: exam.examType,
     optionId: exam.optionId ?? "",
   };

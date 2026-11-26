@@ -207,6 +207,9 @@ const getAcademicYearsCached = unstable_cache(
       let query = supabase
         .from("exams")
         .select("academic_year")
+        // Une annee inconnue (#196) ne doit jamais entrer dans ce filtre : exclue avant le tri,
+        // sinon elle remonterait en tete d'un ORDER BY DESC (NULLS FIRST par defaut en Postgres).
+        .not("academic_year", "is", null)
         .order("academic_year", { ascending: false })
         .limit(1);
       if (fieldId) query = query.eq("field_id", fieldId);
@@ -338,6 +341,9 @@ const getFieldLevelYearsCached = unstable_cache(
         .select("academic_year")
         .eq("field_id", fieldId)
         .eq("level_id", levelId)
+        // Voir getAcademicYearsCached : une annee inconnue (#196) fausserait sinon la borne
+        // triee en ASC (NULLS FIRST par defaut).
+        .not("academic_year", "is", null)
         .order("academic_year", { ascending })
         .limit(1)
         .maybeSingle();
