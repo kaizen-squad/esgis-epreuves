@@ -123,7 +123,13 @@ export function slugify(title: string): string {
   return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
-/** Validation du depot d'une epreuve (#18) : type MIME et taille du fichier, referentiels requis. */
+/**
+ * Validation du depot d'une epreuve (#18) : type MIME et taille du fichier, matiere requise.
+ * `fieldId`/`levelId`/`optionId` ne sont plus exiges depuis #197 : le classement est deduit de
+ * `subjectId` par le trigger `exams_set_classification`, jamais saisi ni verifie cote serveur.
+ * Restent acceptes et simplement ignores si le front (pas encore aligne, ticket #202) les envoie
+ * encore.
+ */
 export const examUploadSchema = z.object({
   title: z.string().trim().min(3).max(200),
   academicYear: z
@@ -131,8 +137,8 @@ export const examUploadSchema = z.object({
     .regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA."),
   session: z.enum(EXAM_SESSIONS),
   examType: z.enum(EXAM_TYPES),
-  fieldId: z.uuid(),
-  levelId: z.uuid(),
+  fieldId: z.uuid().optional(),
+  levelId: z.uuid().optional(),
   subjectId: z.uuid(),
   optionId: z.uuid().optional(),
   file: z

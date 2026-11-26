@@ -5,7 +5,7 @@ import type { Field, Level, Option, Subject } from "./types";
 
 const FIELD_SELECT = "id, name, description, is_active";
 const LEVEL_SELECT = "id, name, is_active";
-const SUBJECT_SELECT = "id, name, field_id, level_id, is_active";
+const SUBJECT_SELECT = "id, name, field_id, level_id, option_id, is_active";
 const OPTION_SELECT = "id, name, field_id, is_active";
 
 type ListOptions = {
@@ -106,6 +106,7 @@ export async function getSubjects(
     name: subject.name,
     fieldId: subject.field_id,
     levelId: subject.level_id,
+    optionId: subject.option_id,
     isActive: subject.is_active,
   }));
 }

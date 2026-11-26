@@ -428,12 +428,12 @@ describe("runSeed", () => {
       academic_year: "2024-2025",
       session: "Session Normale",
       exam_type: "Contrôle Terminal",
-      field_id: "field-irt",
-      level_id: "level-l1",
       subject_id: "subject-algo",
-      option_id: null,
       file_mime_type: "application/pdf",
     });
+    expect(supabase.insertedRows[0]).not.toHaveProperty("field_id");
+    expect(supabase.insertedRows[0]).not.toHaveProperty("level_id");
+    expect(supabase.insertedRows[0]).not.toHaveProperty("option_id");
     expect(deps.putExamFile).toHaveBeenCalledTimes(1);
   });
 

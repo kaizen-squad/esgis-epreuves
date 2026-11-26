@@ -16,6 +16,8 @@ export type Subject = {
   name: string;
   fieldId: string;
   levelId: string;
+  /** Option a laquelle la matiere est rattachee (#197), `null` pour le tronc commun. */
+  optionId: string | null;
   isActive: boolean;
 };
 
