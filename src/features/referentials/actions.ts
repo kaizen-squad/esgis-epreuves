@@ -163,13 +163,18 @@ export async function updateField(
       z.flattenError(parsed.error).fieldErrors,
     );
   }
+  // `short_name` (#198) n'est ecrit que si le formulaire l'a reellement envoye : l'ecran Admin
+  // actuel (#200, pas encore livre) n'a qu'un champ "name", et un renommage de filiere ne doit
+  // jamais effacer silencieusement son sigle faute d'un champ absent du formulaire.
+  const values: Record<string, unknown> = { name: parsed.data.name };
+  if (formData.has("shortName")) values.short_name = parsed.data.shortName;
   return updateReferential(
     "updateField",
     "cette filière",
     "fields",
     id,
     "Cette filière existe déjà.",
-    { name: parsed.data.name, short_name: parsed.data.shortName },
+    values,
   );
 }
 

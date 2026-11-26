@@ -8,7 +8,7 @@ export type CoteFields = {
   /** Sigle d'affichage de la filiere (#198), prefere au nom complet quand renseigne. */
   fieldShortName?: string | null;
   level?: string | null;
-  /** Absente des niveaux de tronc commun (L1/L2) : simplement omise de la cote. */
+  /** Absente d'une matiere de tronc commun (L1, ou une matiere de L2 anterieure a l'option, #195) : simplement omise de la cote. */
   option?: string | null;
   subject?: string | null;
   academicYear?: string | null;

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { examTitle } from "@/components/exams/examCote";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getFieldById, getFields } from "@/features/referentials/queries";
@@ -89,10 +90,20 @@ async function getExamFiles(
   );
 }
 
+/**
+ * Titre toujours recalcule a la lecture (#198), jamais celui stocke a l'insertion : un
+ * renommage de matiere (`updateSubject`, #64, toujours autorise) laisserait sinon le titre
+ * (et le slug, s'il en etait aussi recalcule) figes sur l'ancien nom sur toutes les epreuves
+ * deja deposees. Constat de revue, lot metadonnees 2026-11-26.
+ */
 function toExam(row: CatalogRow, file: ExamFile | undefined): Exam {
   return {
     id: row.id,
-    title: row.title,
+    title: examTitle({
+      subject: row.subject_name,
+      examType: row.exam_type,
+      session: row.session,
+    }),
     slug: row.slug,
     academicYear: row.academic_year,
     session: row.session,

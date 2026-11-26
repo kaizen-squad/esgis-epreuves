@@ -46,8 +46,11 @@ export function yearSpanLabel({
   return first === last ? first : `${first} à ${last}`;
 }
 
-/** Niveaux du tronc commun : les epreuves n'y ont pas d'option. */
-const COMMON_CORE_LEVELS = ["L1", "L2"];
+/**
+ * Niveau purement tronc commun (jamais d'option), pour les deux filieres reelles (#195) : IRT et
+ * Gestion se scindent toutes deux a partir du S4, donc de L2. Seul L1 reste commun aux deux.
+ */
+const COMMON_CORE_LEVELS = ["L1"];
 
 /** "Architecture Logicielle (AL)" devient "AL" ; sans sigle entre parentheses, le nom reste entier. */
 export function optionDisplayName(name: string): string {
@@ -55,8 +58,11 @@ export function optionDisplayName(name: string): string {
 }
 
 /**
- * Titre de la page d'une filiere : "L1 IRT : Tronc commun" en L1/L2, "L3 IRT : AL / SRS" ensuite
- * (options presentes dans les epreuves du niveau). Sans niveau : seulement l'abreviation de la filiere.
+ * Titre de la page d'une filiere : "L1 IRT : Tronc commun" en L1, "L3 IRT : AL / SRS" ensuite
+ * (options presentes dans les epreuves du niveau). Un niveau mixte (L2 du programme reel #195, a
+ * la fois tronc commun au S3 et scinde par option au S4) affiche les options : la page sans
+ * filtre d'option montre deja les deux, le titre les nomme plutot que de pretendre a tort qu'il
+ * n'y en a aucune. Sans niveau : seulement l'abreviation de la filiere.
  */
 export function fieldPageTitle(
   fieldName: string,

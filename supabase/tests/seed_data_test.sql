@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(18);
 
 -- Referentiels de base : 5 niveaux (M1/M2 sans matiere, programme pas encore fourni, #195), 2 filieres
 select is((select count(*) from public.levels)::int, 5, '5 niveaux (L1 a M2)');
@@ -58,6 +58,20 @@ select ok(
   ),
   'l''option d''une epreuve factice appartient toujours a sa filiere'
 );
+-- #197 (corrige par 20261126190000) : deux matieres de tronc commun (option_id null) ne doivent
+-- pas pouvoir partager le meme nom, sans quoi `createSubject` en creerait en silence et
+-- `buildReferentialMaps` n'en garderait qu'une sans jamais le signaler.
+select throws_ok(
+  $$
+  insert into public.subjects (field_id, level_id, option_id, name)
+  select field_id, level_id, option_id, name from public.subjects
+  where name = 'Algorithmique de base' and option_id is null
+  limit 1
+  $$,
+  '23505',
+  null,
+  'deux matieres de tronc commun ne peuvent pas partager le meme nom (nulls not distinct)'
+);
 
 -- #196 : annee academique et session facultatives, Controle Continu jamais de session.
 select ok(
@@ -87,9 +101,15 @@ select is(
   'IRT',
   'le sigle IRT est renseigne pour la filiere IRT'
 );
+-- `subject_name !~* 'irt'` isole le cas : sans lui, une matiere comme "Virtualisation et Cloud"
+-- ferait passer ce test meme si short_name n'etait jamais repris dans search_text (le "irt" de
+-- "vIRTualisation" matcherait seul).
 select ok(
-  (select count(*) from public.exams_catalog where search_text ilike '%irt%') > 0,
-  'search_text contient le sigle de filiere (#198), pas seulement le nom complet'
+  exists (
+    select 1 from public.exams_catalog
+    where subject_name !~* 'irt' and search_text ilike '%irt%'
+  ),
+  'une matiere sans "irt" dans son nom reste trouvable par le sigle de la filiere (#198)'
 );
 select ok(
   not exists (select 1 from public.exams where title not like '%:%'),
