@@ -140,6 +140,16 @@ describe("buildReferentialMaps / resolveSeedRow", () => {
         name: "Algorithmique",
         fieldId: "field-irt",
         levelId: "level-l1",
+        optionId: null,
+      },
+      // Meme nom que ci-dessus mais rattachee a l'option AL (#197) : la resolution doit
+      // distinguer les deux matieres par leur option, jamais par le seul nom.
+      {
+        id: "subject-algo-al",
+        name: "Algorithmique",
+        fieldId: "field-irt",
+        levelId: "level-l1",
+        optionId: "option-al",
       },
     ],
     options: [{ id: "option-al", name: "AL", fieldId: "field-irt" }],
@@ -175,7 +185,7 @@ describe("buildReferentialMaps / resolveSeedRow", () => {
     });
   });
 
-  it("resout l'option quand elle est renseignee", () => {
+  it("resout l'option quand elle est renseignee, et la bonne matiere parmi celles du meme nom", () => {
     const row = seedRowSchema.parse({
       ...ROW,
       option: "AL",
@@ -183,6 +193,20 @@ describe("buildReferentialMaps / resolveSeedRow", () => {
     });
     const result = resolveSeedRow(row, maps);
     expect(result.ok && result.row.optionId).toBe("option-al");
+    expect(result.ok && result.row.subjectId).toBe("subject-algo-al");
+  });
+
+  it("echoue si la matiere n'existe pas pour l'option demandee, meme si elle existe sans option", () => {
+    const row = seedRowSchema.parse({
+      ...ROW,
+      option: "AL",
+      matiere: "Algorithmique",
+      fichier: ROW.fichier,
+    });
+    // Matiere differente, jamais rattachee a AL dans ces fixtures : doit echouer plutot que de
+    // retomber sur la variante sans option.
+    const otherOptionRow = { ...row, matiere: "Matiere absente de AL" };
+    expect(resolveSeedRow(otherOptionRow, maps).ok).toBe(false);
   });
 
   it("echoue sur une filiere inconnue sans toucher aux autres referentiels", () => {
@@ -610,7 +634,7 @@ describe("runSeed", () => {
     const twoIdenticalFiles =
       "fichier;titre;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
       "epreuves/a.pdf;Algorithmique S1;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n" +
-      "epreuves/copie.pdf;Algorithmique S1 copie;IRT;L1;Algorithmique;;2024-2025;Contrôle Continu;Session Normale\n";
+      "epreuves/copie.pdf;Algorithmique S1 copie;IRT;L1;Algorithmique;;2024-2025;Contrôle Continu;\n";
     const supabase = makeFakeSupabase({
       fields: FIELDS,
       levels: LEVELS,

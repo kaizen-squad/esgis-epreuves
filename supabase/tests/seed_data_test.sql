@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(14);
 
 -- Referentiels de base : 5 niveaux (M1/M2 sans matiere, programme pas encore fourni, #195), 2 filieres
 select is((select count(*) from public.levels)::int, 5, '5 niveaux (L1 a M2)');
@@ -57,6 +57,27 @@ select ok(
     where o.field_id <> e.field_id
   ),
   'l''option d''une epreuve factice appartient toujours a sa filiere'
+);
+
+-- #196 : annee academique et session facultatives, Controle Continu jamais de session.
+select ok(
+  not exists (
+    select 1 from public.exams where exam_type = 'Contrôle Continu' and session is not null
+  ),
+  'aucune epreuve factice de type Controle Continu n''a de session'
+);
+select ok(
+  exists (select 1 from public.exams where academic_year is null),
+  'au moins une epreuve factice a une annee academique inconnue (#196)'
+);
+select throws_ok(
+  $$
+  update public.exams set session = 'Session Normale'
+  where id = (select id from public.exams where exam_type = 'Contrôle Continu' limit 1)
+  $$,
+  '23514',
+  null,
+  'la contrainte exams_cc_never_has_session bloque une session sur un Controle Continu'
 );
 
 select * from finish();

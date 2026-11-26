@@ -123,43 +123,67 @@ export function slugify(title: string): string {
   return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+const examFileSchema = z
+  .instanceof(File, { message: "Fichier manquant." })
+  .refine((file) => file.size > 0, "Le fichier est vide.")
+  .refine((file) => file.type === PDF_MIME_TYPE, "Le fichier doit etre un PDF.")
+  .refine(
+    (file) => file.size <= MAX_FILE_SIZE_BYTES,
+    `Le fichier depasse la limite de ${Math.floor(MAX_FILE_SIZE_BYTES / 1024)} Ko. Compressez-le (un outil de compression PDF en ligne suffit) puis reessayez.`,
+  );
+
 /**
- * Validation du depot d'une epreuve (#18) : type MIME et taille du fichier, matiere requise.
+ * Champs communs au depot (#18) et a la modification (#55) d'une epreuve, hors fichier (`pick`/
+ * `omit` requiert un objet simple, impossible une fois `superRefine` applique ci-dessous).
  * `fieldId`/`levelId`/`optionId` ne sont plus exiges depuis #197 : le classement est deduit de
  * `subjectId` par le trigger `exams_set_classification`, jamais saisi ni verifie cote serveur.
  * Restent acceptes et simplement ignores si le front (pas encore aligne, ticket #202) les envoie
- * encore.
+ * encore. `academicYear`/`session` sont facultatifs depuis #196 (inconnues possibles sur une
+ * vieille epreuve au depot) ; `examType` reste toujours obligatoire (visible sur toute copie).
  */
-export const examUploadSchema = z.object({
+/** Exporte pour `seedRowSchema` (#21/#196), qui reutilise ses bornes `title`/`academicYear` sans
+ * dupliquer `.shape` d'un schema deja passe par `superRefine` (devenu un ZodEffects, sans `.shape`). */
+export const examFieldsSchema = z.object({
   title: z.string().trim().min(3).max(200),
   academicYear: z
     .string()
-    .regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA."),
-  session: z.enum(EXAM_SESSIONS),
+    .regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA.")
+    .optional(),
+  session: z.enum(EXAM_SESSIONS).optional(),
   examType: z.enum(EXAM_TYPES),
   fieldId: z.uuid().optional(),
   levelId: z.uuid().optional(),
   subjectId: z.uuid(),
   optionId: z.uuid().optional(),
-  file: z
-    .instanceof(File, { message: "Fichier manquant." })
-    .refine((file) => file.size > 0, "Le fichier est vide.")
-    .refine(
-      (file) => file.type === PDF_MIME_TYPE,
-      "Le fichier doit etre un PDF.",
-    )
-    .refine(
-      (file) => file.size <= MAX_FILE_SIZE_BYTES,
-      `Le fichier depasse la limite de ${Math.floor(MAX_FILE_SIZE_BYTES / 1024)} Ko. Compressez-le (un outil de compression PDF en ligne suffit) puis reessayez.`,
-    ),
 });
+
+/** Un Controle Continu n'a jamais de session (#196), regle universelle valable pour toute filiere. */
+function refuseSessionOnContinuousControl<
+  T extends z.ZodType<{ examType: ExamType; session?: ExamSession }>,
+>(schema: T) {
+  return schema.superRefine((data, ctx) => {
+    if (data.examType === "Contrôle Continu" && data.session !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["session"],
+        message: "Un Contrôle Continu n'a jamais de session.",
+      });
+    }
+  });
+}
+
+/** Validation du depot d'une epreuve (#18) : type MIME et taille du fichier en plus des champs communs. */
+export const examUploadSchema = refuseSessionOnContinuousControl(
+  examFieldsSchema.extend({ file: examFileSchema }),
+);
 
 export type ExamUploadParsed = z.output<typeof examUploadSchema>;
 
 /** Validation de la modification des metadonnees d'une epreuve (#55) : memes champs que examUploadSchema, sans le fichier. */
-export const examMetadataSchema = examUploadSchema.omit({ file: true });
+export const examMetadataSchema =
+  refuseSessionOnContinuousControl(examFieldsSchema);
 
 export type ExamMetadataParsed = z.output<typeof examMetadataSchema>;
 
 /** Validation du remplacement du fichier d'une epreuve (#55) : seul le fichier, memes contraintes que examUploadSchema. */
-export const examFileReplaceSchema = examUploadSchema.pick({ file: true });
+export const examFileReplaceSchema = z.object({ file: examFileSchema });

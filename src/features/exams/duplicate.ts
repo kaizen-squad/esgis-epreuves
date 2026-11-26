@@ -18,8 +18,10 @@ export type ExamDuplicateCheck =
 
 export type ExamQuadruplet = {
   subjectId: string;
-  academicYear: string;
-  session: ExamSession;
+  /** Inconnue possible (#196) : comparee avec `.is()` plutot que `.eq()` pour matcher correctement une autre epreuve dont l'annee est elle aussi inconnue. */
+  academicYear: string | null;
+  /** Toujours absente pour un Controle Continu (#196), facultative sinon ; meme remarque que academicYear. */
+  session: ExamSession | null;
   examType: ExamType;
 };
 
@@ -57,9 +59,18 @@ export async function checkExamDuplicate(
   let quadrupletQuery = supabase
     .from("exams")
     .select(DUPLICATE_SELECT)
-    .eq("subject_id", quadruplet.subjectId)
-    .eq("academic_year", quadruplet.academicYear)
-    .eq("session", quadruplet.session)
+    .eq("subject_id", quadruplet.subjectId);
+  // `.eq(col, null)` ne matche jamais rien en PostgREST : une annee/session inconnue (#196) doit
+  // au contraire matcher une autre epreuve elle aussi sans annee/session, d'ou `.is()`.
+  quadrupletQuery =
+    quadruplet.academicYear === null
+      ? quadrupletQuery.is("academic_year", null)
+      : quadrupletQuery.eq("academic_year", quadruplet.academicYear);
+  quadrupletQuery =
+    quadruplet.session === null
+      ? quadrupletQuery.is("session", null)
+      : quadrupletQuery.eq("session", quadruplet.session);
+  quadrupletQuery = quadrupletQuery
     .eq("exam_type", quadruplet.examType)
     .limit(1);
   if (excludeExamId) quadrupletQuery = quadrupletQuery.neq("id", excludeExamId);

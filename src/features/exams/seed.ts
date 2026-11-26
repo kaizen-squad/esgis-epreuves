@@ -3,10 +3,9 @@ import path from "node:path";
 import { z } from "zod";
 import { checkExamDuplicate } from "./duplicate";
 import {
-  EXAM_SESSIONS,
   EXAM_TYPES,
   MAX_FILE_SIZE_BYTES,
-  examMetadataSchema,
+  examFieldsSchema,
   slugify,
 } from "./schemas";
 import type { ExamSession, ExamType } from "./types";
@@ -98,25 +97,45 @@ export function csvToRows(content: string): Record<string, string>[] {
 }
 
 /**
- * `titre`/`annee_academique` reutilisent les memes bornes que `examMetadataSchema` (donc que
- * `examUploadSchema`), au lieu d'une seconde copie : un titre de plus de 200 caracteres importe
- * ici bloquerait ensuite toute modification par `updateExamMetadata`, qui revalide avec la meme
- * limite.
+ * `titre`/`annee_academique` reutilisent les memes bornes que `examFieldsSchema` (donc que
+ * `examUploadSchema`/`examMetadataSchema`), au lieu d'une seconde copie : un titre de plus de 200
+ * caracteres importe ici bloquerait ensuite toute modification par `updateExamMetadata`, qui
+ * revalide avec la meme limite. `annee_academique`/`session` sont facultatives (#196, vieille
+ * epreuve dont elles sont inconnues) : une cellule vide du CSV devient `undefined`, comme `option`.
  */
-export const seedRowSchema = z.object({
-  fichier: z.string().min(1, "Chemin de fichier manquant."),
-  titre: examMetadataSchema.shape.title,
-  filiere: z.string().min(1, "Filiere manquante."),
-  niveau: z.string().min(1, "Niveau manquant."),
-  matiere: z.string().min(1, "Matiere manquante."),
-  option: z
-    .string()
-    .optional()
-    .transform((value) => (value ? value : undefined)),
-  annee_academique: examMetadataSchema.shape.academicYear,
-  type_epreuve: z.enum(EXAM_TYPES),
-  session: z.enum(EXAM_SESSIONS),
-});
+export const seedRowSchema = z
+  .object({
+    fichier: z.string().min(1, "Chemin de fichier manquant."),
+    titre: examFieldsSchema.shape.title,
+    filiere: z.string().min(1, "Filiere manquante."),
+    niveau: z.string().min(1, "Niveau manquant."),
+    matiere: z.string().min(1, "Matiere manquante."),
+    option: z
+      .string()
+      .optional()
+      .transform((value) => (value ? value : undefined)),
+    annee_academique: z
+      .string()
+      .transform((value) => (value ? value : undefined))
+      .pipe(examFieldsSchema.shape.academicYear),
+    type_epreuve: z.enum(EXAM_TYPES),
+    session: z
+      .string()
+      .transform((value) => (value ? value : undefined))
+      .pipe(examFieldsSchema.shape.session),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.type_epreuve === "Contrôle Continu" &&
+      data.session !== undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["session"],
+        message: "Un Contrôle Continu n'a jamais de session.",
+      });
+    }
+  });
 
 export type SeedCsvRow = z.output<typeof seedRowSchema>;
 
@@ -126,6 +145,7 @@ export type SubjectRow = {
   name: string;
   fieldId: string;
   levelId: string;
+  optionId: string | null;
 };
 export type OptionRow = { id: string; name: string; fieldId: string };
 
@@ -136,10 +156,16 @@ export type ReferentialMaps = {
   options: Map<string, string>;
 };
 
+/** Cle d'une matiere sans option (tronc commun) : distincte de tout id d'option possible. */
+const NO_OPTION = "";
+
 /**
  * Index en memoire des referentiels par nom, pour resoudre les colonnes textuelles du CSV sans
  * requete par ligne. Matiere et option ne sont uniques qu'au sein d'une filiere (et d'un niveau
- * pour la matiere, cf. contraintes `unique` de la migration initiale) : cles composites.
+ * pour la matiere, cf. contraintes `unique` de la migration initiale) : cles composites. Depuis
+ * #197, plusieurs options d'une meme filiere/niveau peuvent partager un nom de matiere identique
+ * (ex. "Introduction à Docker" en AL, SI et SRC) : la cle de matiere inclut donc aussi l'option,
+ * jamais seulement filiere+niveau+nom.
  */
 export function buildReferentialMaps(data: {
   fields: ReferentialRow[];
@@ -151,7 +177,10 @@ export function buildReferentialMaps(data: {
     fields: new Map(data.fields.map((f) => [f.name, f.id])),
     levels: new Map(data.levels.map((l) => [l.name, l.id])),
     subjects: new Map(
-      data.subjects.map((s) => [`${s.fieldId}:${s.levelId}:${s.name}`, s.id]),
+      data.subjects.map((s) => [
+        `${s.fieldId}:${s.levelId}:${s.optionId ?? NO_OPTION}:${s.name}`,
+        s.id,
+      ]),
     ),
     options: new Map(data.options.map((o) => [`${o.fieldId}:${o.name}`, o.id])),
   };
@@ -163,8 +192,8 @@ export type ResolvedSeedRow = {
   subjectId: string;
   optionId: string | null;
   title: string;
-  academicYear: string;
-  session: ExamSession;
+  academicYear: string | null;
+  session: ExamSession | null;
   examType: ExamType;
   filePath: string;
 };
@@ -185,14 +214,8 @@ export function resolveSeedRow(
   if (!levelId)
     return { ok: false, error: `Niveau inconnu : "${row.niveau}".` };
 
-  const subjectId = maps.subjects.get(`${fieldId}:${levelId}:${row.matiere}`);
-  if (!subjectId) {
-    return {
-      ok: false,
-      error: `Matiere inconnue pour cette filiere et ce niveau : "${row.matiere}".`,
-    };
-  }
-
+  // L'option se resout avant la matiere : depuis #197, plusieurs options d'une meme
+  // filiere/niveau peuvent partager un nom de matiere identique (voir buildReferentialMaps).
   let optionId: string | null = null;
   if (row.option) {
     const found = maps.options.get(`${fieldId}:${row.option}`);
@@ -205,6 +228,16 @@ export function resolveSeedRow(
     optionId = found;
   }
 
+  const subjectId = maps.subjects.get(
+    `${fieldId}:${levelId}:${optionId ?? NO_OPTION}:${row.matiere}`,
+  );
+  if (!subjectId) {
+    return {
+      ok: false,
+      error: `Matiere inconnue pour cette filiere, ce niveau et cette option : "${row.matiere}".`,
+    };
+  }
+
   return {
     ok: true,
     row: {
@@ -213,8 +246,8 @@ export function resolveSeedRow(
       subjectId,
       optionId,
       title: row.titre,
-      academicYear: row.annee_academique,
-      session: row.session,
+      academicYear: row.annee_academique ?? null,
+      session: row.session ?? null,
       examType: row.type_epreuve,
       filePath: row.fichier,
     },
@@ -352,7 +385,8 @@ export async function runSeed(
       name: string;
       field_id: string;
       level_id: string;
-    }>(deps.supabase, "subjects", "id, name, field_id, level_id"),
+      option_id: string | null;
+    }>(deps.supabase, "subjects", "id, name, field_id, level_id, option_id"),
     fetchTable<{ id: string; name: string; field_id: string }>(
       deps.supabase,
       "options",
@@ -367,6 +401,7 @@ export async function runSeed(
       name: s.name,
       fieldId: s.field_id,
       levelId: s.level_id,
+      optionId: s.option_id,
     })),
     options: examOptions.map((o) => ({
       id: o.id,

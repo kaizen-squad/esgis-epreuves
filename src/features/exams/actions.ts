@@ -85,8 +85,8 @@ export async function uploadExam(
   try {
     duplicate = await checkExamDuplicate(fileHash, {
       subjectId: exam.subjectId,
-      academicYear: exam.academicYear,
-      session: exam.session,
+      academicYear: exam.academicYear ?? null,
+      session: exam.session ?? null,
       examType: exam.examType,
     });
   } catch (error) {
@@ -208,8 +208,8 @@ export async function updateExamMetadata(
       current.file_hash,
       {
         subjectId: exam.subjectId,
-        academicYear: exam.academicYear,
-        session: exam.session,
+        academicYear: exam.academicYear ?? null,
+        session: exam.session ?? null,
         examType: exam.examType,
       },
       examId,
@@ -230,8 +230,10 @@ export async function updateExamMetadata(
     .from("exams")
     .update({
       title: exam.title,
-      academic_year: exam.academicYear,
-      session: exam.session,
+      // `?? null` explicite : un champ vide doit effacer l'ancienne valeur en base (#196), pas
+      // rester inchange comme le ferait un `undefined` (silencieusement retire du corps JSON).
+      academic_year: exam.academicYear ?? null,
+      session: exam.session ?? null,
       exam_type: exam.examType,
       subject_id: exam.subjectId,
     })
@@ -654,8 +656,8 @@ export async function uploadExamsBatch(
     try {
       duplicate = await checkExamDuplicate(fileHash, {
         subjectId: exam.subjectId,
-        academicYear: exam.academicYear,
-        session: exam.session,
+        academicYear: exam.academicYear ?? null,
+        session: exam.session ?? null,
         examType: exam.examType,
       });
     } catch (error) {
