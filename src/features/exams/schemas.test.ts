@@ -185,6 +185,30 @@ describe("examUploadSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("traite null comme absent pour les champs facultatifs (formData.get() d'un champ non envoye)", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({
+        academicYear: null,
+        session: null,
+        fieldId: null,
+        levelId: null,
+      }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("traite une chaine vide comme absente pour les champs facultatifs (Controle Continu, session jamais envoyee)", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({ examType: "Contrôle Continu", session: "" }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("accepte une annee academique vide (champ vide, pas absent)", () => {
+    const result = examUploadSchema.safeParse(validInput({ academicYear: "" }));
+    expect(result.success).toBe(true);
+  });
+
   it("rejette une session renseignee pour un Controle Continu (#196)", () => {
     const result = examUploadSchema.safeParse(
       validInput({ examType: "Contrôle Continu", session: "Session Normale" }),

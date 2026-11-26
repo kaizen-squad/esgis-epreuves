@@ -141,6 +141,21 @@ const examFileSchema = z
  * encore. `academicYear`/`session` sont facultatifs depuis #196 (inconnues possibles sur une
  * vieille epreuve au depot) ; `examType` reste toujours obligatoire (visible sur toute copie).
  */
+/**
+ * `formData.get(x)` renvoie `null` quand le champ est absent et `""` quand il est present mais
+ * vide ; seul `undefined` est "absent" pour `.optional()`. Sans ce preprocess, un champ facultatif
+ * (`title`/`academicYear`/`session`/`fieldId`/`levelId`) envoye vide ou non envoye du tout est
+ * rejete comme invalide au lieu d'etre traite comme absent (constat de revue bloquant, lot
+ * metadonnees 2026-11-26) : un Controle Continu (session forcement vide) ne pouvait alors plus
+ * jamais etre depose ni modifie.
+ */
+function optionalText<T extends z.ZodTypeAny>(schema: T) {
+  return z.preprocess(
+    (value) => (value === null || value === "" ? undefined : value),
+    schema.optional(),
+  );
+}
+
 /** Exporte pour `seedRowSchema` (#21/#196), qui reutilise ses bornes `title`/`academicYear` sans
  * dupliquer `.shape` d'un schema deja passe par `superRefine` (devenu un ZodEffects, sans `.shape`). */
 export const examFieldsSchema = z.object({
@@ -148,17 +163,16 @@ export const examFieldsSchema = z.object({
    * Accepte encore un titre libre (ignoré) si le front (pas aligné avant #202) en envoie un :
    * depuis #198, le titre est toujours calculé côté serveur (`examTitle`), jamais saisi.
    */
-  title: z.string().trim().max(200).optional(),
-  academicYear: z
-    .string()
-    .regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA.")
-    .optional(),
-  session: z.enum(EXAM_SESSIONS).optional(),
+  title: optionalText(z.string().trim().max(200)),
+  academicYear: optionalText(
+    z.string().regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA."),
+  ),
+  session: optionalText(z.enum(EXAM_SESSIONS)),
   examType: z.enum(EXAM_TYPES),
-  fieldId: z.uuid().optional(),
-  levelId: z.uuid().optional(),
+  fieldId: optionalText(z.uuid()),
+  levelId: optionalText(z.uuid()),
   subjectId: z.uuid(),
-  optionId: z.uuid().optional(),
+  optionId: optionalText(z.uuid()),
 });
 
 /** Un Controle Continu n'a jamais de session (#196), regle universelle valable pour toute filiere. */

@@ -114,15 +114,11 @@ export const seedRowSchema = z
       .string()
       .optional()
       .transform((value) => (value ? value : undefined)),
-    annee_academique: z
-      .string()
-      .transform((value) => (value ? value : undefined))
-      .pipe(examFieldsSchema.shape.academicYear),
+    // Le preprocess de `examFieldsSchema.shape.academicYear`/`.session` traite deja "" comme
+    // absent (voir `optionalText`, schemas.ts) : pas besoin d'un transform prealable ici.
+    annee_academique: examFieldsSchema.shape.academicYear,
     type_epreuve: z.enum(EXAM_TYPES),
-    session: z
-      .string()
-      .transform((value) => (value ? value : undefined))
-      .pipe(examFieldsSchema.shape.session),
+    session: examFieldsSchema.shape.session,
   })
   .superRefine((data, ctx) => {
     if (
