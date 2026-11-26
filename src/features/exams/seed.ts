@@ -602,3 +602,322 @@ export async function runSeed(
 
   return { entries, summary: summarizeReport(entries) };
 }
+
+export type SeedCheckMismatch = {
+  field: "matiere" | "annee_academique" | "session" | "type_epreuve";
+  attendu: string;
+  trouve: string;
+};
+
+export type SeedCheckEntry =
+  | { file: string; status: "absente" }
+  | { file: string; status: "conforme"; slug: string }
+  | {
+      file: string;
+      status: "mal_classee";
+      slug: string;
+      mismatches: SeedCheckMismatch[];
+    }
+  | { file: string; status: "error"; message: string };
+
+export type SeedCheckSummary = {
+  total: number;
+  conforme: number;
+  mal_classee: number;
+  absente: number;
+  error: number;
+};
+
+export type SeedCheckReport = {
+  entries: SeedCheckEntry[];
+  /** Epreuves en base qu'aucune ligne du CSV ne revendique (fichier absent du dossier de collecte). */
+  orphanExams: { slug: string }[];
+  /** Complement optionnel (`options.checkR2Objects`) : epreuves en base dont l'objet R2 est introuvable. */
+  missingR2Objects: { slug: string; r2Key: string }[];
+  summary: SeedCheckSummary;
+};
+
+export type SeedCheckDeps = {
+  supabase: SeedSupabaseClient;
+  readFile: (filePath: string) => Promise<Buffer>;
+  /** Injectable pour les tests ; par defaut `examFileExists` (`src/lib/r2/exists.ts`). */
+  examFileExists: (r2Key: string) => Promise<boolean>;
+};
+
+function summarizeCheck(entries: SeedCheckEntry[]): SeedCheckSummary {
+  return {
+    total: entries.length,
+    conforme: entries.filter((e) => e.status === "conforme").length,
+    mal_classee: entries.filter((e) => e.status === "mal_classee").length,
+    absente: entries.filter((e) => e.status === "absente").length,
+    error: entries.filter((e) => e.status === "error").length,
+  };
+}
+
+type ExamRow = {
+  id: string;
+  slug: string;
+  subject_id: string;
+  academic_year: string | null;
+  session: ExamSession | null;
+  exam_type: ExamType;
+  r2_key: string;
+};
+
+const EXAM_ROW_SELECT =
+  "id, slug, subject_id, academic_year, session, exam_type, r2_key";
+
+/**
+ * Compare la ligne resolue du CSV a l'epreuve trouvee en base, champ par champ : matiere (par
+ * nom, `subjectNames` resout `subject_id` -> nom), annee academique, session, type. Les trois
+ * dernieres colonnes se comparent directement (deja des chaines ou `null`), jamais via `subjectId`
+ * qui n'a aucun sens pour l'utilisateur relisant le rapport.
+ */
+function diffAgainstDb(
+  row: ResolvedSeedRow,
+  exam: ExamRow,
+  subjectNames: Map<string, string>,
+): SeedCheckMismatch[] {
+  const mismatches: SeedCheckMismatch[] = [];
+  const dbSubjectName = subjectNames.get(exam.subject_id) ?? exam.subject_id;
+
+  if (row.subjectId !== exam.subject_id) {
+    mismatches.push({
+      field: "matiere",
+      attendu: subjectNames.get(row.subjectId) ?? row.subjectId,
+      trouve: dbSubjectName,
+    });
+  }
+  if (row.academicYear !== exam.academic_year) {
+    mismatches.push({
+      field: "annee_academique",
+      attendu: row.academicYear ?? "(inconnue)",
+      trouve: exam.academic_year ?? "(inconnue)",
+    });
+  }
+  if (row.session !== exam.session) {
+    mismatches.push({
+      field: "session",
+      attendu: row.session ?? "(absente)",
+      trouve: exam.session ?? "(absente)",
+    });
+  }
+  if (row.examType !== exam.exam_type) {
+    mismatches.push({
+      field: "type_epreuve",
+      attendu: row.examType,
+      trouve: exam.exam_type,
+    });
+  }
+  return mismatches;
+}
+
+/**
+ * Audit de complétude et de classement (#199) : pour chaque ligne du CSV de collecte, cherche
+ * l'épreuve déjà en base par hash exact du fichier et, si elle y est, signale tout écart avec ce
+ * que dit maintenant le CSV (matière, année, session, type ; plus de filière/niveau/option à
+ * vérifier séparément depuis #197, déduits de la matière). Repli par quadruplet (matière, année,
+ * session, type) quand le hash ne correspond à rien : un fichier compressé après coup (> 900 Ko,
+ * `MAX_FILE_SIZE_BYTES`) n'a plus le même hash que l'original déposé, et serait sinon classé à
+ * tort "absente".
+ *
+ * Signale aussi les épreuves en base qu'aucune ligne du CSV ne revendique (`orphanExams`) : un
+ * fichier qui manque au dossier de collecte, ou une épreuve jamais redéposée. Le rapport "objet R2
+ * manquant" (`missingR2Objects`) est un complément optionnel (`options.checkR2Objects`), coûteux
+ * (une requête R2 par épreuve en base) et jamais nécessaire au classement lui-même.
+ */
+export async function checkSeed(
+  csvContent: string,
+  options: { baseDir: string; checkR2Objects?: boolean },
+  deps: SeedCheckDeps,
+): Promise<SeedCheckReport> {
+  const rawRows = csvToRows(csvContent);
+  const entries: SeedCheckEntry[] = [];
+  const matchedExamIds = new Set<string>();
+
+  const [fields, levels, subjects, examOptions] = await Promise.all([
+    fetchTable<ReferentialRow>(deps.supabase, "fields", "id, name"),
+    fetchTable<ReferentialRow>(deps.supabase, "levels", "id, name"),
+    fetchTable<{
+      id: string;
+      name: string;
+      field_id: string;
+      level_id: string;
+      option_id: string | null;
+    }>(deps.supabase, "subjects", "id, name, field_id, level_id, option_id"),
+    fetchTable<{ id: string; name: string; field_id: string }>(
+      deps.supabase,
+      "options",
+      "id, name, field_id",
+    ),
+  ]);
+  const maps = buildReferentialMaps({
+    fields,
+    levels,
+    subjects: subjects.map((s) => ({
+      id: s.id,
+      name: s.name,
+      fieldId: s.field_id,
+      levelId: s.level_id,
+      optionId: s.option_id,
+    })),
+    options: examOptions.map((o) => ({
+      id: o.id,
+      name: o.name,
+      fieldId: o.field_id,
+    })),
+  });
+  const subjectNames = new Map(subjects.map((s) => [s.id, s.name]));
+
+  for (const raw of rawRows) {
+    const label = raw.fichier || "(fichier non renseigne)";
+
+    const parsed = seedRowSchema.safeParse(raw);
+    if (!parsed.success) {
+      const [firstError] = z.flattenError(parsed.error).formErrors;
+      const fieldErrors = Object.values(
+        z.flattenError(parsed.error).fieldErrors,
+      ).flat();
+      entries.push({
+        file: label,
+        status: "error",
+        message: firstError ?? fieldErrors[0] ?? "Ligne invalide.",
+      });
+      continue;
+    }
+
+    const resolved = resolveSeedRow(parsed.data, maps);
+    if (!resolved.ok) {
+      entries.push({
+        file: parsed.data.fichier,
+        status: "error",
+        message: resolved.error,
+      });
+      continue;
+    }
+    const { row } = resolved;
+
+    const filePath = resolveFilePath(options.baseDir, row.filePath);
+    if (!filePath) {
+      entries.push({
+        file: row.filePath,
+        status: "error",
+        message: "Chemin de fichier invalide (hors du dossier source).",
+      });
+      continue;
+    }
+
+    let buffer: Buffer;
+    try {
+      buffer = await deps.readFile(filePath);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      entries.push({
+        file: row.filePath,
+        status: "error",
+        message:
+          code === "ENOENT"
+            ? "Fichier introuvable."
+            : `Lecture du fichier impossible (${code ?? (error as Error).message}).`,
+      });
+      continue;
+    }
+
+    const fileHash = hashBuffer(buffer);
+
+    const { data: byHash, error: hashError } = await deps.supabase
+      .from("exams")
+      .select(EXAM_ROW_SELECT)
+      .eq("file_hash", fileHash)
+      .maybeSingle();
+    if (hashError) {
+      entries.push({
+        file: row.filePath,
+        status: "error",
+        message: `Lecture en base impossible : ${hashError.message ?? hashError}`,
+      });
+      continue;
+    }
+
+    if (byHash) {
+      matchedExamIds.add(byHash.id);
+      const mismatches = diffAgainstDb(row, byHash as ExamRow, subjectNames);
+      entries.push(
+        mismatches.length > 0
+          ? {
+              file: row.filePath,
+              status: "mal_classee",
+              slug: byHash.slug,
+              mismatches,
+            }
+          : { file: row.filePath, status: "conforme", slug: byHash.slug },
+      );
+      continue;
+    }
+
+    // Repli par quadruplet (fichier compresse apres coup, hash different de l'original deja
+    // depose) : les 4 colonnes filtrees sont deja celles du CSV, un resultat n'a donc jamais
+    // d'ecart a signaler.
+    let quadrupletQuery = deps.supabase
+      .from("exams")
+      .select(EXAM_ROW_SELECT)
+      .eq("subject_id", row.subjectId)
+      .eq("exam_type", row.examType);
+    quadrupletQuery =
+      row.academicYear === null
+        ? quadrupletQuery.is("academic_year", null)
+        : quadrupletQuery.eq("academic_year", row.academicYear);
+    quadrupletQuery =
+      row.session === null
+        ? quadrupletQuery.is("session", null)
+        : quadrupletQuery.eq("session", row.session);
+    const { data: byQuadruplet, error: quadrupletError } = await quadrupletQuery
+      .limit(1)
+      .maybeSingle();
+    if (quadrupletError) {
+      entries.push({
+        file: row.filePath,
+        status: "error",
+        message: `Lecture en base impossible : ${quadrupletError.message ?? quadrupletError}`,
+      });
+      continue;
+    }
+
+    if (byQuadruplet) {
+      matchedExamIds.add(byQuadruplet.id);
+      entries.push({
+        file: row.filePath,
+        status: "conforme",
+        slug: byQuadruplet.slug,
+      });
+      continue;
+    }
+
+    entries.push({ file: row.filePath, status: "absente" });
+  }
+
+  const allExams = await fetchTable<ExamRow>(
+    deps.supabase,
+    "exams",
+    EXAM_ROW_SELECT,
+  );
+  const orphanExams = allExams
+    .filter((exam) => !matchedExamIds.has(exam.id))
+    .map((exam) => ({ slug: exam.slug }));
+
+  const missingR2Objects: SeedCheckReport["missingR2Objects"] = [];
+  if (options.checkR2Objects) {
+    for (const exam of allExams) {
+      const exists = await deps.examFileExists(exam.r2_key);
+      if (!exists)
+        missingR2Objects.push({ slug: exam.slug, r2Key: exam.r2_key });
+    }
+  }
+
+  return {
+    entries,
+    orphanExams,
+    missingR2Objects,
+    summary: summarizeCheck(entries),
+  };
+}

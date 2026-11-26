@@ -276,6 +276,16 @@ Mêmes contrôles que `uploadExam`/`replaceExamFile` (octets de signature `%PDF-
 
 Compte chaque statut (`imported`/`dry-run` ensemble comme imports, `duplicate`, `error`) et les avertissements séparément : un import avec `warning` compte dans les deux. Utilisé par `runSeed` pour construire `SeedReport.summary`, et par `scripts/seed-exams.ts` pour le résumé affiché en fin d'exécution et le code de sortie (`1` si `errors > 0`, jamais sur un simple `warning` ou `duplicate`).
 
+### `checkSeed(csvContent: string, options: { baseDir: string; checkR2Objects?: boolean }, deps: SeedCheckDeps): Promise<SeedCheckReport>`
+
+Import `import { checkSeed } from "@/features/exams/seed"`. Audit de complétude et de classement (#199, `scripts/seed-exams.ts --check`), en lecture seule (aucune credential R2/BDE requise, comme `--dry-run`) : avant le lancement réel de la collecte (#23), vérifie que le CSV de métadonnées décrit encore fidèlement ce qui est déjà en base.
+
+Pour chaque ligne, résout d'abord les référentiels (même `buildReferentialMaps`/`resolveSeedRow` que `runSeed`), hache le fichier puis cherche l'épreuve correspondante en base par hash exact (`exams.file_hash`). Trouvée, compare matière/année académique/session/type avec ce que dit maintenant le CSV (`diffAgainstDb`) : sans écart, statut `"conforme"` ; avec, `"mal_classee"` et le détail (`SeedCheckMismatch[]`, `{ field, attendu, trouve }`). Filière/niveau/option ne sont plus comparés séparément depuis #197 (déduits de la matière par le trigger `exams_set_classification`) : seule la matière (`subjectId`) compte pour le classement. Si aucun hash ne matche, replie sur le quadruplet (`subject_id`/`academic_year`/`session`/`exam_type`, mêmes colonnes que `checkExamDuplicate`) : un fichier compressé après coup (> `MAX_FILE_SIZE_BYTES`) n'a plus le hash de l'original déjà déposé, et serait sinon classé à tort `"absente"` ; un quadruplet trouvé est par construction déjà conforme (les 4 colonnes filtrées sont celles du CSV), jamais de `mismatches` dans ce cas. Sans aucun match, statut `"absente"` : l'épreuve n'est pas encore en base. Une ligne invalide ou un fichier illisible renvoient `"error"` sans interrompre les lignes suivantes, même principe que `runSeed`.
+
+`SeedCheckReport.orphanExams` liste les épreuves en base qu'aucune ligne du CSV ne revendique (fichier absent du dossier de collecte, ou épreuve jamais redéposée) : la différence entre toutes les épreuves en base et celles effectivement matchées (par hash ou quadruplet) pendant la boucle. `missingR2Objects` est un complément optionnel (`options.checkR2Objects`, coûteux : une requête R2 par épreuve en base via `examFileExists`, jamais activé par défaut) qui signale une épreuve en base dont l'objet R2 est introuvable.
+
+`SeedCheckDeps` diffère de `SeedDeps` : pas de `putExamFile` (lecture seule), et `examFileExists` est injectable (`src/lib/r2/exists.ts` par défaut depuis `scripts/seed-exams.ts`) pour rester testable sans vrai bucket R2.
+
 ## `src/lib/supabase/public.ts`
 
 ### `createPublicClient()`
