@@ -112,10 +112,7 @@ export async function uploadExam(
       academic_year: exam.academicYear,
       session: exam.session,
       exam_type: exam.examType,
-      field_id: exam.fieldId,
-      level_id: exam.levelId,
       subject_id: exam.subjectId,
-      option_id: exam.optionId ?? null,
       file_hash: fileHash,
       file_mime_type: file.type,
       file_size: file.size,
@@ -236,10 +233,7 @@ export async function updateExamMetadata(
       academic_year: exam.academicYear,
       session: exam.session,
       exam_type: exam.examType,
-      field_id: exam.fieldId,
-      level_id: exam.levelId,
       subject_id: exam.subjectId,
-      option_id: exam.optionId ?? null,
     })
     .eq("id", examId)
     .select("id");
@@ -709,10 +703,7 @@ export async function uploadExamsBatch(
         academic_year: exam.academicYear,
         session: exam.session,
         exam_type: exam.examType,
-        field_id: exam.fieldId,
-        level_id: exam.levelId,
         subject_id: exam.subjectId,
-        option_id: exam.optionId ?? null,
         file_hash: fileHash,
         file_mime_type: exam.file.type,
         file_size: exam.file.size,

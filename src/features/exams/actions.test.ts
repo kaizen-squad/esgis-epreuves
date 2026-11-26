@@ -268,10 +268,7 @@ describe("uploadExam", () => {
       academic_year: "2024-2025",
       session: "Session Normale",
       exam_type: "Contrôle Terminal",
-      field_id: UUID,
-      level_id: UUID,
       subject_id: UUID,
-      option_id: OPTION_UUID,
       file_hash: FILE_HASH,
       file_mime_type: "application/pdf",
       file_size: 8,
@@ -284,10 +281,12 @@ describe("uploadExam", () => {
     expect(del).not.toHaveBeenCalled();
   });
 
-  it("transmet null comme option_id quand aucune option n'est fournie", async () => {
-    await uploadExam(uploadForm());
+  it("n'envoie plus fieldId/levelId/optionId a l'insertion : le trigger les deduit de subjectId (#197)", async () => {
+    await uploadExam(uploadForm({ optionId: OPTION_UUID }));
 
-    expect(insert.mock.calls[0]![0].option_id).toBeNull();
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("field_id");
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("level_id");
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("option_id");
   });
 
   it("traite une violation d'unicite sur le hash a l'insertion comme un doublon, sans toucher a R2", async () => {
@@ -421,20 +420,19 @@ describe("updateExamMetadata", () => {
       academic_year: "2024-2025",
       session: "Session Normale",
       exam_type: "Contrôle Terminal",
-      field_id: UUID,
-      level_id: UUID,
       subject_id: UUID,
-      option_id: OPTION_UUID,
     });
     expect(updateEq).toHaveBeenCalledWith("id", EXAM_ID);
   });
 
-  it("transmet null comme option_id quand aucune option n'est fournie", async () => {
+  it("n'envoie plus fieldId/levelId/optionId a la mise a jour : le trigger les deduit de subjectId (#197)", async () => {
     maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
 
     await updateExamMetadata(EXAM_ID, metadataForm());
 
-    expect(update.mock.calls[0]![0].option_id).toBeNull();
+    expect(update.mock.calls[0]![0]).not.toHaveProperty("field_id");
+    expect(update.mock.calls[0]![0]).not.toHaveProperty("level_id");
+    expect(update.mock.calls[0]![0]).not.toHaveProperty("option_id");
   });
 
   it("renvoie un avertissement non bloquant quand le quadruplet correspond a une autre epreuve", async () => {
@@ -989,19 +987,15 @@ describe("uploadExamsBatch", () => {
     expect(result.data.entries[1]).toMatchObject({ status: "imported" });
   });
 
-  it("convertit une option vide en absence d'option a l'insertion, au bon index", async () => {
+  it("n'envoie plus fieldId/levelId/optionId a l'insertion du lot : le trigger les deduit de subjectId (#197)", async () => {
     await uploadExamsBatch(
       batchForm([{ optionId: "" }, { optionId: OPTION_UUID }]),
     );
 
-    expect(insert).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ option_id: null }),
-    );
-    expect(insert).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ option_id: OPTION_UUID }),
-    );
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("option_id");
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("field_id");
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("level_id");
+    expect(insert.mock.calls[1]![0]).not.toHaveProperty("option_id");
   });
 
   it("insere malgre un quadruplet identique a une epreuve existante, avec un avertissement non bloquant", async () => {
