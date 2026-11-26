@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { MAX_FILE_SIZE_BYTES } from "./schemas";
 import {
   buildReferentialMaps,
+  checkSeed,
   csvToRows,
   hashBuffer,
   isPdfBuffer,
@@ -792,5 +793,366 @@ describe("runSeed", () => {
     expect((report.entries[0] as { message: string }).message).not.toContain(
       "deja depose",
     );
+  });
+});
+
+/**
+ * Faux client suffisant pour `checkSeed` : simule la table `exams` en memoire (filtrage par
+ * `.eq()`/`.is()` accumules, `.maybeSingle()` ou attente directe pour `fetchTable`), distinct de
+ * `makeFakeSupabase` (pensee pour `runSeed`, sans filtrage reel sur `exams`).
+ */
+function makeCheckFakeSupabase(config: {
+  fields?: unknown[];
+  levels?: unknown[];
+  subjects?: unknown[];
+  options?: unknown[];
+  exams?: Record<string, unknown>[];
+}) {
+  const exams = config.exams ?? [];
+  const tables: Record<string, unknown[]> = {
+    fields: config.fields ?? [],
+    levels: config.levels ?? [],
+    subjects: config.subjects ?? [],
+    options: config.options ?? [],
+  };
+
+  function matches(row: Record<string, unknown>, filters: [string, unknown][]) {
+    return filters.every(([column, value]) => row[column] === value);
+  }
+
+  function examsBuilder() {
+    const filters: [string, unknown][] = [];
+    const builder = {
+      eq: (column: string, value: unknown) => {
+        filters.push([column, value]);
+        return builder;
+      },
+      is: (column: string, value: unknown) => {
+        filters.push([column, value]);
+        return builder;
+      },
+      limit: () => builder,
+      maybeSingle: () => {
+        const found = exams.find((row) => matches(row, filters)) ?? null;
+        return Promise.resolve({ data: found, error: null });
+      },
+      then: (resolve: (value: unknown) => void) =>
+        Promise.resolve({
+          data: exams.filter((row) => matches(row, filters)),
+          error: null,
+        }).then(resolve),
+    };
+    return builder;
+  }
+
+  const from = vi.fn((table: string) => {
+    if (table === "exams") return { select: () => examsBuilder() };
+    return {
+      select: () => Promise.resolve({ data: tables[table] ?? [], error: null }),
+    };
+  });
+
+  return { from };
+}
+
+describe("checkSeed", () => {
+  const FIELD_ID = "field-irt";
+  const LEVEL_ID = "level-l1";
+  const SUBJECT_ID = "subject-algo";
+  const SUBJECT_AL_ID = "subject-algo-al";
+
+  const REFERENTIALS = {
+    fields: [{ id: FIELD_ID, name: "IRT" }],
+    levels: [{ id: LEVEL_ID, name: "L1" }],
+    subjects: [
+      {
+        id: SUBJECT_ID,
+        name: "Algorithmique",
+        field_id: FIELD_ID,
+        level_id: LEVEL_ID,
+        option_id: null,
+      },
+      {
+        id: SUBJECT_AL_ID,
+        name: "Reseaux",
+        field_id: FIELD_ID,
+        level_id: LEVEL_ID,
+        option_id: null,
+      },
+    ],
+    options: [],
+  };
+
+  const CSV_ROW =
+    "fichier;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
+    "epreuves/a.pdf;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n";
+
+  function makeDeps(
+    supabase: ReturnType<typeof makeCheckFakeSupabase>,
+    files: Record<string, Buffer> = {
+      "/data/epreuves/a.pdf": Buffer.from("%PDF-1.4"),
+    },
+    examFileExists: (r2Key: string) => Promise<boolean> = () =>
+      Promise.resolve(true),
+  ) {
+    return {
+      supabase,
+      readFile: (filePath: string) => {
+        const buffer = files[filePath];
+        return buffer
+          ? Promise.resolve(buffer)
+          : Promise.reject(
+              Object.assign(new Error("ENOENT"), { code: "ENOENT" }),
+            );
+      },
+      examFileExists,
+    };
+  }
+
+  it("classe conforme une ligne dont le hash matche une epreuve identique en base", async () => {
+    const fileHash = hashBuffer(Buffer.from("%PDF-1.4"));
+    const supabase = makeCheckFakeSupabase({
+      ...REFERENTIALS,
+      exams: [
+        {
+          id: "exam-1",
+          slug: "algo-s1",
+          subject_id: SUBJECT_ID,
+          academic_year: "2024-2025",
+          session: "Session Normale",
+          exam_type: "Contrôle Terminal",
+          file_hash: fileHash,
+          r2_key: "exams/algo-s1.pdf",
+        },
+      ],
+    });
+
+    const report = await checkSeed(
+      CSV_ROW,
+      { baseDir: "/data" },
+      makeDeps(supabase),
+    );
+
+    expect(report.entries).toEqual([
+      { file: "epreuves/a.pdf", status: "conforme", slug: "algo-s1" },
+    ]);
+    expect(report.orphanExams).toEqual([]);
+    expect(report.summary).toEqual({
+      total: 1,
+      conforme: 1,
+      mal_classee: 0,
+      absente: 0,
+      error: 0,
+    });
+  });
+
+  it("signale les ecarts (matiere, annee, session, type) d'une ligne mal classee", async () => {
+    const fileHash = hashBuffer(Buffer.from("%PDF-1.4"));
+    const supabase = makeCheckFakeSupabase({
+      ...REFERENTIALS,
+      exams: [
+        {
+          id: "exam-1",
+          slug: "reseaux-ancienne",
+          subject_id: SUBJECT_AL_ID,
+          academic_year: "2022-2023",
+          session: "Rattrapage",
+          exam_type: "Contrôle Continu",
+          file_hash: fileHash,
+          r2_key: "exams/reseaux-ancienne.pdf",
+        },
+      ],
+    });
+
+    const report = await checkSeed(
+      CSV_ROW,
+      { baseDir: "/data" },
+      makeDeps(supabase),
+    );
+
+    expect(report.entries).toEqual([
+      {
+        file: "epreuves/a.pdf",
+        status: "mal_classee",
+        slug: "reseaux-ancienne",
+        mismatches: [
+          { field: "matiere", attendu: "Algorithmique", trouve: "Reseaux" },
+          {
+            field: "annee_academique",
+            attendu: "2024-2025",
+            trouve: "2022-2023",
+          },
+          {
+            field: "session",
+            attendu: "Session Normale",
+            trouve: "Rattrapage",
+          },
+          {
+            field: "type_epreuve",
+            attendu: "Contrôle Terminal",
+            trouve: "Contrôle Continu",
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("retrouve par quadruplet une epreuve compressee apres coup (hash different), sans ecart", async () => {
+    const supabase = makeCheckFakeSupabase({
+      ...REFERENTIALS,
+      exams: [
+        {
+          id: "exam-1",
+          slug: "algo-s1",
+          subject_id: SUBJECT_ID,
+          academic_year: "2024-2025",
+          session: "Session Normale",
+          exam_type: "Contrôle Terminal",
+          file_hash: "0".repeat(64),
+          r2_key: "exams/algo-s1.pdf",
+        },
+      ],
+    });
+
+    const report = await checkSeed(
+      CSV_ROW,
+      { baseDir: "/data" },
+      makeDeps(supabase),
+    );
+
+    expect(report.entries).toEqual([
+      { file: "epreuves/a.pdf", status: "conforme", slug: "algo-s1" },
+    ]);
+  });
+
+  it("classe absente une ligne sans hash ni quadruplet correspondant en base", async () => {
+    const supabase = makeCheckFakeSupabase({ ...REFERENTIALS, exams: [] });
+
+    const report = await checkSeed(
+      CSV_ROW,
+      { baseDir: "/data" },
+      makeDeps(supabase),
+    );
+
+    expect(report.entries).toEqual([
+      { file: "epreuves/a.pdf", status: "absente" },
+    ]);
+  });
+
+  it("signale une epreuve en base qu'aucune ligne du CSV ne revendique", async () => {
+    const fileHash = hashBuffer(Buffer.from("%PDF-1.4"));
+    const supabase = makeCheckFakeSupabase({
+      ...REFERENTIALS,
+      exams: [
+        {
+          id: "exam-1",
+          slug: "algo-s1",
+          subject_id: SUBJECT_ID,
+          academic_year: "2024-2025",
+          session: "Session Normale",
+          exam_type: "Contrôle Terminal",
+          file_hash: fileHash,
+          r2_key: "exams/algo-s1.pdf",
+        },
+        {
+          id: "exam-orphan",
+          slug: "orpheline",
+          subject_id: SUBJECT_ID,
+          academic_year: "2023-2024",
+          session: "Rattrapage",
+          exam_type: "Contrôle Terminal",
+          file_hash: "1".repeat(64),
+          r2_key: "exams/orpheline.pdf",
+        },
+      ],
+    });
+
+    const report = await checkSeed(
+      CSV_ROW,
+      { baseDir: "/data" },
+      makeDeps(supabase),
+    );
+
+    expect(report.orphanExams).toEqual([{ slug: "orpheline" }]);
+  });
+
+  it("ne verifie l'objet R2 que lorsque checkR2Objects est demande", async () => {
+    const fileHash = hashBuffer(Buffer.from("%PDF-1.4"));
+    const supabase = makeCheckFakeSupabase({
+      ...REFERENTIALS,
+      exams: [
+        {
+          id: "exam-1",
+          slug: "algo-s1",
+          subject_id: SUBJECT_ID,
+          academic_year: "2024-2025",
+          session: "Session Normale",
+          exam_type: "Contrôle Terminal",
+          file_hash: fileHash,
+          r2_key: "exams/algo-s1.pdf",
+        },
+      ],
+    });
+    const examFileExists = vi.fn().mockResolvedValue(false);
+
+    const withoutCheck = await checkSeed(
+      CSV_ROW,
+      { baseDir: "/data" },
+      makeDeps(supabase, undefined, examFileExists),
+    );
+    expect(examFileExists).not.toHaveBeenCalled();
+    expect(withoutCheck.missingR2Objects).toEqual([]);
+
+    const withCheck = await checkSeed(
+      CSV_ROW,
+      { baseDir: "/data", checkR2Objects: true },
+      makeDeps(supabase, undefined, examFileExists),
+    );
+    expect(examFileExists).toHaveBeenCalledWith("exams/algo-s1.pdf");
+    expect(withCheck.missingR2Objects).toEqual([
+      { slug: "algo-s1", r2Key: "exams/algo-s1.pdf" },
+    ]);
+  });
+
+  it("rapporte une ligne en erreur (fichier manquant) sans interrompre les suivantes", async () => {
+    const twoRows =
+      "fichier;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
+      "epreuves/manquant.pdf;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n" +
+      "epreuves/a.pdf;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n";
+    const fileHash = hashBuffer(Buffer.from("%PDF-1.4"));
+    const supabase = makeCheckFakeSupabase({
+      ...REFERENTIALS,
+      exams: [
+        {
+          id: "exam-1",
+          slug: "algo-s1",
+          subject_id: SUBJECT_ID,
+          academic_year: "2024-2025",
+          session: "Session Normale",
+          exam_type: "Contrôle Terminal",
+          file_hash: fileHash,
+          r2_key: "exams/algo-s1.pdf",
+        },
+      ],
+    });
+
+    const report = await checkSeed(
+      twoRows,
+      { baseDir: "/data" },
+      makeDeps(supabase),
+    );
+
+    expect(report.entries[0]).toMatchObject({ status: "error" });
+    expect(report.entries[1]).toMatchObject({
+      status: "conforme",
+      slug: "algo-s1",
+    });
+    expect(report.summary).toEqual({
+      total: 2,
+      conforme: 1,
+      mal_classee: 0,
+      absente: 0,
+      error: 1,
+    });
   });
 });
