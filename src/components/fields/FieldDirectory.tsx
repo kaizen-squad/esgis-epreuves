@@ -159,7 +159,7 @@ function FieldRow({
   field: FieldDirectoryEntry;
   columns: Directory["columns"];
 }) {
-  const displayName = fieldDisplayName(field.fieldName);
+  const displayName = fieldDisplayName(field.fieldName, field.fieldShortName);
   const headingId = `filiere-${field.fieldId}`;
   const levels = new Map(field.levels.map((level) => [level.levelId, level]));
   const facts = [

@@ -15,6 +15,7 @@ import {
   actionOkWithWarning,
   type ActionResult,
 } from "@/lib/action-result";
+import { examTitle } from "@/components/exams/examCote";
 import { checkExamDuplicate } from "./duplicate";
 import { searchExamTitles } from "./queries";
 import type { Exam } from "./types";
@@ -29,6 +30,24 @@ import {
 
 const PDF_MAGIC_BYTES = "%PDF-";
 const EXAM_ID_SCHEMA = z.uuid();
+
+/**
+ * Nom de la matiere choisie, pour composer le titre genere (#198, `examTitle`) : jamais confie au
+ * client, comme field_id/level_id/option_id (#197). `null` si la matiere n'existe pas (ne devrait
+ * jamais arriver, la FK de `exams.subject_id` l'empecherait de toute facon a l'insertion).
+ */
+async function getSubjectName(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  subjectId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("subjects")
+    .select("name")
+    .eq("id", subjectId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.name ?? null;
+}
 
 /**
  * Depot d'une epreuve par le BDE (#18). Validation (type MIME declare, taille, referentiels)
@@ -101,13 +120,22 @@ export async function uploadExam(
     });
   }
 
-  const slug = slugify(exam.title);
+  const subjectName = await getSubjectName(supabase, exam.subjectId);
+  if (!subjectName) {
+    return actionError("Matiere introuvable.");
+  }
+  const title = examTitle({
+    subject: subjectName,
+    examType: exam.examType,
+    session: exam.session ?? null,
+  });
+  const slug = slugify(title);
   const r2Key = `exams/${fileHash}.pdf`;
 
   const { data: inserted, error: insertError } = await supabase
     .from("exams")
     .insert({
-      title: exam.title,
+      title,
       slug,
       academic_year: exam.academicYear,
       session: exam.session,
@@ -226,10 +254,20 @@ export async function updateExamMetadata(
     });
   }
 
+  const subjectName = await getSubjectName(supabase, exam.subjectId);
+  if (!subjectName) {
+    return actionError("Matiere introuvable.");
+  }
+  const title = examTitle({
+    subject: subjectName,
+    examType: exam.examType,
+    session: exam.session ?? null,
+  });
+
   const { data: updated, error: updateError } = await supabase
     .from("exams")
     .update({
-      title: exam.title,
+      title,
       // `?? null` explicite : un champ vide doit effacer l'ancienne valeur en base (#196), pas
       // rester inchange comme le ferait un `undefined` (silencieusement retire du corps JSON).
       academic_year: exam.academicYear ?? null,
@@ -694,13 +732,27 @@ export async function uploadExamsBatch(
 
     seenHashes.set(fileHash, i);
 
-    const slug = slugify(exam.title);
+    const subjectName = await getSubjectName(supabase, exam.subjectId);
+    if (!subjectName) {
+      entries.push({
+        file: label,
+        status: "error",
+        message: "Matiere introuvable.",
+      });
+      continue;
+    }
+    const title = examTitle({
+      subject: subjectName,
+      examType: exam.examType,
+      session: exam.session ?? null,
+    });
+    const slug = slugify(title);
     const r2Key = `exams/${fileHash}.pdf`;
 
     const { data: inserted, error: insertError } = await supabase
       .from("exams")
       .insert({
-        title: exam.title,
+        title,
         slug,
         academic_year: exam.academicYear,
         session: exam.session,
@@ -765,7 +817,7 @@ export async function uploadExamsBatch(
     insertedByQuadruplet.set(quadrupletKey, {
       examId: inserted.id,
       slug,
-      title: exam.title,
+      title,
     });
     entries.push({ file: label, status: "imported", slug, warning });
   }

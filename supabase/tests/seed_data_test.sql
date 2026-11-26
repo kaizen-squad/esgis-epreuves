@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(17);
 
 -- Referentiels de base : 5 niveaux (M1/M2 sans matiere, programme pas encore fourni, #195), 2 filieres
 select is((select count(*) from public.levels)::int, 5, '5 niveaux (L1 a M2)');
@@ -78,6 +78,22 @@ select throws_ok(
   '23514',
   null,
   'la contrainte exams_cc_never_has_session bloque une session sur un Controle Continu'
+);
+
+-- #198 : sigle de filiere en base, remplace la table en dur de fieldLabel.ts, et search_text le
+-- reprend (une recherche sur "IRT" doit trouver une epreuve sans l'avoir dans son titre genere).
+select is(
+  (select short_name from public.fields where name = 'Informatique, Réseaux et Télécommunications'),
+  'IRT',
+  'le sigle IRT est renseigne pour la filiere IRT'
+);
+select ok(
+  (select count(*) from public.exams_catalog where search_text ilike '%irt%') > 0,
+  'search_text contient le sigle de filiere (#198), pas seulement le nom complet'
+);
+select ok(
+  not exists (select 1 from public.exams where title not like '%:%'),
+  'chaque titre genere suit le format "Matière : Type[, session]"'
 );
 
 select * from finish();

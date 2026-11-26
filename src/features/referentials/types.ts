@@ -2,6 +2,8 @@ export type Field = {
   id: string;
   name: string;
   description: string | null;
+  /** Abreviation d'affichage (#198), modifiable depuis l'Admin : "IRT" pour le nom complet. */
+  shortName: string | null;
   isActive: boolean;
 };
 

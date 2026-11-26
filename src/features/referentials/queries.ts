@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { Field, Level, Option, Subject } from "./types";
 
-const FIELD_SELECT = "id, name, description, is_active";
+const FIELD_SELECT = "id, name, description, short_name, is_active";
 const LEVEL_SELECT = "id, name, is_active";
 const SUBJECT_SELECT = "id, name, field_id, level_id, option_id, is_active";
 const OPTION_SELECT = "id, name, field_id, is_active";
@@ -28,6 +28,7 @@ export async function getFields(options: ListOptions = {}): Promise<Field[]> {
     id: field.id,
     name: field.name,
     description: field.description,
+    shortName: field.short_name,
     isActive: field.is_active,
   }));
 }
@@ -50,6 +51,7 @@ export async function getFieldById(id: string): Promise<Field | null> {
     id: data.id,
     name: data.name,
     description: data.description,
+    shortName: data.short_name,
     isActive: data.is_active,
   };
 }

@@ -40,6 +40,13 @@ typed_subjects as (
   select ns.*,
     case when (ns.n / 2) % 2 = 0 then 'Contrôle Terminal' else 'Contrôle Continu' end as exam_type
   from numbered_subjects ns
+),
+sessioned_subjects as (
+  select ts.*,
+    case when ts.exam_type = 'Contrôle Continu' then null
+      when ts.n % 2 = 0 then 'Session Normale' else 'Rattrapage'
+    end as session
+  from typed_subjects ts
 )
 -- Epreuves factices : une par matiere ci-dessus, combinaisons session/type/annee decorrelees
 -- (periodes 2/4/3 sur n) pour couvrir plusieurs croisements de filtres, toutes pointant vers
@@ -47,26 +54,32 @@ typed_subjects as (
 -- Une annee academique sur 7 est volontairement laissee inconnue (#196), pour exercer l'affichage
 -- "Inconnue" en dev sans fausser les autres croisements de filtres.
 -- `field_id`/`level_id`/`option_id` ne sont plus fournis : le trigger `exams_set_classification`
--- (#197) les deduit de `subject_id`.
+-- (#197) les deduit de `subject_id`. Titre au meme format que `examTitle()` (#198, "Matiere :
+-- Type[, session]"), jamais la matiere seule : le seed doit refleter ce que l'application ecrit
+-- reellement, sinon un bug de format ne serait jamais visible en local.
 insert into public.exams (
   title, slug, academic_year, session, exam_type,
   subject_id,
   file_hash, file_mime_type, file_size, r2_key
 )
 select
-  ts.name,
+  ts.name || ' : ' ||
+    (case ts.exam_type when 'Contrôle Continu' then 'Contrôle continu' else 'Contrôle terminal' end) ||
+    (case ts.session
+      when 'Session Normale' then ', session normale'
+      when 'Rattrapage' then ', rattrapage'
+      else ''
+    end),
   lower(ts.level_name) || '-' || (case when ts.field_name = 'Gestion' then 'gestion' else 'irt' end)
     || '-' || ts.n,
   case when ts.n % 7 = 0 then null
     else case (ts.n % 3) when 0 then '2022-2023' when 1 then '2023-2024' else '2024-2025' end
   end,
-  case when ts.exam_type = 'Contrôle Continu' then null
-    when ts.n % 2 = 0 then 'Session Normale' else 'Rattrapage'
-  end,
+  ts.session,
   ts.exam_type,
   ts.id,
   lpad(ts.n::text, 64, '0'),
   'application/pdf',
   524288,
   case when ts.n % 2 = 0 then 'dev/exemple-1.pdf' else 'dev/exemple-2.pdf' end
-from typed_subjects ts;
+from sessioned_subjects ts;

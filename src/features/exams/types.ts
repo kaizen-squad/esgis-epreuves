@@ -14,6 +14,8 @@ export type Exam = {
   session: ExamSession | null;
   examType: ExamType;
   field: string;
+  /** Sigle d'affichage de la filiere (#198), `null` si non renseigne. */
+  fieldShortName: string | null;
   fieldId: string;
   level: string;
   levelId: string;
@@ -72,6 +74,8 @@ export type FieldExamsResult = {
 export type FieldLevelSummary = {
   fieldId: string;
   fieldName: string;
+  /** Sigle d'affichage de la filiere (#198), `null` si non renseigne. */
+  fieldShortName: string | null;
   levelId: string;
   levelName: string;
   examCount: number;
@@ -91,6 +95,7 @@ export type FieldDirectoryLevel = FieldLevelSummary & {
 export type FieldDirectoryEntry = {
   fieldId: string;
   fieldName: string;
+  fieldShortName: string | null;
   examCount: number;
   /** Matieres couvertes (au moins une epreuve), tous niveaux confondus. */
   subjectCount: number;

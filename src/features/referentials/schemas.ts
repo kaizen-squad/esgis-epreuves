@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const fieldSchema = z.object({
   name: z.string().trim().min(1, "Le nom est requis."),
+  /** Sigle d'affichage (#198, ex. "IRT"), modifiable depuis l'Admin. Cellule vide -> `null`. */
+  shortName: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value ? value : null)),
 });
 
 export const levelSchema = z.object({

@@ -21,6 +21,8 @@ export interface ExamCardProps {
   /** Absente des niveaux de tronc commun (L1/L2). */
   option: string | null;
   field: string;
+  /** Sigle d'affichage de la filiere (#198), prefere au nom complet quand renseigne. */
+  fieldShortName: string | null;
   fieldId: string;
   /** Inconnue sur une vieille epreuve deposee sans cette information (#196). */
   academicYear: string | null;
@@ -62,6 +64,7 @@ const ExamCard = (data: ExamCardProps) => {
         <div className="flex items-center justify-between gap-2">
           <Cote
             field={data.field}
+            fieldShortName={data.fieldShortName}
             fieldId={data.fieldId}
             level={data.class}
             levelId={data.levelId}

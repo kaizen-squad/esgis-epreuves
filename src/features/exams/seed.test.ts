@@ -84,7 +84,6 @@ describe("csvToRows", () => {
 describe("seedRowSchema", () => {
   const VALID = {
     fichier: "epreuves/a.pdf",
-    titre: "Algorithmique S1",
     filiere: "IRT",
     niveau: "L1",
     matiere: "Algorithmique",
@@ -114,19 +113,28 @@ describe("seedRowSchema", () => {
     ).toBe(false);
   });
 
-  it("rejette un titre trop court ou un chemin de fichier vide", () => {
-    expect(seedRowSchema.safeParse({ ...VALID, titre: "Al" }).success).toBe(
-      false,
-    );
+  it("rejette un chemin de fichier vide", () => {
     expect(seedRowSchema.safeParse({ ...VALID, fichier: "" }).success).toBe(
       false,
     );
   });
 
-  it("rejette un titre trop long (meme limite que examUploadSchema)", () => {
-    expect(
-      seedRowSchema.safeParse({ ...VALID, titre: "A".repeat(201) }).success,
-    ).toBe(false);
+  it("accepte l'absence d'annee academique et de session (#196, vieille epreuve)", () => {
+    const result = seedRowSchema.safeParse({
+      ...VALID,
+      annee_academique: "",
+      session: "",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejette une session renseignee pour un Controle Continu (#196)", () => {
+    const result = seedRowSchema.safeParse({
+      ...VALID,
+      type_epreuve: "Contrôle Continu",
+      session: "Session Normale",
+    });
+    expect(result.success).toBe(false);
   });
 });
 
@@ -157,7 +165,6 @@ describe("buildReferentialMaps / resolveSeedRow", () => {
 
   const ROW = seedRowSchema.parse({
     fichier: "epreuves/a.pdf",
-    titre: "Algorithmique S1",
     filiere: "IRT",
     niveau: "L1",
     matiere: "Algorithmique",
@@ -176,7 +183,7 @@ describe("buildReferentialMaps / resolveSeedRow", () => {
         levelId: "level-l1",
         subjectId: "subject-algo",
         optionId: null,
-        title: "Algorithmique S1",
+        title: "Algorithmique : Contrôle terminal, session normale",
         academicYear: "2024-2025",
         session: "Session Normale",
         examType: "Contrôle Terminal",
@@ -377,8 +384,8 @@ const NONE_THEN_EMPTY: QueryResult[] = [
 ];
 
 const CSV =
-  "fichier;titre;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
-  "epreuves/a.pdf;Algorithmique S1;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n";
+  "fichier;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
+  "epreuves/a.pdf;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n";
 
 function makeDeps(
   supabase: ReturnType<typeof makeFakeSupabase>,
@@ -448,7 +455,7 @@ describe("runSeed", () => {
     });
     expect(supabase.insertedRows).toHaveLength(1);
     expect(supabase.insertedRows[0]).toMatchObject({
-      title: "Algorithmique S1",
+      title: "Algorithmique : Contrôle terminal, session normale",
       academic_year: "2024-2025",
       session: "Session Normale",
       exam_type: "Contrôle Terminal",
@@ -602,9 +609,9 @@ describe("runSeed", () => {
 
   it("continue sur la ligne suivante quand une ligne echoue", async () => {
     const twoRowsCsv =
-      "fichier;titre;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
-      "epreuves/manquant.pdf;Inconnue;Gestion;L1;Comptabilite;;2024-2025;Contrôle Terminal;Session Normale\n" +
-      "epreuves/a.pdf;Algorithmique S1;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n";
+      "fichier;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
+      "epreuves/manquant.pdf;Gestion;L1;Comptabilite;;2024-2025;Contrôle Terminal;Session Normale\n" +
+      "epreuves/a.pdf;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n";
     const supabase = makeFakeSupabase({
       fields: FIELDS,
       levels: LEVELS,
@@ -632,9 +639,9 @@ describe("runSeed", () => {
 
   it("rapporte un doublon par hash entre deux lignes du meme CSV, meme en dry-run", async () => {
     const twoIdenticalFiles =
-      "fichier;titre;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
-      "epreuves/a.pdf;Algorithmique S1;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n" +
-      "epreuves/copie.pdf;Algorithmique S1 copie;IRT;L1;Algorithmique;;2024-2025;Contrôle Continu;\n";
+      "fichier;filiere;niveau;matiere;option;annee_academique;type_epreuve;session\n" +
+      "epreuves/a.pdf;IRT;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale\n" +
+      "epreuves/copie.pdf;IRT;L1;Algorithmique;;2024-2025;Contrôle Continu;\n";
     const supabase = makeFakeSupabase({
       fields: FIELDS,
       levels: LEVELS,

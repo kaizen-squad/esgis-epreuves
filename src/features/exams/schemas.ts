@@ -144,7 +144,11 @@ const examFileSchema = z
 /** Exporte pour `seedRowSchema` (#21/#196), qui reutilise ses bornes `title`/`academicYear` sans
  * dupliquer `.shape` d'un schema deja passe par `superRefine` (devenu un ZodEffects, sans `.shape`). */
 export const examFieldsSchema = z.object({
-  title: z.string().trim().min(3).max(200),
+  /**
+   * Accepte encore un titre libre (ignoré) si le front (pas aligné avant #202) en envoie un :
+   * depuis #198, le titre est toujours calculé côté serveur (`examTitle`), jamais saisi.
+   */
+  title: z.string().trim().max(200).optional(),
   academicYear: z
     .string()
     .regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA.")
