@@ -193,10 +193,14 @@ select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-1111111
 -- `set search_path = ''` (pg_catalog est cherche en premier, meme absent du search_path).
 -- updated_at est fige dans le passe hors trigger (reset role, pas de politique RLS a contourner),
 -- puisque now() est constant pour toute la transaction du test : sans ce repere, le trigger
--- pourrait ne rien faire et le test passerait quand meme.
+-- pourrait ne rien faire et le test passerait quand meme. Le trigger est desactive le temps de ce
+-- figeage : sinon il s'applique deja a cet update et ecrase '2000-01-01' par now(), rendant le
+-- second update (celui reellement teste plus bas) incapable de faire echouer le test.
 reset role;
+alter table public.exams disable trigger exams_set_updated_at;
 update public.exams set updated_at = '2000-01-01'
 where slug = 'comptabilite-generale-2024-2025';
+alter table public.exams enable trigger exams_set_updated_at;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
 
