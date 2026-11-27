@@ -22,7 +22,6 @@ export {
   FiHome,
   FiLayers,
   FiMenu,
-  FiLinkedin,
   FiMoreVertical,
   FiRefreshCw,
   FiSettings,
@@ -31,6 +30,6 @@ export {
   FiX,
 } from "react-icons/fi";
 export { GoDotFill } from "react-icons/go";
-// Feather n'a pas d'icone WhatsApp ; meme exception de marque que FiLinkedin, mais prise dans
-// react-icons/fa faute d'equivalent Feather.
-export { FaWhatsapp } from "react-icons/fa";
+// Feather n'a pas d'icones de marque (WhatsApp, LinkedIn) : prises dans react-icons/fa, qui
+// reprend le logo officiel de chaque reseau plutot qu'un simple contour generique.
+export { FaWhatsapp, FaLinkedin } from "react-icons/fa";

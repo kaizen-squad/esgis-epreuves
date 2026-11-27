@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FaWhatsapp, FiLinkedin } from "@/components/icons";
+import { FaLinkedin, FaWhatsapp } from "@/components/icons";
 import { getBdeContactHref } from "@/features/contact/queries";
 import type { NavLink } from "./Navbar";
 
@@ -66,16 +66,18 @@ const Footer = async ({ links }: FooterProps) => {
           © Copyright {new Date().getFullYear()}, tous droits réservés par
           Kaizen Studio.
         </p>
-        <span className="text-text-primary flex items-center gap-2 text-base font-semibold tracking-tight">
-          <span className="text-xl">By</span>
-          <Image
-            src="/images/kaizen-logo.png"
-            alt="Kaizen"
-            width={640}
-            height={131}
-            className="h-5 w-auto"
-          />
-          <FiLinkedin size={20} aria-hidden="true" />
+        <span className="text-text-primary flex flex-col items-end gap-1">
+          <span className="flex items-center gap-2 text-base font-semibold tracking-tight">
+            <span className="text-xl">By</span>
+            <Image
+              src="/images/kaizen-logo.png"
+              alt="Kaizen"
+              width={640}
+              height={131}
+              className="h-5 w-auto"
+            />
+          </span>
+          <FaLinkedin size={18} aria-hidden="true" />
         </span>
       </div>
 
