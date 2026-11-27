@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { EXAM_SESSIONS, EXAM_TYPES } from "@/features/exams/schemas";
 import type { Field, Level, Subject } from "@/features/referentials/types";
 import ChoiceGroup from "./ChoiceGroup";
@@ -49,6 +50,12 @@ export default function ExamCommonFields({
   const fieldName = fields.find((f) => f.id === values.fieldId)?.name;
   const levelName = levels.find((l) => l.id === values.levelId)?.name;
 
+  // Incremente uniquement par "Changer de matiere" (jamais par la frappe, qui vide aussi
+  // `subjectId` a chaque caractere apres une selection) : `SubjectSearch` ne doit remonter que sur
+  // ce geste explicite, pas sur chaque `onSelect(null)` interne a la recherche (revue Opus du lot,
+  // le precedent `key={values.subjectId}` effacait la saisie en cours a chaque frappe).
+  const [searchResetKey, setSearchResetKey] = useState(0);
+
   const handleSubjectSelect = (subject: Subject | null) =>
     onChange(
       subject
@@ -59,6 +66,11 @@ export default function ExamCommonFields({
           }
         : { subjectId: "" },
     );
+
+  const handleChangeSubject = () => {
+    setSearchResetKey((key) => key + 1);
+    handleSubjectSelect(null);
+  };
 
   const handleTypeChange = (examType: string) =>
     onChange({
@@ -76,10 +88,10 @@ export default function ExamCommonFields({
   return (
     <>
       <SubjectSearch
-        // Remonte le composant a chaque changement de matiere (y compris vide, "Changer de
-        // matiere") : sans ca, sa recherche interne gardait l'ancien nom affiche meme apres
+        // Remonte le composant seulement sur "Changer de matiere" (voir `searchResetKey`
+        // ci-dessus) : sans ca, sa recherche interne gardait l'ancien nom affiche meme apres
         // effacement de `subjectId` (revue Opus du lot, defaut important).
-        key={values.subjectId}
+        key={searchResetKey}
         subjects={subjects}
         fields={fields}
         levels={levels}
@@ -180,7 +192,7 @@ export default function ExamCommonFields({
       {subjectChosen ? (
         <button
           type="button"
-          onClick={() => handleSubjectSelect(null)}
+          onClick={handleChangeSubject}
           className="text-text-default self-start text-sm font-medium underline"
         >
           Changer de matière
