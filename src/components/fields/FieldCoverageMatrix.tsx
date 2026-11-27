@@ -77,7 +77,7 @@ export default async function FieldCoverageMatrix({
         {levels.map((level) => (
           <div
             key={level.levelName}
-            className="rounded-xl border border-gray-200 p-4"
+            className="rounded-card border border-gray-200 p-4"
           >
             <p className="text-text-secondary mb-2 font-semibold">
               {level.levelName}
@@ -98,7 +98,7 @@ export default async function FieldCoverageMatrix({
                         identique se serait fait lire deux fois par un lecteur d'ecran. */}
                     <Link
                       href={href}
-                      className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-sm hover:underline ${
+                      className={`rounded-control flex items-center justify-between gap-2 px-2 py-1 text-sm hover:underline ${
                         isGap ? "bg-blue-50 text-blue-700" : "text-text-default"
                       }`}
                     >

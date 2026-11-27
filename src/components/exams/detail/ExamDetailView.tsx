@@ -35,7 +35,7 @@ const dateFormat = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
 // (defaut) et Supprimer (accent) l'avaient deja, dependent de l'ordre du feuille de style genere,
 // pas de l'ordre dans la chaine (revue de code, #176, apres coup).
 const MANAGE_LINK_CLASS =
-  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100";
+  "flex items-center gap-2 rounded-control px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100";
 
 /**
  * Page de consultation d'une epreuve, partagee par l'espace public (`/epreuves/[slug]`) et
@@ -142,12 +142,12 @@ export default async function ExamDetailView({
           basePath={basePath}
         />
 
-        <aside className="bg-background-primary flex flex-col gap-6 rounded-xl border border-gray-200 p-6 shadow-sm lg:sticky lg:top-6">
+        <aside className="bg-background-primary rounded-card shadow-card flex flex-col gap-6 border border-gray-200 p-6 lg:sticky lg:top-6">
           <div className="flex flex-col gap-3">
             {available ? (
               <a
                 href={examFileHref(basePath, exam.slug, true)}
-                className="bg-background-accent text-text-primary flex items-center justify-center gap-2 rounded-lg px-4 py-3 font-medium transition-opacity hover:opacity-90"
+                className="bg-background-accent text-text-primary rounded-control flex items-center justify-center gap-2 px-4 py-3 font-medium transition-opacity hover:opacity-90"
               >
                 <FiDownload size={18} /> Télécharger l&apos;épreuve
               </a>
@@ -155,7 +155,7 @@ export default async function ExamDetailView({
               <button
                 type="button"
                 disabled
-                className="bg-background-accent text-text-primary flex cursor-not-allowed items-center justify-center gap-2 rounded-lg px-4 py-3 font-medium opacity-50"
+                className="bg-background-accent text-text-primary rounded-control flex cursor-not-allowed items-center justify-center gap-2 px-4 py-3 font-medium opacity-50"
               >
                 <FiDownload size={18} /> Télécharger l&apos;épreuve
               </button>
