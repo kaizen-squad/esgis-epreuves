@@ -203,7 +203,17 @@ export async function searchExamTitles(
   const { rows, total } = await queryCatalog(createPublicClient(), rawFilters);
   return {
     total,
-    exams: rows.map((row) => ({ title: row.title, slug: row.slug })),
+    // `row.title` est la colonne stockee a l'ajout : `examTitle()` reste la seule source de
+    // verite pour l'affichage (meme principe que `toExam`), sinon une vieille epreuve ressortait
+    // ici au format de titre perime (revue Opus du lot).
+    exams: rows.map((row) => ({
+      title: examTitle({
+        subject: row.subject_name,
+        examType: row.exam_type,
+        session: row.session,
+      }),
+      slug: row.slug,
+    })),
   };
 }
 
