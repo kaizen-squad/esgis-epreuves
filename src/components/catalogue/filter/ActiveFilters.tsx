@@ -59,7 +59,9 @@ function activeChips(
         onRemove: () => filters.set("optionId", null),
       });
   }
-  if (session)
+  // Un Controle Continu n'a jamais de session (#196/#203) : la puce n'a pas lieu d'etre, meme sur
+  // une URL partagee qui porterait encore les deux parametres.
+  if (session && examType !== "Contrôle Continu")
     chips.push({
       key: "session",
       label: session,
