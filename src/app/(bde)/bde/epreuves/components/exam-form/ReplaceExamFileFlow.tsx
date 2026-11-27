@@ -10,6 +10,7 @@ import {
 } from "react";
 import { FiArrowRight, FiExternalLink, FiX } from "react-icons/fi";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { BDE_BASE_PATH, examFileHref } from "@/components/layout/spaces";
 import { replaceExamFile } from "@/features/exams/actions";
 import type { Exam } from "@/features/exams/types";
 import type { ActionResult } from "@/lib/action-result";
@@ -170,7 +171,7 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
                 detail={`${exam.subject} · ${exam.level} · ${exam.academicYear ?? "Année inconnue"} · ${formatFileSize(exam.fileSize)}`}
                 actions={
                   <a
-                    href={`/api/exams/${exam.slug}`}
+                    href={examFileHref(BDE_BASE_PATH, exam.slug)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={ACTION_LINK_CLASS}

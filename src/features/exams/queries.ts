@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { examTitle } from "@/components/exams/examCote";
+import { examTitle, type CoteFields } from "@/components/exams/examCote";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getFieldById, getFields } from "@/features/referentials/queries";
@@ -575,6 +575,44 @@ export async function getExamBySlug(slug: string): Promise<Exam | null> {
 
 /** `getExamBySlug` memoisee par requete : partagee entre `generateMetadata`, la vue et l'image de partage, pour ne lire l'epreuve qu'une fois. */
 export const getExamCached = cache(getExamBySlug);
+
+const EXAM_SHARE_CARD_SELECT =
+  "field_name, field_short_name, level_name, option_name, subject_name, academic_year, exam_type, session";
+
+export type ExamShareCard = CoteFields & { title: string };
+
+/**
+ * Cote et titre d'une epreuve, pour l'image de partage (#145) : evite la lecture R2 (taille,
+ * type) que fait `getExamBySlug` via `getExamFiles`, inutile a cette image qui n'affiche que la
+ * cote et le titre.
+ */
+export async function getExamShareCard(
+  slug: string,
+): Promise<ExamShareCard | null> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("exams_catalog")
+    .select(EXAM_SHARE_CARD_SELECT)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    title: examTitle({
+      subject: data.subject_name,
+      examType: data.exam_type,
+      session: data.session,
+    }),
+    field: data.field_name,
+    fieldShortName: data.field_short_name,
+    level: data.level_name,
+    option: data.option_name,
+    subject: data.subject_name,
+    academicYear: data.academic_year,
+    examType: data.exam_type,
+  };
+}
 
 /**
  * Nom du depositaire d'une epreuve (#176), pour la fiche cote BDE seulement. Jamais depuis

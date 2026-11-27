@@ -28,6 +28,23 @@ export function publicExamPath(slug: string): string {
 }
 
 /**
+ * Lien vers la route de previsualisation/telechargement (`/api/exams/[slug]`). Porte l'espace
+ * d'origine (`?space=bde`) pour que, si le fichier est absent de R2, la redirection de repli
+ * mene a la fiche du meme espace plutot que toujours a la fiche publique.
+ */
+export function examFileHref(
+  basePath: SpaceBasePath,
+  slug: string,
+  download = false,
+): string {
+  const params = new URLSearchParams();
+  if (basePath === BDE_BASE_PATH) params.set("space", "bde");
+  if (download) params.set("dl", "1");
+  const query = params.toString();
+  return `/api/exams/${slug}${query ? `?${query}` : ""}`;
+}
+
+/**
  * Un lien de navigation est actif sur sa propre page et sur ses sous-pages (ex. `/filieres`
  * reste actif sur `/filieres/[id]`), jamais par simple prefixe de chaine qui ferait correspondre
  * `/f` a `/filieres`.

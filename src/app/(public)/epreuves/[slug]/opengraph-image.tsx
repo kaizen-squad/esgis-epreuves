@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { examCote } from "@/components/exams/examCote";
-import { getExamCached } from "@/features/exams/queries";
+import { getExamShareCard } from "@/features/exams/queries";
 import { KaizenCredit } from "@/lib/og/kaizen-credit";
 
 export const size = { width: 1200, height: 630 };
@@ -16,7 +16,7 @@ export default async function OpengraphImage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const exam = await getExamCached((await params).slug);
+  const exam = await getExamShareCard((await params).slug);
 
   return new ImageResponse(
     <div

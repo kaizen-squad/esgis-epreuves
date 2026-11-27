@@ -10,6 +10,7 @@ import {
 import {
   BDE_BASE_PATH,
   catalogueHref,
+  examFileHref,
   publicExamPath,
   type SpaceBasePath,
 } from "@/components/layout/spaces";
@@ -138,13 +139,14 @@ export default async function ExamDetailView({
           r2Key={r2Key}
           fileVersion={exam.fileVersion}
           fileSize={exam.fileSize}
+          basePath={basePath}
         />
 
         <aside className="bg-background-primary flex flex-col gap-6 rounded-xl border border-gray-200 p-6 shadow-sm lg:sticky lg:top-6">
           <div className="flex flex-col gap-3">
             {available ? (
               <a
-                href={`/api/exams/${exam.slug}?dl=1`}
+                href={examFileHref(basePath, exam.slug, true)}
                 className="bg-background-accent text-text-primary flex items-center justify-center gap-2 rounded-lg px-4 py-3 font-medium transition-opacity hover:opacity-90"
               >
                 <FiDownload size={18} /> Télécharger l&apos;épreuve

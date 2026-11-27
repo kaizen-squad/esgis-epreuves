@@ -210,6 +210,10 @@ Lecture d'une épreuve par son slug, pour la page détail. Retourne `null` si ab
 
 Lit uniquement la clé R2 (`r2_key`) d'une épreuve par son slug, pour la route de prévisualisation/téléchargement (`/api/exams/[slug]`, #50). Retourne `null` si absente : la route répond alors `404`. Toute autre erreur Supabase remonte en exception.
 
+### `getExamShareCard(slug: string): Promise<ExamShareCard | null>`
+
+Cote et titre d'une épreuve, pour l'image de partage (`opengraph-image.tsx`, #145). Lit uniquement `exams_catalog`, sans la lecture R2 (taille, type) que fait `getExamBySlug` via `getExamFiles`, inutile à cette image.
+
 ## `src/features/exams/actions.ts`
 
 ### `uploadExam(formData: FormData): Promise<ActionResult<{ slug: string }>>`

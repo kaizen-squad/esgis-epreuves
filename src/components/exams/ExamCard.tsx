@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { FiDownload, FiFileText } from "@/components/icons";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
-import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
+import {
+  BDE_BASE_PATH,
+  examFileHref,
+  examHref,
+} from "@/components/layout/spaces";
 import Cote from "./Cote";
 import ExamManageMenu from "./ExamManageMenu";
 import ExamThumbnail from "./ExamThumbnail";
@@ -39,7 +43,9 @@ const ExamCard = (data: ExamCardProps) => {
   // Espace BDE (cartes gerables) : la page de l'epreuve reste dans l'espace BDE.
   const basePath = data.manageable ? BDE_BASE_PATH : "";
   const previewHref = data.slug ? examHref(basePath, data.slug) : null;
-  const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
+  const downloadHref = data.slug
+    ? examFileHref(basePath, data.slug, true)
+    : null;
 
   return (
     <article className="group bg-background-primary relative flex h-full w-full flex-row overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-lg md:flex-col md:hover:-translate-y-1">

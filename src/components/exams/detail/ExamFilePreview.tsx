@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { FiDownload, FiExternalLink, FiFileText } from "react-icons/fi";
 import { formatFileSize } from "@/lib/file-format";
+import { examFileHref, type SpaceBasePath } from "@/components/layout/spaces";
 import FullPagePreviewImage from "./FullPagePreviewImage";
 
 /**
@@ -17,6 +18,7 @@ export default function ExamFilePreview({
   r2Key,
   fileVersion,
   fileSize,
+  basePath,
 }: {
   slug: string;
   title: string;
@@ -24,8 +26,9 @@ export default function ExamFilePreview({
   r2Key: string | null;
   fileVersion: string;
   fileSize: number;
+  basePath: SpaceBasePath;
 }) {
-  const previewHref = `/api/exams/${slug}`;
+  const previewHref = examFileHref(basePath, slug);
 
   return (
     <section
@@ -70,7 +73,7 @@ export default function ExamFilePreview({
               />
             </Suspense>
             <a
-              href={`${previewHref}?dl=1`}
+              href={examFileHref(basePath, slug, true)}
               className="bg-background-accent text-text-primary flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium"
             >
               <FiDownload size={16} /> Télécharger · {formatFileSize(fileSize)}
