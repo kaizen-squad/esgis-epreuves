@@ -54,5 +54,9 @@ export function toExamFilters(
     const first = Array.isArray(value) ? value[0] : value;
     if (first) filters[key] = first;
   }
+  // Un Controle Continu n'a jamais de session (#196) : une URL partagee ou perimee qui porterait
+  // encore les deux ne doit jamais renvoyer zero resultat en silence (#203, revue Opus du lot),
+  // l'interface masquant deja ce filtre pour ce type (`FilterComponents.tsx`/`ActiveFilters.tsx`).
+  if (filters.examType === "Contrôle Continu") delete filters.session;
   return { ...filters, pageSize: CATALOGUE_PAGE_SIZE } as ExamFilters;
 }
