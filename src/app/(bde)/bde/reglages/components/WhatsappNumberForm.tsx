@@ -128,7 +128,7 @@ export default function WhatsappNumberForm({
       action={dispatch}
       onSubmit={handleSubmit}
       noValidate
-      className="bg-background-primary rounded-card border-border-default flex flex-col gap-6 border p-5 shadow-(--shadow-card) sm:p-6 md:p-8"
+      className="bg-background-primary rounded-card border-border-default shadow-card flex flex-col gap-6 border p-5 sm:p-6 md:p-8"
     >
       <div className="flex items-start gap-4">
         <span
