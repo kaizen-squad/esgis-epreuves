@@ -2,9 +2,6 @@ import type { ReactNode } from "react";
 import { FiAlertCircle, FiFileText } from "react-icons/fi";
 import { academicYears } from "./examForm";
 
-const INPUT_CLASS =
-  "w-full rounded-lg border bg-background-primary px-3 py-2 text-sm outline-none focus:border-background-accent";
-
 type CardValues = { academicYear: string; yearUnknown: boolean };
 
 /**
@@ -49,11 +46,11 @@ export default function ExamFileCard({
 
   return (
     <li
-      className={`bg-background-primary flex w-full flex-col gap-3 rounded-lg border p-3 text-left ${fileError ? "border-red-300" : "border-gray-200"}`}
+      className={`bg-background-primary rounded-control flex w-full flex-col gap-3 border p-3 text-left ${fileError ? "border-error" : "border-border-default"}`}
     >
       <div className="flex items-center gap-3">
         <span
-          className={`flex size-9 shrink-0 items-center justify-center rounded-md ${fileError ? "bg-red-50 text-red-600" : "bg-background-default text-background-accent"}`}
+          className={`rounded-control flex size-9 shrink-0 items-center justify-center ${fileError ? "bg-error/10 text-error" : "bg-background-default text-background-accent"}`}
         >
           {fileError ? <FiAlertCircle size={18} /> : <FiFileText size={18} />}
         </span>
@@ -62,7 +59,7 @@ export default function ExamFileCard({
             {name}
           </p>
           <p
-            className={`mb-0 text-xs ${fileError ? "text-red-600" : "text-text-paragraph"}`}
+            className={`mb-0 text-xs ${fileError ? "text-error" : "text-text-paragraph"}`}
           >
             {fileError ?? detail}
           </p>
@@ -97,7 +94,7 @@ export default function ExamFileCard({
               aria-describedby={
                 errors?.academicYear ? `${yearId}-error` : undefined
               }
-              className={`${INPUT_CLASS} ${errors?.academicYear ? "border-red-400" : "border-gray-300"}`}
+              className="field-control text-sm"
             >
               <option value="" disabled>
                 Choisir une année
@@ -127,7 +124,7 @@ export default function ExamFileCard({
             Année inconnue
           </label>
           {errors?.academicYear ? (
-            <p id={`${yearId}-error`} className="mb-0 text-xs text-red-600">
+            <p id={`${yearId}-error`} className="text-error mb-0 text-xs">
               {errors.academicYear}
             </p>
           ) : null}

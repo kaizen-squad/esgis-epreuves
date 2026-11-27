@@ -47,7 +47,7 @@ type SubmitState =
     };
 
 const ACTION_LINK_CLASS =
-  "text-text-paragraph flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-gray-100";
+  "text-text-paragraph flex items-center gap-1 rounded-control px-2 py-1 text-xs hover:bg-background-default";
 
 function initialValues(exam: Exam): EditValues {
   return {
@@ -276,11 +276,7 @@ export default function EditExamFlow({
               href={`/bde/epreuves/${exam.slug}`}
               isDirty={isDirty}
             />
-            <button
-              type="submit"
-              disabled={pending}
-              className="bg-background-accent text-text-primary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 disabled:opacity-50"
-            >
+            <button type="submit" disabled={pending} className="btn-primary">
               Enregistrer les modifications <FiArrowRight />
             </button>
           </div>

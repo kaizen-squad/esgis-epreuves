@@ -61,7 +61,7 @@ export default function MembersTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-border-default divide-y">
             {members.length === 0 ? (
               <tr>
                 <td
@@ -86,19 +86,19 @@ export default function MembersTable({
                     className={
                       member.isActive
                         ? "hover:bg-background-default/60"
-                        : "bg-gray-50 text-gray-600"
+                        : "bg-background-default/60 text-muted"
                     }
                   >
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         <span
                           aria-hidden
-                          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${member.isActive ? "bg-background-partial text-text-primary" : "bg-gray-200 text-gray-500"}`}
+                          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${member.isActive ? "bg-background-partial text-text-primary" : "bg-muted/15 text-muted"}`}
                         >
                           {initials(member.fullName) || "?"}
                         </span>
                         <span
-                          className={`font-medium ${member.isActive ? "text-text-default" : "text-gray-500"}`}
+                          className={`font-medium ${member.isActive ? "text-text-default" : "text-muted"}`}
                         >
                           {member.fullName || "Sans nom"}
                         </span>
@@ -132,18 +132,18 @@ export default function MembersTable({
                     </td>
                     <td className="px-5 py-3">
                       {member.isActive ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                        <span className="bg-success/10 text-success inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
                           <span
                             aria-hidden
-                            className="size-1.5 rounded-full bg-green-600"
+                            className="bg-success size-1.5 rounded-full"
                           />
                           Actif
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+                        <span className="bg-muted/15 text-muted inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
                           <span
                             aria-hidden
-                            className="size-1.5 rounded-full bg-gray-500"
+                            className="bg-muted size-1.5 rounded-full"
                           />
                           Désactivé
                         </span>
@@ -154,7 +154,7 @@ export default function MembersTable({
                         <Link
                           href={`/admin/membres/${member.id}/modifier`}
                           aria-label={`Modifier ${name}`}
-                          className="text-text-default rounded-control flex items-center gap-1.5 border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
+                          className="btn-secondary gap-1.5 px-3 py-1.5 text-xs"
                         >
                           <FiEdit2 size={13} /> Modifier
                         </Link>

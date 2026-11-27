@@ -115,7 +115,7 @@ export default function SubjectSearch({
       </label>
       <div className="relative">
         <div
-          className={`flex items-center rounded-lg border px-3 py-2 ${error ? "border-red-400" : "border-gray-300"}`}
+          className={`rounded-control flex items-center border px-3 py-2 ${error ? "border-error" : "border-border-control"}`}
         >
           <input
             id="subject-search"
@@ -171,7 +171,7 @@ export default function SubjectSearch({
             ref={listRef}
             id={listId}
             role="listbox"
-            className="bg-background-primary absolute z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 py-1 shadow-lg"
+            className="bg-background-primary rounded-control border-border-default shadow-elevated absolute z-10 mt-1 max-h-72 w-full overflow-y-auto border py-1"
           >
             {outOfScope && suggestions.length > 0 ? (
               <li className="text-text-paragraph px-3 py-1 text-xs">
@@ -213,7 +213,7 @@ export default function SubjectSearch({
         ) : null}
       </div>
       {error ? (
-        <p id="subjectId-error" className="mb-0 text-sm text-red-600">
+        <p id="subjectId-error" className="text-error mb-0 text-sm">
           {error}
         </p>
       ) : (

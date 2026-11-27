@@ -2,8 +2,8 @@ import type { IconType } from "react-icons";
 
 const TONE_CLASS = {
   accent: "bg-background-default text-background-accent",
-  positive: "bg-green-50 text-green-600",
-  negative: "bg-red-50 text-red-600",
+  positive: "bg-success/10 text-success",
+  negative: "bg-error/10 text-error",
 } as const;
 
 /** Indicateur de la page Membres : libelle, valeur et precision. */
@@ -22,7 +22,7 @@ export default function KpiCard({
   tone?: keyof typeof TONE_CLASS;
 }) {
   return (
-    <div className="bg-background-primary rounded-card shadow-card flex items-start justify-between gap-4 border border-gray-200 p-5">
+    <div className="bg-background-primary rounded-card shadow-card border-border-default flex items-start justify-between gap-4 border p-5">
       <div className="min-w-0">
         <p className="text-text-paragraph mb-2 text-sm font-medium">{label}</p>
         <p className="text-text-secondary mb-1 text-3xl font-semibold tabular-nums">

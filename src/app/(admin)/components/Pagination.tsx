@@ -24,7 +24,7 @@ export default function Pagination({
   };
 
   const arrowClass =
-    "flex size-9 items-center justify-center rounded-lg border border-gray-200";
+    "flex size-9 items-center justify-center rounded-control border border-border-default";
 
   return (
     <nav aria-label="Pagination" className="flex items-center gap-1">
@@ -50,7 +50,7 @@ export default function Pagination({
             key={item}
             href={href(item)}
             aria-current={item === page ? "page" : undefined}
-            className={`flex size-9 items-center justify-center rounded-lg text-sm font-medium ${item === page ? "bg-background-accent text-text-primary" : "hover:bg-background-default"}`}
+            className={`rounded-control flex size-9 items-center justify-center text-sm font-medium ${item === page ? "bg-background-accent text-text-primary" : "hover:bg-background-default"}`}
           >
             {item}
           </Link>

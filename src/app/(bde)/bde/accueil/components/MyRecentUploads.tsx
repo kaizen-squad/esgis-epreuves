@@ -11,10 +11,10 @@ const RECENT_UPLOADS_LIMIT = 8;
 export function MyRecentUploadsSkeleton() {
   return (
     <div className="mx-auto mb-16 max-w-7xl animate-pulse">
-      <div className="mb-6 h-8 w-64 rounded bg-gray-200" />
+      <div className="rounded-control bg-muted/15 mb-6 h-8 w-64" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="rounded-card h-72 bg-gray-200" />
+          <div key={index} className="rounded-card bg-muted/15 h-72" />
         ))}
       </div>
     </div>
@@ -41,10 +41,7 @@ export default async function MyRecentUploads() {
         <p className="text-text-paragraph">
           Vous n&apos;avez pas encore versé d&apos;épreuve.
         </p>
-        <Link
-          href="/bde/epreuves/ajouter"
-          className="bg-background-accent text-text-primary rounded-control mt-2 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
-        >
+        <Link href="/bde/epreuves/ajouter" className="btn-primary mt-2">
           Verser votre première épreuve <FiArrowRight />
         </Link>
       </div>

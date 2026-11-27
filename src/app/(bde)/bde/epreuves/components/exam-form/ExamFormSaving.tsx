@@ -31,7 +31,7 @@ export default function ExamFormSaving({
     <div
       role="status"
       aria-live="polite"
-      className="bg-background-default flex flex-col items-center gap-4 rounded-lg px-6 py-16 text-center"
+      className="bg-background-default rounded-control flex flex-col items-center gap-4 px-6 py-16 text-center"
     >
       <CgSpinner className="text-background-accent animate-spin" size={48} />
       <h2 className="text-text-secondary text-xl font-semibold">{title}</h2>
@@ -43,7 +43,7 @@ export default function ExamFormSaving({
           {entries.map((entry) => (
             <li
               key={entry.key}
-              className="bg-background-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+              className="bg-background-primary rounded-control flex items-center gap-2 px-3 py-2 text-sm"
             >
               <CgSpinner
                 className="text-background-accent shrink-0 animate-spin"

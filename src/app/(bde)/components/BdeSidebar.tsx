@@ -107,7 +107,7 @@ export default function BdeSidebar() {
         <div
           aria-hidden
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="bg-background-secondary/60 fixed inset-0 z-40 lg:hidden"
         />
       ) : null}
 
@@ -133,7 +133,7 @@ export default function BdeSidebar() {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Fermer le menu"
-            className="text-text-primary/70 rounded-control cursor-pointer p-1 hover:bg-white/10 lg:hidden"
+            className="text-text-primary/70 rounded-control hover:bg-text-primary/10 cursor-pointer p-1 lg:hidden"
           >
             <FiX size={20} />
           </button>
@@ -157,8 +157,8 @@ export default function BdeSidebar() {
                     aria-current={active ? "page" : undefined}
                     className={`rounded-control flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
                       active
-                        ? "text-text-primary bg-white/10"
-                        : "text-text-primary/70 hover:text-text-primary hover:bg-white/5"
+                        ? "text-text-primary bg-text-primary/10"
+                        : "text-text-primary/70 hover:text-text-primary hover:bg-text-primary/5"
                     }`}
                   >
                     <Icon
@@ -172,15 +172,15 @@ export default function BdeSidebar() {
             })}
           </ul>
 
-          <div className="mt-4 border-t border-white/10 pt-4">
+          <div className="border-text-primary/10 mt-4 border-t pt-4">
             <Link
               href="/bde/reglages"
               onClick={() => setOpen(false)}
               aria-current={reglagesActive ? "page" : undefined}
               className={`rounded-control flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
                 reglagesActive
-                  ? "text-text-primary bg-white/10"
-                  : "text-text-primary/70 hover:text-text-primary hover:bg-white/5"
+                  ? "text-text-primary bg-text-primary/10"
+                  : "text-text-primary/70 hover:text-text-primary hover:bg-text-primary/5"
               }`}
             >
               <FiSettings
@@ -192,7 +192,7 @@ export default function BdeSidebar() {
           </div>
         </nav>
 
-        <div className="border-t border-white/10 pt-4">
+        <div className="border-text-primary/10 border-t pt-4">
           <LogoutButton className="w-full justify-center" tone="dark" />
         </div>
       </aside>

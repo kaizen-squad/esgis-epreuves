@@ -17,13 +17,6 @@ const EXAM_TYPE_LABELS: Record<(typeof EXAM_TYPES)[number], string> = {
   "Contrôle Continu": "Continu",
 };
 
-export const INPUT_CLASS =
-  "w-full rounded-lg border px-3 py-2 outline-none focus:border-background-accent";
-
-export function inputClass(error?: string) {
-  return `${INPUT_CLASS} ${error ? "border-red-400" : "border-gray-300"}`;
-}
-
 /**
  * Champs communs aux formulaires d'ajout et de modification d'une epreuve : matiere (recherche,
  * en premier), filiere, niveau, type et session. Choisir une matiere renseigne sa filiere et son
@@ -123,7 +116,7 @@ export default function ExamCommonFields({
           </label>
           {subjectChosen ? (
             <>
-              <p className="text-text-paragraph bg-background-default mb-0 rounded-lg border border-gray-200 px-3 py-2">
+              <p className="text-text-paragraph bg-background-default rounded-control border-border-default mb-0 border px-3 py-2">
                 {fieldName}
               </p>
               <input type="hidden" name="fieldId" value={values.fieldId} />
@@ -136,7 +129,7 @@ export default function ExamCommonFields({
               onChange={(event) => onChange({ fieldId: event.target.value })}
               aria-invalid={fieldError ? true : undefined}
               aria-describedby={fieldError ? "fieldId-error" : undefined}
-              className={inputClass(fieldError)}
+              className="field-control"
             >
               <option value="" disabled>
                 Choisir une filière
@@ -160,7 +153,7 @@ export default function ExamCommonFields({
           </label>
           {subjectChosen ? (
             <>
-              <p className="text-text-paragraph bg-background-default mb-0 rounded-lg border border-gray-200 px-3 py-2">
+              <p className="text-text-paragraph bg-background-default rounded-control border-border-default mb-0 border px-3 py-2">
                 {levelName}
               </p>
               <input type="hidden" name="levelId" value={values.levelId} />
@@ -173,7 +166,7 @@ export default function ExamCommonFields({
               onChange={(event) => onChange({ levelId: event.target.value })}
               aria-invalid={levelError ? true : undefined}
               aria-describedby={levelError ? "levelId-error" : undefined}
-              className={inputClass(levelError)}
+              className="field-control"
             >
               <option value="" disabled>
                 Choisir un niveau

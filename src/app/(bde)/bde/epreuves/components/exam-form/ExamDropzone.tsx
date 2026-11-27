@@ -68,7 +68,7 @@ export default function ExamDropzone({
         tabIndex={-1}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${errorName}-error` : undefined}
-        className={`flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors ${dragging ? "border-blue-400 bg-blue-50" : error ? "border-red-400" : "bg-background-default border-gray-300"}`}
+        className={`rounded-control flex flex-col items-center gap-2 border-2 border-dashed px-6 py-8 text-center transition-colors ${dragging ? "border-background-partial bg-background-partial/5" : error ? "border-error" : "bg-background-default border-border-control"}`}
       >
         {/* Toute l'invite (pas seulement le mot "Importez") est un vrai bouton, entierement
             cliquable et focusable (#172) ; l'etat invalide reste porte par le conteneur (role
@@ -76,7 +76,7 @@ export default function ExamDropzone({
         <button
           type="button"
           onClick={openPicker}
-          className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg outline-none focus-visible:underline"
+          className="rounded-control flex w-full cursor-pointer flex-col items-center gap-2 outline-none focus-visible:underline"
         >
           <FiCloud size={28} className="text-background-accent" />
           <span>
