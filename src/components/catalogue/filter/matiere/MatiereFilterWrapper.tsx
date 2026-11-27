@@ -3,12 +3,15 @@ import { FiSearch } from "react-icons/fi";
 import type { Subject } from "@/features/referentials/types";
 import { searchTokens } from "@/features/exams/schemas";
 import MatiereCard from "@/components/catalogue/filter/matiere/MatiereCard";
+import { subjectLabelWithCount } from "@/components/catalogue/filter/matiere/subjectLabel";
 
 interface MatiereFilterWrapperProps {
   name: string;
   subjects: Subject[];
   selectedId: string | null;
   onToggle: (subjectId: string) => void;
+  /** Nombre d'epreuves par matiere (#147), affiche entre parentheses quand il est connu. */
+  examCounts?: Record<string, number>;
 }
 
 const MatiereFilterWrapper = ({
@@ -16,6 +19,7 @@ const MatiereFilterWrapper = ({
   subjects,
   selectedId,
   onToggle,
+  examCounts,
 }: MatiereFilterWrapperProps) => {
   const [query, setQuery] = useState("");
   const tokens = searchTokens(query);
@@ -46,7 +50,10 @@ const MatiereFilterWrapper = ({
             <MatiereCard
               key={subject.id}
               name={name}
-              label={subject.name}
+              label={subjectLabelWithCount(
+                subject.name,
+                examCounts?.[subject.id],
+              )}
               checked={selectedId === subject.id}
               onChange={() => onToggle(subject.id)}
             />

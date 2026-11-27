@@ -133,6 +133,7 @@ const FilterComponents = ({
               subjects={subjects}
               selectedId={filters.get("subjectId")}
               onToggle={(subjectId) => filters.toggle("subjectId", subjectId)}
+              examCounts={options.examCountsBySubjectId}
             />
           </HideFilterComponent>
           <HideFilterComponent label="Année académique">

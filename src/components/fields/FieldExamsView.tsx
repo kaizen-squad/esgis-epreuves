@@ -3,6 +3,7 @@ import {
   getAcademicYears,
   getFieldExams,
   getFieldLevelOptionNames,
+  getSubjectCoverage,
 } from "@/features/exams/queries";
 import {
   getLevelById,
@@ -40,14 +41,22 @@ export default async function FieldExamsView({
   const filters = toExamFilters(searchParams);
   const levelId = filters.levelId;
 
-  const [result, level, levels, subjects, options] = await Promise.all([
-    getFieldExams(fieldId, filters),
-    levelId ? getLevelById(levelId) : null,
-    getLevels(),
-    getSubjects(),
-    getOptions(),
-  ]);
+  const [result, level, levels, subjects, options, coverage] =
+    await Promise.all([
+      getFieldExams(fieldId, filters),
+      levelId ? getLevelById(levelId) : null,
+      getLevels(),
+      getSubjects(),
+      getOptions(),
+      getSubjectCoverage(fieldId),
+    ]);
   if (!result) notFound();
+
+  // #147 : nombre d'epreuves par matiere dans le filtre, deduit de la couverture deja calculee
+  // pour cette filiere (getSubjectCoverage), sans nouvelle requete.
+  const examCountsBySubjectId = Object.fromEntries(
+    coverage.map((entry) => [entry.subjectId, entry.examCount]),
+  );
 
   const [optionNames, academicYears] = await Promise.all([
     level ? getFieldLevelOptionNames(result.field.id, level.id) : [],
@@ -101,6 +110,7 @@ export default async function FieldExamsView({
             (option) => option.fieldId === result.field.id,
           ),
           academicYears,
+          examCountsBySubjectId,
         }}
       />
       <CTACatalogue catalogueHref={spaceCatalogue} />
