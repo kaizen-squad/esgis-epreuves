@@ -18,6 +18,11 @@ export const subjectSchema = z.object({
   fieldId: z.uuid("Filière invalide."),
   levelId: z.uuid("Niveau invalide."),
   name: z.string().trim().min(1, "Le nom est requis."),
+  /** Option a laquelle rattacher la matiere (#197), `null` pour le tronc commun. */
+  optionId: z.preprocess(
+    (value) => (value ? value : null),
+    z.uuid("Option invalide.").nullable(),
+  ),
 });
 
 export const optionSchema = z.object({
