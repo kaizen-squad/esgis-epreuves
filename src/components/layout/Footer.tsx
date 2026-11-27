@@ -67,6 +67,7 @@ const Footer = async ({ links }: FooterProps) => {
           Kaizen Studio.
         </p>
         <span className="text-text-primary flex items-center gap-2 text-base font-semibold tracking-tight">
+          <span className="text-xl">By</span>
           <Image
             src="/images/kaizen-logo.png"
             alt="Kaizen"
@@ -74,7 +75,6 @@ const Footer = async ({ links }: FooterProps) => {
             height={131}
             className="h-5 w-auto"
           />
-          <span>Studio</span>
           <FiLinkedin size={20} aria-hidden="true" />
         </span>
       </div>
