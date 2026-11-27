@@ -7,6 +7,7 @@ import {
 import {
   getLevelById,
   getLevels,
+  getOptions,
   getSubjects,
 } from "@/features/referentials/queries";
 import {
@@ -39,11 +40,12 @@ export default async function FieldExamsView({
   const filters = toExamFilters(searchParams);
   const levelId = filters.levelId;
 
-  const [result, level, levels, subjects] = await Promise.all([
+  const [result, level, levels, subjects, options] = await Promise.all([
     getFieldExams(fieldId, filters),
     levelId ? getLevelById(levelId) : null,
     getLevels(),
     getSubjects(),
+    getOptions(),
   ]);
   if (!result) notFound();
 
@@ -95,6 +97,9 @@ export default async function FieldExamsView({
           levels,
           subjects: subjects.filter(
             (subject) => subject.fieldId === result.field.id,
+          ),
+          options: options.filter(
+            (option) => option.fieldId === result.field.id,
           ),
           academicYears,
         }}

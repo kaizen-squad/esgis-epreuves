@@ -15,6 +15,7 @@ function activeChips(
   const fieldId = filters.get("fieldId");
   const levelId = filters.get("levelId");
   const subjectId = filters.get("subjectId");
+  const optionId = filters.get("optionId");
   const session = filters.get("session");
   const examType = filters.get("examType");
   const academicYear = filters.get("academicYear");
@@ -46,6 +47,15 @@ function activeChips(
         key: "subjectId",
         label: subject.name,
         onRemove: () => filters.set("subjectId", null),
+      });
+  }
+  if (optionId) {
+    const option = options.options.find((item) => item.id === optionId);
+    if (option)
+      chips.push({
+        key: "optionId",
+        label: option.name,
+        onRemove: () => filters.set("optionId", null),
       });
   }
   if (session)
