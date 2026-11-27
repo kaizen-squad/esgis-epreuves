@@ -573,7 +573,7 @@ export async function getExamBySlug(slug: string): Promise<Exam | null> {
   return toExam(data, files.get(data.id));
 }
 
-/** `getExamBySlug` memoisee par requete : partagee entre `generateMetadata`, la vue et l'image de partage, pour ne lire l'epreuve qu'une fois. */
+/** `getExamBySlug` memoisee par requete : partagee entre `generateMetadata` et la vue, pour ne lire l'epreuve qu'une fois. L'image de partage utilise `getExamShareCard`, qui evite sa lecture R2 (#145). */
 export const getExamCached = cache(getExamBySlug);
 
 const EXAM_SHARE_CARD_SELECT =
