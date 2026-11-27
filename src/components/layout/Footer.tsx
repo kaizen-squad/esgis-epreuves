@@ -62,22 +62,28 @@ const Footer = async ({ links }: FooterProps) => {
       </div>
 
       <div className="text-text-primary/70 mt-6 flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:justify-between">
-        <p>
+        <p className="order-2 sm:order-1">
           © Copyright {new Date().getFullYear()}, tous droits réservés par
           Kaizen Studio.
         </p>
-        <span className="text-text-primary flex flex-col items-end gap-1">
-          <span className="flex items-center gap-2 text-base font-semibold tracking-tight">
-            <span className="text-xl">By</span>
-            <Image
-              src="/images/kaizen-logo.png"
-              alt="Kaizen"
-              width={640}
-              height={131}
-              className="h-5 w-auto"
-            />
-          </span>
-          <FaLinkedin size={18} aria-hidden="true" />
+        <span className="text-text-primary order-1 flex items-center gap-2 text-base font-semibold tracking-tight sm:order-2">
+          <a
+            href="https://www.linkedin.com/company/studio-kaizen-bj/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="LinkedIn de Kaizen Studio"
+            className="transition-opacity hover:opacity-80"
+          >
+            <FaLinkedin size={20} aria-hidden="true" />
+          </a>
+          <span className="text-xl">By</span>
+          <Image
+            src="/images/kaizen-logo.png"
+            alt="Kaizen"
+            width={640}
+            height={131}
+            className="h-5 w-auto"
+          />
         </span>
       </div>
 
