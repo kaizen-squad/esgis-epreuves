@@ -304,6 +304,40 @@ describe("createSubject", () => {
     });
   });
 
+  it('insere en tronc commun quand optionId est une chaine vide (choix "Tronc commun" du select, #200)', async () => {
+    insertSingle.mockResolvedValue({ data: { id: FIELD_UUID }, error: null });
+
+    await createSubject(
+      form({
+        fieldId: FIELD_UUID,
+        levelId: FIELD_UUID,
+        name: "Algorithmique",
+        optionId: "",
+      }),
+    );
+
+    expect(insert).toHaveBeenCalledWith({
+      field_id: FIELD_UUID,
+      level_id: FIELD_UUID,
+      name: "Algorithmique",
+      option_id: null,
+    });
+  });
+
+  it("rejette un optionId qui n'est pas un uuid sans toucher la base", async () => {
+    const result = await createSubject(
+      form({
+        fieldId: FIELD_UUID,
+        levelId: FIELD_UUID,
+        name: "Algo",
+        optionId: "pas-un-uuid",
+      }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
+  });
+
   it("rejette un fieldId invalide sans toucher la base", async () => {
     const result = await createSubject(
       form({ fieldId: "pas-un-uuid", levelId: FIELD_UUID, name: "Algo" }),

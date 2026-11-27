@@ -292,7 +292,7 @@ export async function updateSubject(
     "cette matière",
     "subjects",
     id,
-    "Cette matière existe déjà pour cette filière et ce niveau.",
+    "Cette matière existe déjà pour cette filière, ce niveau et cette option.",
     parsed.data,
   );
 }
