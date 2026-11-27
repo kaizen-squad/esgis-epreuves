@@ -46,9 +46,6 @@ export default function ShareExamButton({
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [canShare, setCanShare] = useState(false);
-  // Indetermine jusqu'au premier effet : rien n'est rendu avant, pour ne pas afficher le mauvais
-  // variant (WhatsApp/copie) une fraction de seconde avant qu'il ne bascule sur le partage natif.
-  const [ready, setReady] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
@@ -60,11 +57,8 @@ export default function ShareExamButton({
       typeof navigator.share === "function" &&
         window.matchMedia("(pointer: coarse)").matches,
     );
-    setReady(true);
     return () => clearTimeout(timer.current);
   }, [path]);
-
-  if (!ready) return null;
 
   const handleCopy = async () => {
     if (!shareUrl) return;
