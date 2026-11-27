@@ -1,6 +1,7 @@
 import { FiX } from "@/components/icons";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 import type { CatalogueFilters } from "@/components/exams/useCatalogueFilters";
+import { optionDisplayName } from "@/components/fields/fieldLabel";
 
 interface ActiveFiltersProps {
   options: CatalogueFilterOptions;
@@ -54,7 +55,7 @@ function activeChips(
     if (option)
       chips.push({
         key: "optionId",
-        label: option.name,
+        label: optionDisplayName(option.name),
         onRemove: () => filters.set("optionId", null),
       });
   }
