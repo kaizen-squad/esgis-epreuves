@@ -192,7 +192,7 @@ export async function uploadExam(
 export async function updateExamMetadata(
   examId: string,
   formData: FormData,
-): Promise<ActionResult<{ slug: string }>> {
+): Promise<ActionResult<{ slug: string; title: string }>> {
   if (!EXAM_ID_SCHEMA.safeParse(examId).success) {
     return actionError("Epreuve introuvable.");
   }
@@ -294,7 +294,7 @@ export async function updateExamMetadata(
 
   if (duplicate.kind === "quadruplet") {
     return actionOkWithWarning(
-      { slug: current.slug },
+      { slug: current.slug, title },
       {
         examId: duplicate.exam.id,
         slug: duplicate.exam.slug,
@@ -303,7 +303,7 @@ export async function updateExamMetadata(
     );
   }
 
-  return actionOk({ slug: current.slug });
+  return actionOk({ slug: current.slug, title });
 }
 
 /**

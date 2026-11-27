@@ -7,7 +7,6 @@ import {
   mergeFiles,
   replaceFileFormSchema,
   toBatchFormData,
-  titleFromFileName,
   toEditFieldErrors,
   toFieldErrors,
   toMetadataFormData,
@@ -27,13 +26,12 @@ const validValues = {
   fieldId: UUID,
   levelId: UUID,
   subjectId: UUID,
-  session: "Session Normale",
+  session: "",
   examType: "Contrôle Continu",
-  optionId: "",
 };
 
-function entry(file = pdf(), title = "Devoir d'algorithmique") {
-  return { file, title, academicYear: "2025-2026" };
+function entry(file = pdf(), academicYear = "2025-2026") {
+  return { file, academicYear };
 }
 
 describe("academicYears", () => {
@@ -80,17 +78,47 @@ describe("mergeFiles", () => {
   });
 });
 
-describe("titleFromFileName", () => {
-  it("retire l'extension et les separateurs", () => {
-    expect(titleFromFileName("devoir_algo-2025.pdf")).toBe("devoir algo 2025");
-  });
-});
-
 describe("addExamFormSchema", () => {
-  it("accepte un formulaire complet", () => {
+  it("accepte un formulaire complet (Controle Continu, sans session)", () => {
     expect(
       addExamFormSchema.safeParse({ ...validValues, files: [entry()] }).success,
     ).toBe(true);
+  });
+
+  it("accepte une annee inconnue (case cochee, #202)", () => {
+    expect(
+      addExamFormSchema.safeParse({
+        ...validValues,
+        files: [entry(pdf(), "")],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("exige une session pour un Controle Terminal", () => {
+    const result = addExamFormSchema.safeParse({
+      ...validValues,
+      examType: "Contrôle Terminal",
+      files: [entry()],
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(toFieldErrors(result.error).errors.session).toBe(
+      "Choisissez une session.",
+    );
+  });
+
+  it("refuse une session pour un Controle Continu", () => {
+    const result = addExamFormSchema.safeParse({
+      ...validValues,
+      session: "Session Normale",
+      examType: "Contrôle Continu",
+      files: [entry()],
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(toFieldErrors(result.error).errors.session).toBe(
+      "Un Contrôle Continu n'a jamais de session.",
+    );
   });
 
   it("renvoie un message par champ commun manquant", () => {
@@ -98,9 +126,8 @@ describe("addExamFormSchema", () => {
       fieldId: "",
       levelId: "",
       subjectId: "",
-      session: null,
+      session: "",
       examType: null,
-      optionId: "",
       files: [],
     });
     expect(result.success).toBe(false);
@@ -110,7 +137,6 @@ describe("addExamFormSchema", () => {
         fieldId: "Choisissez une filière.",
         levelId: "Choisissez un niveau.",
         subjectId: "Choisissez une matière dans la liste.",
-        session: "Choisissez une session.",
         examType: "Choisissez un type d'évaluation.",
         files: "Ajoutez au moins un fichier.",
       },
@@ -118,18 +144,15 @@ describe("addExamFormSchema", () => {
     });
   });
 
-  it("indexe les erreurs de titre et d'annee par fichier", () => {
+  it("indexe l'erreur d'annee par fichier", () => {
     const result = addExamFormSchema.safeParse({
       ...validValues,
-      files: [entry(), { file: pdf("b.pdf"), title: "", academicYear: "" }],
+      files: [entry(), { file: pdf("b.pdf"), academicYear: "2024" }],
     });
     expect(result.success).toBe(false);
     if (result.success) return;
     expect(toFieldErrors(result.error).fileErrors).toEqual({
-      1: {
-        title: "Le titre doit contenir au moins 3 caractères.",
-        academicYear: "Choisissez une année académique.",
-      },
+      1: { academicYear: "Format attendu : AAAA-AAAA." },
     });
   });
 
@@ -152,52 +175,48 @@ describe("toBatchFormData", () => {
   it("aligne une valeur de chaque metadonnee par fichier", () => {
     const parsed = addExamFormSchema.parse({
       ...validValues,
-      files: [entry(pdf("a.pdf"), "Devoir A"), entry(pdf("b.pdf"), "Devoir B")],
+      files: [entry(pdf("a.pdf"), "2025-2026"), entry(pdf("b.pdf"), "")],
     });
     const formData = toBatchFormData(parsed);
     expect(formData.getAll("files")).toHaveLength(2);
     for (const name of [
-      "title",
       "academicYear",
       "session",
       "examType",
       "fieldId",
       "levelId",
       "subjectId",
-      "optionId",
     ]) {
       expect(formData.getAll(name)).toHaveLength(2);
     }
-    expect(formData.getAll("optionId")).toEqual(["", ""]);
-    expect(formData.getAll("title")).toEqual(["Devoir A", "Devoir B"]);
+    expect(formData.getAll("academicYear")).toEqual(["2025-2026", ""]);
+    expect(formData.has("title")).toBe(false);
+    expect(formData.has("optionId")).toBe(false);
   });
 });
 
 describe("editExamFormSchema", () => {
-  const editValues = {
-    ...validValues,
-    title: "Devoir d'algorithmique",
-    academicYear: "2024-2025",
-    optionId: "",
-  };
+  const editValues = { ...validValues, academicYear: "2024-2025" };
 
-  it("accepte une epreuve sans option", () => {
+  it("accepte une epreuve en Controle Continu", () => {
     expect(editExamFormSchema.safeParse(editValues).success).toBe(true);
+  });
+
+  it("accepte une annee inconnue", () => {
+    expect(
+      editExamFormSchema.safeParse({ ...editValues, academicYear: "" }).success,
+    ).toBe(true);
   });
 
   it("renvoie le premier message par champ", () => {
     const result = editExamFormSchema.safeParse({
       ...editValues,
-      title: "a",
-      academicYear: "",
-      optionId: "pas-un-uuid",
+      academicYear: "2024",
     });
     expect(result.success).toBe(false);
     if (result.success) return;
     expect(toEditFieldErrors(result.error)).toEqual({
-      title: "Le titre doit contenir au moins 3 caractères.",
-      academicYear: "Choisissez une année académique.",
-      optionId: "Option invalide.",
+      academicYear: "Format attendu : AAAA-AAAA.",
     });
   });
 

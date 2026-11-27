@@ -451,7 +451,13 @@ describe("updateExamMetadata", () => {
       metadataForm({ optionId: OPTION_UUID }),
     );
 
-    expect(result).toEqual({ ok: true, data: { slug: CURRENT_EXAM.slug } });
+    expect(result).toEqual({
+      ok: true,
+      data: {
+        slug: CURRENT_EXAM.slug,
+        title: "Algorithmique : Contrôle terminal, session normale",
+      },
+    });
     expect(update).toHaveBeenCalledWith({
       title: "Algorithmique : Contrôle terminal, session normale",
       academic_year: "2024-2025",
@@ -483,7 +489,10 @@ describe("updateExamMetadata", () => {
 
     expect(result).toEqual({
       ok: true,
-      data: { slug: CURRENT_EXAM.slug },
+      data: {
+        slug: CURRENT_EXAM.slug,
+        title: "Algorithmique : Contrôle terminal, session normale",
+      },
       warning: {
         examId: "exam-2",
         slug: "algo-s1-def67890",

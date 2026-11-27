@@ -12,16 +12,11 @@ import {
 import { FiArrowRight, FiExternalLink, FiRefreshCw } from "react-icons/fi";
 import { updateExamMetadata } from "@/features/exams/actions";
 import type { Exam } from "@/features/exams/types";
-import type {
-  Field,
-  Level,
-  Option,
-  Subject,
-} from "@/features/referentials/types";
+import type { Field, Level, Subject } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 import { formatFileSize } from "@/lib/file-format";
 import CancelAction from "./CancelAction";
-import ExamCommonFields, { inputClass } from "./ExamCommonFields";
+import ExamCommonFields from "./ExamCommonFields";
 import ExamFileCard from "./ExamFileCard";
 import {
   editExamFormSchema,
@@ -34,12 +29,9 @@ import ExamFormSaving from "./ExamFormSaving";
 import type { ExamFormStep } from "./ExamFormStepper";
 import ExamPreviewLink from "./ExamPreviewLink";
 import ExamUpdateResult from "./ExamUpdateResult";
-import FieldError from "./FieldError";
 
 type EditValues = ExamCommonValues & {
-  title: string;
   academicYear: string;
-  optionId: string;
 };
 
 type SubmitState =
@@ -48,8 +40,7 @@ type SubmitState =
   | {
       status: "done";
       id: number;
-      title: string;
-      result: ActionResult<{ slug: string }>;
+      result: ActionResult<{ slug: string; title: string }>;
     };
 
 const ACTION_LINK_CLASS =
@@ -57,7 +48,6 @@ const ACTION_LINK_CLASS =
 
 function initialValues(exam: Exam): EditValues {
   return {
-    title: exam.title,
     // Inconnues possibles sur une vieille epreuve (#196) : la case part vide plutot que de
     // planter, a remplir par le BDE si besoin (formulaire aligne par #202).
     academicYear: exam.academicYear ?? "",
@@ -66,7 +56,6 @@ function initialValues(exam: Exam): EditValues {
     subjectId: exam.subjectId,
     session: exam.session ?? "",
     examType: exam.examType,
-    optionId: exam.optionId ?? "",
   };
 }
 
@@ -80,13 +69,11 @@ export default function EditExamFlow({
   fields,
   levels,
   subjects,
-  options,
 }: {
   exam: Exam;
   fields: Field[];
   levels: Level[];
   subjects: Subject[];
-  options: Option[];
 }) {
   const [values, setValues] = useState<EditValues>(() => initialValues(exam));
   const [dismissedId, setDismissedId] = useState<number | null>(null);
@@ -102,20 +89,20 @@ export default function EditExamFlow({
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
       const parsed = editExamFormSchema.safeParse({
-        title: formData.get("title") ?? "",
         academicYear: formData.get("academicYear") ?? "",
         fieldId: formData.get("fieldId") ?? "",
         levelId: formData.get("levelId") ?? "",
         subjectId: formData.get("subjectId") ?? "",
-        session: formData.get("session"),
+        // Absent du DOM pour un Controle Continu (#202, ChoiceGroup masque) : jamais `null`, que
+        // le schema rejetterait au lieu d'y voir une session vide, valide pour ce type.
+        session: formData.get("session") ?? "",
         examType: formData.get("examType"),
-        optionId: formData.get("optionId") ?? "",
       });
       if (!parsed.success) {
         return { status: "invalid", errors: toEditFieldErrors(parsed.error) };
       }
 
-      let result: ActionResult<{ slug: string }>;
+      let result: ActionResult<{ slug: string; title: string }>;
       try {
         result = await updateExamMetadata(
           exam.id,
@@ -128,12 +115,7 @@ export default function EditExamFlow({
             "Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.",
         };
       }
-      return {
-        status: "done",
-        id: Date.now(),
-        title: parsed.data.title,
-        result,
-      };
+      return { status: "done", id: Date.now(), result };
     },
     { status: "idle" },
   );
@@ -161,19 +143,8 @@ export default function EditExamFlow({
     target?.focus();
   }, [state]);
 
-  const availableOptions = options.filter(
-    (option) => option.fieldId === values.fieldId,
-  );
-
-  /** Une option appartient a une filiere : changer de filiere vide l'option devenue incompatible. */
   const handleCommonChange = (patch: Partial<ExamCommonValues>) =>
-    setValues((current) => {
-      const next = { ...current, ...patch };
-      const optionFits = options.some(
-        (o) => o.id === next.optionId && o.fieldId === next.fieldId,
-      );
-      return optionFits ? next : { ...next, optionId: "" };
-    });
+    setValues((current) => ({ ...current, ...patch }));
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -205,8 +176,16 @@ export default function EditExamFlow({
           successMessage={(slug) => (
             <>
               Les données de{" "}
-              <ExamPreviewLink exam={{ slug, title: state.title }} /> ont été
-              enregistrées.
+              <ExamPreviewLink
+                exam={{
+                  slug,
+                  title:
+                    state.status === "done" && state.result.ok
+                      ? state.result.data.title
+                      : exam.title,
+                }}
+              />{" "}
+              ont été enregistrées.
             </>
           )}
           againLabel="Modifier à nouveau"
@@ -269,9 +248,9 @@ export default function EditExamFlow({
                 Modifiez les données de l&apos;épreuve
               </h2>
               <p className="text-text-paragraph mb-0 text-sm">
-                Tous les champs marqués * sont obligatoires. Le titre et
-                l&apos;année académique se modifient sur la carte du fichier
-                ci-dessus.
+                Tous les champs marqués * sont obligatoires. L&apos;année
+                académique se modifie sur la carte du fichier ci-dessus (ou «
+                inconnue » sur une vieille épreuve).
               </p>
             </div>
 
@@ -282,41 +261,6 @@ export default function EditExamFlow({
               values={values}
               errors={errors}
               onChange={handleCommonChange}
-              afterSubject={
-                availableOptions.length > 0 || values.optionId ? (
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor="optionId" className="font-medium">
-                      Option (facultatif)
-                    </label>
-                    <select
-                      id="optionId"
-                      name="optionId"
-                      value={values.optionId}
-                      onChange={(event) =>
-                        setValues((current) => ({
-                          ...current,
-                          optionId: event.target.value,
-                        }))
-                      }
-                      aria-invalid={errors.optionId ? true : undefined}
-                      aria-describedby={
-                        errors.optionId ? "optionId-error" : undefined
-                      }
-                      className={inputClass(errors.optionId)}
-                    >
-                      <option value="">Aucune</option>
-                      {availableOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.name}
-                        </option>
-                      ))}
-                    </select>
-                    <FieldError name="optionId" error={errors.optionId} />
-                  </div>
-                ) : (
-                  <input type="hidden" name="optionId" value="" />
-                )
-              }
             />
           </section>
 
