@@ -46,7 +46,7 @@ export default function Modal({
         // Le contenu remplit la boite : un clic dont la cible est le <dialog> vient du fond.
         if (event.target === event.currentTarget && dismissible) onClose();
       }}
-      className="bg-background-primary m-auto w-[calc(100%-2rem)] max-w-md rounded-xl p-0 shadow-xl backdrop:bg-black/50"
+      className="bg-background-primary rounded-card m-auto w-[calc(100%-2rem)] max-w-md p-0 shadow-xl backdrop:bg-black/50"
     >
       <div className="p-6">
         <h2 id={titleId} className="text-text-title mb-3 text-lg font-semibold">

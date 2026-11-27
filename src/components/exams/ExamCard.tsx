@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { FiDownload, FiFileText } from "@/components/icons";
 import { formatFileSize, formatFileType } from "@/lib/file-format";
-import { BDE_BASE_PATH, examHref } from "@/components/layout/spaces";
+import {
+  BDE_BASE_PATH,
+  examFileHref,
+  examHref,
+} from "@/components/layout/spaces";
 import Cote from "./Cote";
 import ExamManageMenu from "./ExamManageMenu";
 import ExamThumbnail from "./ExamThumbnail";
@@ -39,10 +43,12 @@ const ExamCard = (data: ExamCardProps) => {
   // Espace BDE (cartes gerables) : la page de l'epreuve reste dans l'espace BDE.
   const basePath = data.manageable ? BDE_BASE_PATH : "";
   const previewHref = data.slug ? examHref(basePath, data.slug) : null;
-  const downloadHref = data.slug ? `/api/exams/${data.slug}?dl=1` : null;
+  const downloadHref = data.slug
+    ? examFileHref(basePath, data.slug, true)
+    : null;
 
   return (
-    <article className="group bg-background-primary relative flex h-full w-full flex-row overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-lg md:flex-col md:hover:-translate-y-1">
+    <article className="group bg-background-primary rounded-card shadow-card relative flex h-full w-full flex-row overflow-hidden border border-gray-200 transition-all duration-300 hover:border-gray-300 hover:shadow-lg md:flex-col md:hover:-translate-y-1">
       {/* Toute la carte mene a la fiche ; les controles au-dessus (telechargement, menu BDE)
           restent cliquables car places apres dans l'ordre d'empilement. */}
       {previewHref ? (
@@ -118,13 +124,13 @@ const ExamCard = (data: ExamCardProps) => {
           {downloadHref ? (
             <a
               href={downloadHref}
-              className="bg-background-secondary text-text-primary relative z-20 flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90"
+              className="bg-background-secondary text-text-primary rounded-control relative z-20 flex flex-1 cursor-pointer items-center justify-center gap-1.5 py-2 text-sm font-medium transition-opacity hover:opacity-90"
             >
               <FiDownload size={16} />
               Télécharger
             </a>
           ) : (
-            <button className="bg-background-secondary text-text-primary relative z-20 flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-opacity hover:opacity-90">
+            <button className="bg-background-secondary text-text-primary rounded-control relative z-20 flex flex-1 cursor-pointer items-center justify-center gap-1.5 py-2 text-sm font-medium transition-opacity hover:opacity-90">
               <FiDownload size={16} />
               Télécharger
             </button>

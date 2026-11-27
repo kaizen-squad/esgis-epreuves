@@ -210,6 +210,10 @@ Lecture d'une épreuve par son slug, pour la page détail. Retourne `null` si ab
 
 Lit uniquement la clé R2 (`r2_key`) d'une épreuve par son slug, pour la route de prévisualisation/téléchargement (`/api/exams/[slug]`, #50). Retourne `null` si absente : la route répond alors `404`. Toute autre erreur Supabase remonte en exception.
 
+### `getExamShareCard(slug: string): Promise<ExamShareCard | null>`
+
+Cote et titre d'une épreuve, pour l'image de partage (`opengraph-image.tsx`, #145). Lit uniquement `exams_catalog`, sans la lecture R2 (taille, type) que fait `getExamBySlug` via `getExamFiles`, inutile à cette image.
+
 ## `src/features/exams/actions.ts`
 
 ### `uploadExam(formData: FormData): Promise<ActionResult<{ slug: string }>>`
@@ -346,7 +350,7 @@ Supprime un PDF d'épreuve sur R2 sous la clé fournie (`replaceExamFile` et `de
 
 ### `GET /api/exams/[slug]`
 
-Route publique (épreuves lisibles sans authentification, comme le catalogue) qui redirige (307) vers une URL R2 présignée. `?dl=1` pour un téléchargement (pièce jointe) ; sans ce paramètre, prévisualisation en ligne (utilisée dans l'iframe d'aperçu des pages `/epreuves/[slug]` et `/bde/epreuves/[slug]`). Répond `404` (texte brut) si le slug ne correspond à aucune épreuve ou si son PDF est absent de R2 (`examFileExists`), plutôt que de rediriger vers une erreur XML de Cloudflare.
+Route publique (épreuves lisibles sans authentification, comme le catalogue) qui redirige (307) vers une URL R2 présignée. `?dl=1` pour un téléchargement (pièce jointe) ; sans ce paramètre, prévisualisation en ligne (utilisée dans l'iframe d'aperçu des pages `/epreuves/[slug]` et `/bde/epreuves/[slug]`). `?space=bde` (porté par `examFileHref`, #145) : si le slug ne correspond à aucune épreuve ou si son PDF est absent de R2 (`examFileExists`), redirige vers la fiche du même espace plutôt que toujours vers la fiche publique.
 
 ## `src/app/api/exams/[slug]/preview/route.ts`
 

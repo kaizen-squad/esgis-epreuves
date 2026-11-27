@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isNavLinkActive } from "./spaces";
+import { examFileHref, isNavLinkActive } from "./spaces";
 
 describe("isNavLinkActive", () => {
   it("l'accueil n'est actif que sur la racine, jamais par prefixe", () => {
@@ -29,5 +29,26 @@ describe("isNavLinkActive", () => {
   it("ne confond pas deux espaces qui partagent un prefixe", () => {
     expect(isNavLinkActive("/bde/catalogue", "/catalogue")).toBe(false);
     expect(isNavLinkActive("/catalogue", "/bde/catalogue")).toBe(false);
+  });
+});
+
+describe("examFileHref", () => {
+  it("espace public : aucun parametre d'espace", () => {
+    expect(examFileHref("", "l1-irt-42")).toBe("/api/exams/l1-irt-42");
+  });
+
+  it("espace BDE : porte l'espace pour que la redirection de repli y reste (#145)", () => {
+    expect(examFileHref("/bde", "l1-irt-42")).toBe(
+      "/api/exams/l1-irt-42?space=bde",
+    );
+  });
+
+  it("telechargement : ajoute dl=1, combine avec l'espace si BDE", () => {
+    expect(examFileHref("", "l1-irt-42", true)).toBe(
+      "/api/exams/l1-irt-42?dl=1",
+    );
+    expect(examFileHref("/bde", "l1-irt-42", true)).toBe(
+      "/api/exams/l1-irt-42?space=bde&dl=1",
+    );
   });
 });

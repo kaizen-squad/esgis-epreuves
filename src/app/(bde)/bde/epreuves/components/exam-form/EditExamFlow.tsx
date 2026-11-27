@@ -12,6 +12,7 @@ import {
 import { FiArrowRight, FiExternalLink, FiRefreshCw } from "react-icons/fi";
 import { updateExamMetadata } from "@/features/exams/actions";
 import type { Exam } from "@/features/exams/types";
+import { BDE_BASE_PATH, examFileHref } from "@/components/layout/spaces";
 import type { Field, Level, Subject } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 import { formatFileSize } from "@/lib/file-format";
@@ -229,7 +230,7 @@ export default function EditExamFlow({
                 actions={
                   <div className="flex shrink-0 gap-1">
                     <a
-                      href={`/api/exams/${exam.slug}`}
+                      href={examFileHref(BDE_BASE_PATH, exam.slug)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={ACTION_LINK_CLASS}

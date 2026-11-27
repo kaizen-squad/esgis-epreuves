@@ -21,7 +21,7 @@ const CatalogueFilter = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
   return mode === "desktop" ? (
-    <aside className="bg-background-primary hidden overflow-hidden rounded-xl border border-gray-200 py-4 shadow-sm lg:sticky lg:top-4 lg:flex lg:max-h-[calc(100dvh-2rem)] lg:flex-col">
+    <aside className="bg-background-primary rounded-card shadow-card hidden overflow-hidden border border-gray-200 py-4 lg:sticky lg:top-4 lg:flex lg:max-h-[calc(100dvh-2rem)] lg:flex-col">
       <FilterComponents
         onClose={onClose}
         options={options}
@@ -31,7 +31,7 @@ const CatalogueFilter = ({
     </aside>
   ) : (
     <Drawer.Root open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-      <Drawer.Trigger className="text-text-secondary flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 font-semibold lg:hidden">
+      <Drawer.Trigger className="text-text-secondary rounded-control flex cursor-pointer items-center gap-2 border border-gray-300 px-3 py-2 font-semibold lg:hidden">
         <FiFilter size={20} color="#c41c2d" />
         Filtres
       </Drawer.Trigger>
