@@ -125,7 +125,11 @@ function batchForm(
         type: "application/pdf",
       });
     formData.append("files", file);
-    formData.append("title", entry.title ?? `Epreuve ${i}`);
+    // title/optionId ne sont plus envoyes par le front depuis #202 (uploadExamsBatch les ignore
+    // de toute facon, voir BATCH_FIELD_NAMES) : un test les ajoute explicitement seulement quand
+    // il verifie precisement qu'ils restent sans effet, pour ne pas laisser croire par defaut
+    // que ce sont des champs reellement attendus (revue Opus du lot).
+    if (entry.title !== undefined) formData.append("title", entry.title);
     formData.append("academicYear", entry.academicYear ?? "2024-2025");
     formData.append("session", entry.session ?? "Session Normale");
     formData.append("examType", entry.examType ?? "Contrôle Terminal");
@@ -138,7 +142,8 @@ function batchForm(
         BATCH_SUBJECT_UUIDS[0] ??
         UUID,
     );
-    formData.append("optionId", entry.optionId ?? "");
+    if (entry.optionId !== undefined)
+      formData.append("optionId", entry.optionId);
   });
   return formData;
 }
@@ -881,22 +886,27 @@ describe("uploadExamsBatch", () => {
     expect(from).not.toHaveBeenCalled();
   });
 
-  it("accepte un lot sans title/optionId, au format reellement envoye par le front (#202)", async () => {
-    const formData = new FormData();
-    formData.append(
-      "files",
-      new File(["%PDF-1.4 lot-sans-title"], "exam-0.pdf", {
-        type: "application/pdf",
-      }),
-    );
-    formData.append("academicYear", "2024-2025");
-    formData.append("session", "Session Normale");
-    formData.append("examType", "Contrôle Terminal");
-    formData.append("fieldId", UUID);
-    formData.append("levelId", UUID);
-    formData.append("subjectId", UUID);
+  it("accepte un lot construit par toBatchFormData, le vrai serialiseur du front (#202, revue Opus : le test precedent batissait son FormData a la main, aveugle a une regression de toBatchFormData lui-meme)", async () => {
+    const { addExamFormSchema, toBatchFormData } =
+      await import("@/app/(bde)/bde/epreuves/components/exam-form/examForm");
+    const parsed = addExamFormSchema.parse({
+      fieldId: UUID,
+      levelId: UUID,
+      subjectId: UUID,
+      session: "Session Normale",
+      examType: "Contrôle Terminal",
+      files: [
+        {
+          file: new File(["%PDF-1.4 lot-sans-title"], "exam-0.pdf", {
+            type: "application/pdf",
+          }),
+          academicYear: "2024-2025",
+          yearUnknown: false,
+        },
+      ],
+    });
 
-    const result = await uploadExamsBatch(formData);
+    const result = await uploadExamsBatch(toBatchFormData(parsed));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
