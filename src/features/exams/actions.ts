@@ -505,14 +505,12 @@ export async function deleteExam(examId: string): Promise<ActionResult<null>> {
 }
 
 const BATCH_FIELD_NAMES = [
-  "title",
   "academicYear",
   "session",
   "examType",
   "fieldId",
   "levelId",
   "subjectId",
-  "optionId",
 ] as const;
 
 export type ExamBatchEntryResult =
@@ -567,12 +565,13 @@ function summarizeBatch(entries: ExamBatchEntryResult[]): ExamBatchSummary {
  * ni de file d'attente (exclu explicitement par le ticket), un resultat par fichier.
  *
  * `FormData` attendu : un champ repete `files` (un par fichier, dans l'ordre de depot) et un champ
- * repete par metadonnee (`title`, `academicYear`, `session`, `examType`, `fieldId`, `levelId`,
- * `subjectId`, `optionId`), chacun avec exactement autant de valeurs que `files`, dans le meme
- * ordre (le fichier et sa metadonnee partagent le meme index). `optionId` attend une chaine vide
- * (jamais une valeur absente) pour un fichier sans option, afin que l'alignement par index reste
- * valable pour tous les fichiers du lot. Limite a `MAX_BATCH_FILES` fichiers (voir sa definition
- * dans `schemas.ts`, liee au corps maximal d'une requete sur la plateforme d'hebergement).
+ * repete par metadonnee (`academicYear`, `session`, `examType`, `fieldId`, `levelId`,
+ * `subjectId`), chacun avec exactement autant de valeurs que `files`, dans le meme ordre (le
+ * fichier et sa metadonnee partagent le meme index). `title`/`optionId` ne sont plus envoyes par le
+ * front (#202, titre genere et option deduite cote serveur) ; `examUploadSchema` les accepte en
+ * leur absence (facultatifs depuis #197/#198). Limite a `MAX_BATCH_FILES` fichiers (voir sa
+ * definition dans `schemas.ts`, liee au corps maximal d'une requete sur la plateforme
+ * d'hebergement).
  *
  * Reutilise `checkExamDuplicate` (#19) telle quelle, fichier par fichier : meme logique
  * bloquante (hash) / avertissement non bloquant (quadruplet) que `uploadExam`, avec la meme forme
@@ -647,14 +646,12 @@ export async function uploadExamsBatch(
     const label = file.name || `fichier ${i + 1}`;
 
     const parsed = examUploadSchema.safeParse({
-      title: fields.title[i],
       academicYear: fields.academicYear[i],
       session: fields.session[i],
       examType: fields.examType[i],
       fieldId: fields.fieldId[i],
       levelId: fields.levelId[i],
       subjectId: fields.subjectId[i],
-      optionId: fields.optionId[i] || undefined,
       file,
     });
     if (!parsed.success) {

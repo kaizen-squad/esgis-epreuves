@@ -76,6 +76,10 @@ export default function ExamCommonFields({
   return (
     <>
       <SubjectSearch
+        // Remonte le composant a chaque changement de matiere (y compris vide, "Changer de
+        // matiere") : sans ca, sa recherche interne gardait l'ancien nom affiche meme apres
+        // effacement de `subjectId` (revue Opus du lot, defaut important).
+        key={values.subjectId}
         subjects={subjects}
         fields={fields}
         levels={levels}

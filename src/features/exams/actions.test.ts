@@ -864,21 +864,43 @@ describe("uploadExamsBatch", () => {
 
   it("rejette un lot dont les tableaux de metadonnees ne sont pas alignes avec les fichiers", async () => {
     const formData = batchForm([{}, {}]);
-    // Retire une des deux valeurs de "title" : deux fichiers, un seul titre.
-    const titles = formData.getAll("title");
-    formData.delete("title");
-    formData.append("title", titles[0] as string);
+    // Retire une des deux valeurs de "academicYear" : deux fichiers, une seule annee.
+    const years = formData.getAll("academicYear");
+    formData.delete("academicYear");
+    formData.append("academicYear", years[0] as string);
 
     const result = await uploadExamsBatch(formData);
 
     expect(result.ok).toBe(false);
     if (!result.ok && "fieldErrors" in result) {
       expect(result.error).toBe("Donnees invalides.");
-      expect(result.fieldErrors).toHaveProperty("title");
+      expect(result.fieldErrors).toHaveProperty("academicYear");
     } else {
       expect.unreachable("fieldErrors attendu sur le resultat");
     }
     expect(from).not.toHaveBeenCalled();
+  });
+
+  it("accepte un lot sans title/optionId, au format reellement envoye par le front (#202)", async () => {
+    const formData = new FormData();
+    formData.append(
+      "files",
+      new File(["%PDF-1.4 lot-sans-title"], "exam-0.pdf", {
+        type: "application/pdf",
+      }),
+    );
+    formData.append("academicYear", "2024-2025");
+    formData.append("session", "Session Normale");
+    formData.append("examType", "Contrôle Terminal");
+    formData.append("fieldId", UUID);
+    formData.append("levelId", UUID);
+    formData.append("subjectId", UUID);
+
+    const result = await uploadExamsBatch(formData);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({ status: "imported" });
   });
 
   it("traite chaque fichier independamment et renvoie un resultat par fichier", async () => {
