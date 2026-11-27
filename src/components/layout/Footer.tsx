@@ -66,16 +66,14 @@ const Footer = async ({ links }: FooterProps) => {
           © Copyright {new Date().getFullYear()}, tous droits réservés par
           Kaizen Studio.
         </p>
-        <span className="text-text-primary order-1 flex items-center gap-2 text-base font-semibold tracking-tight sm:order-2">
-          <a
-            href="https://www.linkedin.com/company/studio-kaizen-bj/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="LinkedIn de Kaizen Studio"
-            className="transition-opacity hover:opacity-80"
-          >
-            <FaLinkedin size={20} aria-hidden="true" />
-          </a>
+        <a
+          href="https://www.linkedin.com/company/studio-kaizen-bj/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="LinkedIn de Kaizen Studio"
+          className="text-text-primary order-1 flex items-center gap-2 text-base font-semibold tracking-tight transition-opacity hover:opacity-80 sm:order-2"
+        >
+          <FaLinkedin size={20} aria-hidden="true" />
           <span className="text-xl">By</span>
           <Image
             src="/images/kaizen-logo.png"
@@ -84,7 +82,7 @@ const Footer = async ({ links }: FooterProps) => {
             height={131}
             className="h-5 w-auto"
           />
-        </span>
+        </a>
       </div>
 
       {/* Taille calee sur la largeur de la couverture (unites de conteneur) : le titre court
