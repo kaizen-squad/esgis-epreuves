@@ -13,14 +13,10 @@ import {
   FiX,
 } from "@/components/icons";
 import LogoutButton from "@/components/layout/LogoutButton";
-import {
-  BDE_BASE_PATH,
-  catalogueHref,
-  filieresHref,
-} from "@/components/layout/spaces";
+import { BDE_BASE_PATH, filieresHref } from "@/components/layout/spaces";
 import { useMobileDrawer } from "@/components/layout/useMobileDrawer";
 
-const BDE_CATALOGUE_HREF = catalogueHref(BDE_BASE_PATH);
+const BDE_MES_EPREUVES_HREF = `${BDE_BASE_PATH}/mes-epreuves`;
 const BDE_FILIERES_HREF = filieresHref(BDE_BASE_PATH);
 
 type BdeLink = {
@@ -46,13 +42,14 @@ const BDE_LINKS: BdeLink[] = [
     isActive: (pathname) => pathname === "/bde/epreuves/ajouter",
   },
   {
-    // Gestion des epreuves deja deposees (modifier, remplacer, supprimer) : actif aussi sur les
-    // pages d'une epreuve precise, qui ne s'atteignent qu'en partant de cette liste.
+    // Versements du membre connecte (modifier, remplacer, supprimer) : actif aussi sur les pages
+    // d'une epreuve precise, qui ne s'atteignent qu'en partant de cette liste (#192, corrige le
+    // lien qui pointait vers le catalogue de toute l'equipe).
     name: "Mes épreuves",
-    href: BDE_CATALOGUE_HREF,
+    href: BDE_MES_EPREUVES_HREF,
     icon: FiFolder,
     isActive: (pathname) =>
-      pathname === BDE_CATALOGUE_HREF ||
+      pathname === BDE_MES_EPREUVES_HREF ||
       (pathname.startsWith("/bde/epreuves/") &&
         pathname !== "/bde/epreuves/ajouter"),
   },
