@@ -6,8 +6,10 @@ import type { CatalogueFilterKey } from "@/components/exams/catalogueFilters";
 
 /** Changer de filiere, de niveau ou d'option rend la matiere choisie potentiellement hors sujet : on la retire. */
 const CLEARS_SUBJECT: CatalogueFilterKey[] = ["fieldId", "levelId", "optionId"];
-/** Changer de filiere rend l'option choisie potentiellement hors sujet (#201, options propres a une filiere) : on la retire. */
-const CLEARS_OPTION: CatalogueFilterKey[] = ["fieldId"];
+/** Changer de filiere rend l'option choisie potentiellement hors sujet (#201, options propres a une
+ * filiere), changer de niveau aussi (le filtre Option ne liste que les options reellement presentes
+ * pour la filiere ET le niveau choisis, voir `FilterComponents.tsx`) : on la retire dans les deux cas. */
+const CLEARS_OPTION: CatalogueFilterKey[] = ["fieldId", "levelId"];
 
 export type CatalogueFilters = ReturnType<typeof useCatalogueFilters>;
 
