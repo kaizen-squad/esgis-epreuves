@@ -104,11 +104,16 @@ const EXAM_SESSION_TITLE_LABELS: Record<string, string> = {
 
 /**
  * Titre d'une epreuve genere depuis ses metadonnees (#198), jamais saisi : "Matière : Type[,
- * session]" (ex. "Langage C avancé : Contrôle terminal, rattrapage"), sans repeter la cote deja
- * affichee juste en dessous sur la fiche et l'image de partage. La session n'apparait que quand
- * elle est connue (absente pour un Controle Continu, #196, ou une vieille epreuve).
+ * session]" (ex. "Langage C avancé : Contrôle terminal, session normale"), sans repeter la cote
+ * deja affichee juste en dessous sur la fiche et l'image de partage. La session n'apparait que
+ * quand elle est connue (absente pour un Controle Continu, #196, ou une vieille epreuve). Un
+ * rattrapage l'emporte sur le type ("Matière : Rattrapage" plutôt que "Matière : Contrôle
+ * terminal, rattrapage") : c'est l'information la plus saillante pour un rattrapage (toujours un
+ * Contrôle Terminal par construction, le dire est redondant), retour utilisateur.
  */
 export function examTitle(exam: ExamTitleFields): string {
+  if (exam.session === "Rattrapage") return `${exam.subject} : Rattrapage`;
+
   const typeLabel = EXAM_TYPE_TITLE_LABELS[exam.examType] ?? exam.examType;
   const sessionLabel = exam.session
     ? (EXAM_SESSION_TITLE_LABELS[exam.session] ?? exam.session)
