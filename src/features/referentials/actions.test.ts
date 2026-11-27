@@ -57,8 +57,27 @@ describe("createField", () => {
     const result = await createField(form({ name: "Informatique" }));
 
     expect(from).toHaveBeenCalledWith("fields");
-    expect(insert).toHaveBeenCalledWith({ name: "Informatique" });
+    expect(insert).toHaveBeenCalledWith({
+      name: "Informatique",
+      short_name: null,
+    });
     expect(result).toEqual({ ok: true, data: { id: FIELD_UUID } });
+  });
+
+  it("insere le sigle d'affichage quand il est fourni (#198)", async () => {
+    insertSingle.mockResolvedValue({ data: { id: FIELD_UUID }, error: null });
+
+    await createField(
+      form({
+        name: "Informatique, Réseaux et Télécommunications",
+        shortName: "IRT",
+      }),
+    );
+
+    expect(insert).toHaveBeenCalledWith({
+      name: "Informatique, Réseaux et Télécommunications",
+      short_name: "IRT",
+    });
   });
 
   it("renvoie un message de doublon sur une violation d'unicite (23505)", async () => {
@@ -92,7 +111,7 @@ describe("createField", () => {
 });
 
 describe("updateField", () => {
-  it("modifie la filiere existante", async () => {
+  it("modifie la filiere existante, sans toucher short_name si le formulaire ne l'envoie pas", async () => {
     updateSelect.mockResolvedValue({ data: [{ id: FIELD_UUID }], error: null });
 
     const result = await updateField(FIELD_UUID, form({ name: "Gestion" }));
@@ -100,6 +119,31 @@ describe("updateField", () => {
     expect(update).toHaveBeenCalledWith({ name: "Gestion" });
     expect(updateEq).toHaveBeenCalledWith("id", FIELD_UUID);
     expect(result).toEqual({ ok: true, data: null });
+  });
+
+  it("met a jour short_name quand le formulaire l'envoie (#198)", async () => {
+    updateSelect.mockResolvedValue({ data: [{ id: FIELD_UUID }], error: null });
+
+    await updateField(
+      FIELD_UUID,
+      form({
+        name: "Informatique, Réseaux et Télécommunications",
+        shortName: "IRT",
+      }),
+    );
+
+    expect(update).toHaveBeenCalledWith({
+      name: "Informatique, Réseaux et Télécommunications",
+      short_name: "IRT",
+    });
+  });
+
+  it("efface short_name quand le formulaire l'envoie vide", async () => {
+    updateSelect.mockResolvedValue({ data: [{ id: FIELD_UUID }], error: null });
+
+    await updateField(FIELD_UUID, form({ name: "Gestion", shortName: "" }));
+
+    expect(update).toHaveBeenCalledWith({ name: "Gestion", short_name: null });
   });
 
   it("renvoie Introuvable sur un id qui n'est pas un uuid, sans toucher la base", async () => {
@@ -224,7 +268,7 @@ describe("createLevel", () => {
 });
 
 describe("createSubject", () => {
-  it("insere la matiere avec les colonnes field_id/level_id", async () => {
+  it("insere la matiere en tronc commun (optionId absent -> option_id null)", async () => {
     insertSingle.mockResolvedValue({ data: { id: FIELD_UUID }, error: null });
 
     await createSubject(
@@ -236,7 +280,62 @@ describe("createSubject", () => {
       field_id: FIELD_UUID,
       level_id: FIELD_UUID,
       name: "Algorithmique",
+      option_id: null,
     });
+  });
+
+  it("insere la matiere rattachee a une option (#200)", async () => {
+    insertSingle.mockResolvedValue({ data: { id: FIELD_UUID }, error: null });
+
+    await createSubject(
+      form({
+        fieldId: FIELD_UUID,
+        levelId: FIELD_UUID,
+        name: "Anglais technique",
+        optionId: UNKNOWN_UUID,
+      }),
+    );
+
+    expect(insert).toHaveBeenCalledWith({
+      field_id: FIELD_UUID,
+      level_id: FIELD_UUID,
+      name: "Anglais technique",
+      option_id: UNKNOWN_UUID,
+    });
+  });
+
+  it('insere en tronc commun quand optionId est une chaine vide (choix "Tronc commun" du select, #200)', async () => {
+    insertSingle.mockResolvedValue({ data: { id: FIELD_UUID }, error: null });
+
+    await createSubject(
+      form({
+        fieldId: FIELD_UUID,
+        levelId: FIELD_UUID,
+        name: "Algorithmique",
+        optionId: "",
+      }),
+    );
+
+    expect(insert).toHaveBeenCalledWith({
+      field_id: FIELD_UUID,
+      level_id: FIELD_UUID,
+      name: "Algorithmique",
+      option_id: null,
+    });
+  });
+
+  it("rejette un optionId qui n'est pas un uuid sans toucher la base", async () => {
+    const result = await createSubject(
+      form({
+        fieldId: FIELD_UUID,
+        levelId: FIELD_UUID,
+        name: "Algo",
+        optionId: "pas-un-uuid",
+      }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
   });
 
   it("rejette un fieldId invalide sans toucher la base", async () => {
@@ -246,6 +345,27 @@ describe("createSubject", () => {
 
     expect(result.ok).toBe(false);
     expect(from).not.toHaveBeenCalled();
+  });
+
+  it("renvoie un message dedie sur une option d'une autre filiere (23503, #197)", async () => {
+    insertSingle.mockResolvedValue({
+      data: null,
+      error: { code: "23503", message: "foreign key violation" },
+    });
+
+    const result = await createSubject(
+      form({
+        fieldId: FIELD_UUID,
+        levelId: FIELD_UUID,
+        name: "Algo",
+        optionId: UNKNOWN_UUID,
+      }),
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Cette option n'appartient pas à la filière choisie.",
+    });
   });
 });
 

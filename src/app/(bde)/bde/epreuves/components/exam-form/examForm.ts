@@ -61,43 +61,48 @@ export function mergeFiles(current: File[], incoming: File[]): File[] {
   return [...current, ...added];
 }
 
-/** Titre propose par defaut pour un fichier : son nom sans extension, separateurs remplaces. */
-export function titleFromFileName(name: string): string {
-  return name
-    .replace(/\.[^.]+$/, "")
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+/** Vide ("Année inconnue" coché, #202) ou au format attendu par le backend. */
+const academicYearSchema = z.union([
+  z.literal(""),
+  z.string().regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA."),
+]);
+
+const YEAR_REQUIRED_MESSAGE =
+  "Choisissez une année ou cochez « Année inconnue ».";
+
+/** Annee vide sans que la case "Annee inconnue" le justifie : un oubli, pas un choix (revue #202). */
+function requireYearChoice(data: {
+  academicYear: string;
+  yearUnknown: boolean;
+}) {
+  return data.academicYear !== "" || data.yearUnknown;
 }
 
-const titleSchema = z
-  .string()
-  .trim()
-  .min(3, "Le titre doit contenir au moins 3 caractères.")
-  .max(200, "Le titre ne doit pas dépasser 200 caractères.");
+/** Metadonnees propres a chaque fichier du lot ; les autres sont communes a tout le lot. Le titre
+ * n'est plus saisi (#202) : toujours genere cote serveur depuis #198. */
+const examFileEntrySchema = z
+  .object({
+    file: z
+      .instanceof(File, { message: "Fichier manquant." })
+      .refine(
+        (file) => validateExamFile(file) === null,
+        "Retirez ce fichier invalide avant de publier.",
+      ),
+    academicYear: academicYearSchema,
+    yearUnknown: z.boolean(),
+  })
+  .refine(requireYearChoice, {
+    message: YEAR_REQUIRED_MESSAGE,
+    path: ["academicYear"],
+  });
 
-const academicYearSchema = z
-  .string()
-  .regex(/^\d{4}-\d{4}$/, "Choisissez une année académique.");
-
-/** Metadonnees propres a chaque fichier du lot ; les autres sont communes a tout le lot. */
-const examFileEntrySchema = z.object({
-  file: z
-    .instanceof(File, { message: "Fichier manquant." })
-    .refine(
-      (file) => validateExamFile(file) === null,
-      "Retirez ce fichier invalide avant de publier.",
-    ),
-  title: titleSchema,
-  academicYear: academicYearSchema,
-});
-
-/** Champs communs aux formulaires d'ajout et de modification (filiere, niveau, matiere...). */
+/** Champs communs aux formulaires d'ajout et de modification (filiere, niveau, matiere...).
+ * `session` vide est resolu par `validateSessionForExamType`, applique apres `.extend`. */
 const commonExamSchema = z.object({
   fieldId: z.uuid("Choisissez une filière."),
   levelId: z.uuid("Choisissez un niveau."),
   subjectId: z.uuid("Choisissez une matière dans la liste."),
-  session: z.enum(EXAM_SESSIONS, "Choisissez une session."),
+  session: z.union([z.literal(""), z.enum(EXAM_SESSIONS)]),
   examType: z.enum(EXAM_TYPES, "Choisissez un type d'évaluation."),
 });
 
@@ -105,28 +110,48 @@ export type ExamCommonField = keyof z.output<typeof commonExamSchema>;
 export type ExamCommonValues = Record<ExamCommonField, string>;
 
 /**
- * Validation cote client du formulaire d'ajout. Les noms des champs sont ceux attendus par
- * `uploadExamsBatch` : titre et annee academique par fichier, le reste commun au lot.
+ * Un Controle Continu n'a jamais de session (#196), meme regle que
+ * `refuseSessionOnContinuousControl` cote serveur, `exams/schemas.ts`. La session d'un Controle
+ * Terminal reste facultative (decision du 2026-11-26 : inconnue possible sur une vieille epreuve),
+ * jamais exigee ici. Appliquee apres `.extend` comme son equivalent serveur : un `superRefine` rend
+ * le schema un `ZodEffects`, qui n'a plus de `.extend`.
  */
-export const addExamFormSchema = commonExamSchema.extend({
-  // Facultative : une option appartient a une filiere, comme en modification (#172).
-  optionId: z.union([z.literal(""), z.uuid("Option invalide.")]),
-  files: z
-    .array(examFileEntrySchema)
-    .min(1, "Ajoutez au moins un fichier.")
-    .max(
-      MAX_BATCH_FILES,
-      `Vous pouvez publier au plus ${MAX_BATCH_FILES} fichiers à la fois.`,
-    ),
-});
+function validateSessionForExamType<
+  T extends z.ZodType<{ examType: string; session: string }>,
+>(schema: T) {
+  return schema.superRefine((data, ctx) => {
+    if (data.examType === "Contrôle Continu" && data.session !== "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["session"],
+        message: "Un Contrôle Continu n'a jamais de session.",
+      });
+    }
+  });
+}
+
+/**
+ * Validation cote client du formulaire d'ajout. Les noms des champs sont ceux attendus par
+ * `uploadExamsBatch` : l'annee academique par fichier, le reste commun au lot. Option et titre ne
+ * sont plus proposes (#202) : deduits/generes cote serveur (#197/#198).
+ */
+export const addExamFormSchema = validateSessionForExamType(
+  commonExamSchema.extend({
+    files: z
+      .array(examFileEntrySchema)
+      .min(1, "Ajoutez au moins un fichier.")
+      .max(
+        MAX_BATCH_FILES,
+        `Vous pouvez publier au plus ${MAX_BATCH_FILES} fichiers à la fois.`,
+      ),
+  }),
+);
 
 export type AddExamFormValues = z.output<typeof addExamFormSchema>;
 type SharedField = ExamCommonField;
-type FileEntryField = "file" | "title" | "academicYear";
+type FileEntryField = "file" | "academicYear";
 
-export type AddExamErrors = Partial<
-  Record<SharedField | "files" | "optionId", string>
->;
+export type AddExamErrors = Partial<Record<SharedField | "files", string>>;
 /** Erreurs par fichier, indexees par la position du fichier dans le lot. */
 export type AddExamFileErrors = Record<
   number,
@@ -164,31 +189,32 @@ const SHARED_BATCH_FIELDS = [
 
 /**
  * `FormData` au format de `uploadExamsBatch` : un `files` par fichier et, pour chaque metadonnee,
- * autant de valeurs que de fichiers (alignees par index). `optionId` est commun au lot (#172),
- * chaine vide si aucune option choisie.
+ * autant de valeurs que de fichiers (alignees par index).
  */
 export function toBatchFormData(values: AddExamFormValues): FormData {
   const formData = new FormData();
   for (const entry of values.files) {
     formData.append("files", entry.file);
-    formData.append("title", entry.title);
     formData.append("academicYear", entry.academicYear);
     for (const name of SHARED_BATCH_FIELDS) {
       formData.append(name, values[name]);
     }
-    formData.append("optionId", values.optionId);
   }
   return formData;
 }
 
 /**
  * Validation cote client du formulaire de modification (fichier inchange), memes champs que
- * `updateExamMetadata`. `optionId` vide = aucune option.
+ * `updateExamMetadata`. Titre et option ne sont plus proposes (#202).
  */
-export const editExamFormSchema = commonExamSchema.extend({
-  title: titleSchema,
-  academicYear: academicYearSchema,
-  optionId: z.union([z.literal(""), z.uuid("Option invalide.")]),
+export const editExamFormSchema = validateSessionForExamType(
+  commonExamSchema.extend({
+    academicYear: academicYearSchema,
+    yearUnknown: z.boolean(),
+  }),
+).refine(requireYearChoice, {
+  message: YEAR_REQUIRED_MESSAGE,
+  path: ["academicYear"],
 });
 
 export type EditExamFormValues = z.output<typeof editExamFormSchema>;
@@ -204,10 +230,13 @@ export function toEditFieldErrors(error: z.ZodError): EditExamErrors {
   return errors;
 }
 
-/** `FormData` au format de `updateExamMetadata`. */
+/** `FormData` au format de `updateExamMetadata` : `yearUnknown` ne sert qu'a la validation cote
+ * client, le backend n'attend qu'une annee (eventuellement vide, #196). */
 export function toMetadataFormData(values: EditExamFormValues): FormData {
+  const { yearUnknown, ...fields } = values;
+  void yearUnknown;
   const formData = new FormData();
-  for (const [name, value] of Object.entries(values)) {
+  for (const [name, value] of Object.entries(fields)) {
     formData.append(name, value);
   }
   return formData;

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { examTitle } from "@/components/exams/examCote";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getFieldById, getFields } from "@/features/referentials/queries";
@@ -19,7 +20,7 @@ import type {
 } from "./types";
 
 const EXAM_CATALOG_SELECT =
-  "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, level_id, level_name, subject_id, subject_name, option_id, option_name, created_by";
+  "id, title, slug, academic_year, session, exam_type, file_size, created_at, field_id, field_name, field_short_name, level_id, level_name, subject_id, subject_name, option_id, option_name, created_by";
 
 /** PostgREST : decalage hors bornes avec un count exact (page trop loin apres un filtre qui reduit le total). */
 const RANGE_NOT_SATISFIABLE = "PGRST103";
@@ -30,13 +31,14 @@ type CatalogRow = {
   id: string;
   title: string;
   slug: string;
-  academic_year: string;
+  academic_year: string | null;
   session: Exam["session"];
   exam_type: Exam["examType"];
   file_size: number;
   created_at: string;
   field_id: string;
   field_name: string;
+  field_short_name: string | null;
   level_id: string;
   level_name: string;
   subject_id: string;
@@ -88,15 +90,26 @@ async function getExamFiles(
   );
 }
 
+/**
+ * Titre toujours recalcule a la lecture (#198), jamais celui stocke a l'insertion : un
+ * renommage de matiere (`updateSubject`, #64, toujours autorise) laisserait sinon le titre
+ * (et le slug, s'il en etait aussi recalcule) figes sur l'ancien nom sur toutes les epreuves
+ * deja deposees. Constat de revue, lot metadonnees 2026-11-26.
+ */
 function toExam(row: CatalogRow, file: ExamFile | undefined): Exam {
   return {
     id: row.id,
-    title: row.title,
+    title: examTitle({
+      subject: row.subject_name,
+      examType: row.exam_type,
+      session: row.session,
+    }),
     slug: row.slug,
     academicYear: row.academic_year,
     session: row.session,
     examType: row.exam_type,
     field: row.field_name,
+    fieldShortName: row.field_short_name,
     fieldId: row.field_id,
     level: row.level_name,
     levelId: row.level_id,
@@ -190,7 +203,17 @@ export async function searchExamTitles(
   const { rows, total } = await queryCatalog(createPublicClient(), rawFilters);
   return {
     total,
-    exams: rows.map((row) => ({ title: row.title, slug: row.slug })),
+    // `row.title` est la colonne stockee a l'ajout : `examTitle()` reste la seule source de
+    // verite pour l'affichage (meme principe que `toExam`), sinon une vieille epreuve ressortait
+    // ici au format de titre perime (revue Opus du lot).
+    exams: rows.map((row) => ({
+      title: examTitle({
+        subject: row.subject_name,
+        examType: row.exam_type,
+        session: row.session,
+      }),
+      slug: row.slug,
+    })),
   };
 }
 
@@ -207,6 +230,9 @@ const getAcademicYearsCached = unstable_cache(
       let query = supabase
         .from("exams")
         .select("academic_year")
+        // Une annee inconnue (#196) ne doit jamais entrer dans ce filtre : exclue avant le tri,
+        // sinon elle remonterait en tete d'un ORDER BY DESC (NULLS FIRST par defaut en Postgres).
+        .not("academic_year", "is", null)
         .order("academic_year", { ascending: false })
         .limit(1);
       if (fieldId) query = query.eq("field_id", fieldId);
@@ -262,7 +288,7 @@ type FieldLevelCouple = Omit<FieldLevelSummary, "examCount">;
 type SubjectCoupleRow = {
   field_id: string;
   level_id: string;
-  fields: { name: string };
+  fields: { name: string; short_name: string | null };
   levels: { name: string };
 };
 
@@ -272,7 +298,9 @@ async function getFieldLevelCouples(
 ): Promise<FieldLevelCouple[]> {
   const { data, error } = await supabase
     .from("subjects")
-    .select("field_id, level_id, fields!inner(name), levels!inner(name)")
+    .select(
+      "field_id, level_id, fields!inner(name, short_name), levels!inner(name)",
+    )
     .eq("is_active", true)
     .eq("fields.is_active", true)
     .eq("levels.is_active", true);
@@ -286,6 +314,7 @@ async function getFieldLevelCouples(
     couples.set(key, {
       fieldId: row.field_id,
       fieldName: row.fields.name,
+      fieldShortName: row.fields.short_name,
       levelId: row.level_id,
       levelName: row.levels.name,
     });
@@ -338,6 +367,9 @@ const getFieldLevelYearsCached = unstable_cache(
         .select("academic_year")
         .eq("field_id", fieldId)
         .eq("level_id", levelId)
+        // Voir getAcademicYearsCached : une annee inconnue (#196) fausserait sinon la borne
+        // triee en ASC (NULLS FIRST par defaut).
+        .not("academic_year", "is", null)
         .order("academic_year", { ascending })
         .limit(1)
         .maybeSingle();

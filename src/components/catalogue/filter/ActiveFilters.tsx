@@ -1,6 +1,7 @@
 import { FiX } from "@/components/icons";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 import type { CatalogueFilters } from "@/components/exams/useCatalogueFilters";
+import { optionDisplayName } from "@/components/fields/fieldLabel";
 
 interface ActiveFiltersProps {
   options: CatalogueFilterOptions;
@@ -15,6 +16,7 @@ function activeChips(
   const fieldId = filters.get("fieldId");
   const levelId = filters.get("levelId");
   const subjectId = filters.get("subjectId");
+  const optionId = filters.get("optionId");
   const session = filters.get("session");
   const examType = filters.get("examType");
   const academicYear = filters.get("academicYear");
@@ -48,7 +50,18 @@ function activeChips(
         onRemove: () => filters.set("subjectId", null),
       });
   }
-  if (session)
+  if (optionId) {
+    const option = options.options.find((item) => item.id === optionId);
+    if (option)
+      chips.push({
+        key: "optionId",
+        label: optionDisplayName(option.name),
+        onRemove: () => filters.set("optionId", null),
+      });
+  }
+  // Un Controle Continu n'a jamais de session (#196/#203) : la puce n'a pas lieu d'etre, meme sur
+  // une URL partagee qui porterait encore les deux parametres.
+  if (session && examType !== "Contrôle Continu")
     chips.push({
       key: "session",
       label: session,

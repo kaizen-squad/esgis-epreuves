@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   examFiltersSchema,
+  examMetadataSchema,
   examUploadSchema,
   fixedFieldFilters,
   searchTokens,
@@ -174,6 +175,71 @@ describe("examUploadSchema", () => {
     const result = examUploadSchema.safeParse(
       validInput({ academicYear: "2024" }),
     );
+    expect(result.success).toBe(false);
+  });
+
+  it("accepte l'absence d'annee academique et de session (#196, vieille epreuve)", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({ academicYear: undefined, session: undefined }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("traite null comme absent pour les champs facultatifs (formData.get() d'un champ non envoye)", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({
+        academicYear: null,
+        session: null,
+        fieldId: null,
+        levelId: null,
+      }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("traite une chaine vide comme absente pour les champs facultatifs (Controle Continu, session jamais envoyee)", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({ examType: "Contrôle Continu", session: "" }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("accepte une annee academique vide (champ vide, pas absent)", () => {
+    const result = examUploadSchema.safeParse(validInput({ academicYear: "" }));
+    expect(result.success).toBe(true);
+  });
+
+  it("rejette une session renseignee pour un Controle Continu (#196)", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({ examType: "Contrôle Continu", session: "Session Normale" }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  it("accepte un Controle Continu sans session (#196)", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({ examType: "Contrôle Continu", session: undefined }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("accepte un Controle Terminal avec session, refuse d'exiger l'examType seul a dicter la regle", () => {
+    const result = examUploadSchema.safeParse(
+      validInput({ examType: "Contrôle Terminal", session: "Rattrapage" }),
+    );
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("examMetadataSchema", () => {
+  it("applique la meme regle Controle Continu/session que examUploadSchema, sans le fichier", () => {
+    const UUID = "11111111-1111-4111-a111-111111111111";
+    const result = examMetadataSchema.safeParse({
+      title: "Algorithmique S1",
+      examType: "Contrôle Continu",
+      session: "Session Normale",
+      subjectId: UUID,
+    });
     expect(result.success).toBe(false);
   });
 });

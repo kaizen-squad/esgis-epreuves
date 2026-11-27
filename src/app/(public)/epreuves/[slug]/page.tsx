@@ -23,7 +23,12 @@ export async function generateMetadata({
   const exam = await getExamCached((await params).slug);
   if (!exam) return { title: "Épreuve introuvable · Alexandria" };
 
-  const description = `${exam.subject} · ${exam.level} ${exam.field} · ${exam.examType}, ${exam.session} ${exam.academicYear}.`;
+  // Annee academique et session peuvent etre inconnues sur une vieille epreuve (#196) : omises
+  // plutot qu'affichees telles quelles ("undefined"/"null") dans ces metadonnees publiques.
+  const typeAndSession = [exam.examType, exam.session]
+    .filter(Boolean)
+    .join(", ");
+  const description = `${exam.subject} · ${exam.level} ${exam.field} · ${typeAndSession}${exam.academicYear ? ` ${exam.academicYear}` : ""}.`;
   return {
     title: `${exam.title} · Alexandria`,
     description,

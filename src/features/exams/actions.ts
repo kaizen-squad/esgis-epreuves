@@ -15,6 +15,7 @@ import {
   actionOkWithWarning,
   type ActionResult,
 } from "@/lib/action-result";
+import { examTitle } from "@/components/exams/examCote";
 import { checkExamDuplicate } from "./duplicate";
 import { searchExamTitles } from "./queries";
 import type { Exam } from "./types";
@@ -29,6 +30,24 @@ import {
 
 const PDF_MAGIC_BYTES = "%PDF-";
 const EXAM_ID_SCHEMA = z.uuid();
+
+/**
+ * Nom de la matiere choisie, pour composer le titre genere (#198, `examTitle`) : jamais confie au
+ * client, comme field_id/level_id/option_id (#197). `null` si la matiere n'existe pas (ne devrait
+ * jamais arriver, la FK de `exams.subject_id` l'empecherait de toute facon a l'insertion).
+ */
+async function getSubjectName(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  subjectId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("subjects")
+    .select("name")
+    .eq("id", subjectId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.name ?? null;
+}
 
 /**
  * Depot d'une epreuve par le BDE (#18). Validation (type MIME declare, taille, referentiels)
@@ -85,8 +104,8 @@ export async function uploadExam(
   try {
     duplicate = await checkExamDuplicate(fileHash, {
       subjectId: exam.subjectId,
-      academicYear: exam.academicYear,
-      session: exam.session,
+      academicYear: exam.academicYear ?? null,
+      session: exam.session ?? null,
       examType: exam.examType,
     });
   } catch (error) {
@@ -101,21 +120,27 @@ export async function uploadExam(
     });
   }
 
-  const slug = slugify(exam.title);
+  const subjectName = await getSubjectName(supabase, exam.subjectId);
+  if (!subjectName) {
+    return actionError("Matiere introuvable.");
+  }
+  const title = examTitle({
+    subject: subjectName,
+    examType: exam.examType,
+    session: exam.session ?? null,
+  });
+  const slug = slugify(title);
   const r2Key = `exams/${fileHash}.pdf`;
 
   const { data: inserted, error: insertError } = await supabase
     .from("exams")
     .insert({
-      title: exam.title,
+      title,
       slug,
       academic_year: exam.academicYear,
       session: exam.session,
       exam_type: exam.examType,
-      field_id: exam.fieldId,
-      level_id: exam.levelId,
       subject_id: exam.subjectId,
-      option_id: exam.optionId ?? null,
       file_hash: fileHash,
       file_mime_type: file.type,
       file_size: file.size,
@@ -167,7 +192,7 @@ export async function uploadExam(
 export async function updateExamMetadata(
   examId: string,
   formData: FormData,
-): Promise<ActionResult<{ slug: string }>> {
+): Promise<ActionResult<{ slug: string; title: string }>> {
   if (!EXAM_ID_SCHEMA.safeParse(examId).success) {
     return actionError("Epreuve introuvable.");
   }
@@ -211,8 +236,8 @@ export async function updateExamMetadata(
       current.file_hash,
       {
         subjectId: exam.subjectId,
-        academicYear: exam.academicYear,
-        session: exam.session,
+        academicYear: exam.academicYear ?? null,
+        session: exam.session ?? null,
         examType: exam.examType,
       },
       examId,
@@ -229,17 +254,26 @@ export async function updateExamMetadata(
     });
   }
 
+  const subjectName = await getSubjectName(supabase, exam.subjectId);
+  if (!subjectName) {
+    return actionError("Matiere introuvable.");
+  }
+  const title = examTitle({
+    subject: subjectName,
+    examType: exam.examType,
+    session: exam.session ?? null,
+  });
+
   const { data: updated, error: updateError } = await supabase
     .from("exams")
     .update({
-      title: exam.title,
-      academic_year: exam.academicYear,
-      session: exam.session,
+      title,
+      // `?? null` explicite : un champ vide doit effacer l'ancienne valeur en base (#196), pas
+      // rester inchange comme le ferait un `undefined` (silencieusement retire du corps JSON).
+      academic_year: exam.academicYear ?? null,
+      session: exam.session ?? null,
       exam_type: exam.examType,
-      field_id: exam.fieldId,
-      level_id: exam.levelId,
       subject_id: exam.subjectId,
-      option_id: exam.optionId ?? null,
     })
     .eq("id", examId)
     .select("id");
@@ -260,7 +294,7 @@ export async function updateExamMetadata(
 
   if (duplicate.kind === "quadruplet") {
     return actionOkWithWarning(
-      { slug: current.slug },
+      { slug: current.slug, title },
       {
         examId: duplicate.exam.id,
         slug: duplicate.exam.slug,
@@ -269,7 +303,7 @@ export async function updateExamMetadata(
     );
   }
 
-  return actionOk({ slug: current.slug });
+  return actionOk({ slug: current.slug, title });
 }
 
 /**
@@ -471,14 +505,12 @@ export async function deleteExam(examId: string): Promise<ActionResult<null>> {
 }
 
 const BATCH_FIELD_NAMES = [
-  "title",
   "academicYear",
   "session",
   "examType",
   "fieldId",
   "levelId",
   "subjectId",
-  "optionId",
 ] as const;
 
 export type ExamBatchEntryResult =
@@ -533,12 +565,13 @@ function summarizeBatch(entries: ExamBatchEntryResult[]): ExamBatchSummary {
  * ni de file d'attente (exclu explicitement par le ticket), un resultat par fichier.
  *
  * `FormData` attendu : un champ repete `files` (un par fichier, dans l'ordre de depot) et un champ
- * repete par metadonnee (`title`, `academicYear`, `session`, `examType`, `fieldId`, `levelId`,
- * `subjectId`, `optionId`), chacun avec exactement autant de valeurs que `files`, dans le meme
- * ordre (le fichier et sa metadonnee partagent le meme index). `optionId` attend une chaine vide
- * (jamais une valeur absente) pour un fichier sans option, afin que l'alignement par index reste
- * valable pour tous les fichiers du lot. Limite a `MAX_BATCH_FILES` fichiers (voir sa definition
- * dans `schemas.ts`, liee au corps maximal d'une requete sur la plateforme d'hebergement).
+ * repete par metadonnee (`academicYear`, `session`, `examType`, `fieldId`, `levelId`,
+ * `subjectId`), chacun avec exactement autant de valeurs que `files`, dans le meme ordre (le
+ * fichier et sa metadonnee partagent le meme index). `title`/`optionId` ne sont plus envoyes par le
+ * front (#202, titre genere et option deduite cote serveur) ; `examUploadSchema` les accepte en
+ * leur absence (facultatifs depuis #197/#198). Limite a `MAX_BATCH_FILES` fichiers (voir sa
+ * definition dans `schemas.ts`, liee au corps maximal d'une requete sur la plateforme
+ * d'hebergement).
  *
  * Reutilise `checkExamDuplicate` (#19) telle quelle, fichier par fichier : meme logique
  * bloquante (hash) / avertissement non bloquant (quadruplet) que `uploadExam`, avec la meme forme
@@ -613,14 +646,12 @@ export async function uploadExamsBatch(
     const label = file.name || `fichier ${i + 1}`;
 
     const parsed = examUploadSchema.safeParse({
-      title: fields.title[i],
       academicYear: fields.academicYear[i],
       session: fields.session[i],
       examType: fields.examType[i],
       fieldId: fields.fieldId[i],
       levelId: fields.levelId[i],
       subjectId: fields.subjectId[i],
-      optionId: fields.optionId[i] || undefined,
       file,
     });
     if (!parsed.success) {
@@ -660,8 +691,8 @@ export async function uploadExamsBatch(
     try {
       duplicate = await checkExamDuplicate(fileHash, {
         subjectId: exam.subjectId,
-        academicYear: exam.academicYear,
-        session: exam.session,
+        academicYear: exam.academicYear ?? null,
+        session: exam.session ?? null,
         examType: exam.examType,
       });
     } catch (error) {
@@ -698,21 +729,32 @@ export async function uploadExamsBatch(
 
     seenHashes.set(fileHash, i);
 
-    const slug = slugify(exam.title);
+    const subjectName = await getSubjectName(supabase, exam.subjectId);
+    if (!subjectName) {
+      entries.push({
+        file: label,
+        status: "error",
+        message: "Matiere introuvable.",
+      });
+      continue;
+    }
+    const title = examTitle({
+      subject: subjectName,
+      examType: exam.examType,
+      session: exam.session ?? null,
+    });
+    const slug = slugify(title);
     const r2Key = `exams/${fileHash}.pdf`;
 
     const { data: inserted, error: insertError } = await supabase
       .from("exams")
       .insert({
-        title: exam.title,
+        title,
         slug,
         academic_year: exam.academicYear,
         session: exam.session,
         exam_type: exam.examType,
-        field_id: exam.fieldId,
-        level_id: exam.levelId,
         subject_id: exam.subjectId,
-        option_id: exam.optionId ?? null,
         file_hash: fileHash,
         file_mime_type: exam.file.type,
         file_size: exam.file.size,
@@ -772,7 +814,7 @@ export async function uploadExamsBatch(
     insertedByQuadruplet.set(quadrupletKey, {
       examId: inserted.id,
       slug,
-      title: exam.title,
+      title,
     });
     entries.push({ file: label, status: "imported", slug, warning });
   }

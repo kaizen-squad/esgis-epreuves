@@ -1,2 +1,4 @@
-﻿fichier;titre;filiere;niveau;matiere;option;annee_academique;type_epreuve;session
-epreuves/irt-l1-algorithmique-2025.pdf;Algorithmique;Informatique, Réseaux et Télécommunications;L1;Algorithmique;;2024-2025;Contrôle Terminal;Session Normale
+﻿fichier;filiere;niveau;matiere;option;annee_academique;type_epreuve;session
+epreuves/irt-l1-algorithmique-2025.pdf;Informatique, Réseaux et Télécommunications;L1;Algorithmique de base;;2024-2025;Contrôle Terminal;Session Normale
+epreuves/irt-l2-si-docker-2025.pdf;Informatique, Réseaux et Télécommunications;L2;Introduction à Docker;Sécurité Informatique (SI);2023-2024;Contrôle Continu;
+epreuves/irt-l3-al-memoire-ancienne.pdf;Informatique, Réseaux et Télécommunications;L3;Rédaction et Soutenance de Mémoire;Architecture Logicielle (AL);;Contrôle Terminal;

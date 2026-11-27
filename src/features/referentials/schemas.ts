@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const fieldSchema = z.object({
   name: z.string().trim().min(1, "Le nom est requis."),
+  /** Sigle d'affichage (#198, ex. "IRT"), modifiable depuis l'Admin. Cellule vide -> `null`. */
+  shortName: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value ? value : null)),
 });
 
 export const levelSchema = z.object({
@@ -12,6 +18,11 @@ export const subjectSchema = z.object({
   fieldId: z.uuid("Filière invalide."),
   levelId: z.uuid("Niveau invalide."),
   name: z.string().trim().min(1, "Le nom est requis."),
+  /** Option a laquelle rattacher la matiere (#197), `null` pour le tronc commun. */
+  optionId: z.preprocess(
+    (value) => (value ? value : null),
+    z.uuid("Option invalide.").nullable(),
+  ),
 });
 
 export const optionSchema = z.object({

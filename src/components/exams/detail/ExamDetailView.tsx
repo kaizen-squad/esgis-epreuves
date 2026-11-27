@@ -70,8 +70,14 @@ export default async function ExamDetailView({
     { label: "Niveau", value: exam.level },
     ...(exam.option ? [{ label: "Option", value: exam.option }] : []),
     { label: "Matière", value: exam.subject },
-    { label: "Année académique", value: exam.academicYear },
-    { label: "Session", value: exam.session },
+    { label: "Année académique", value: exam.academicYear ?? "Inconnue" },
+    // Un Controle Continu n'a jamais de session (#196) : la ligne n'a pas lieu d'etre, plutot
+    // qu'afficher "Inconnue" pour un champ qui ne s'applique structurellement pas.
+    ...(exam.session
+      ? [{ label: "Session", value: exam.session }]
+      : exam.examType === "Contrôle Continu"
+        ? []
+        : [{ label: "Session", value: "Inconnue" }]),
     { label: "Type", value: exam.examType },
     {
       label: "Format",
@@ -100,15 +106,18 @@ export default async function ExamDetailView({
           <span className="text-background-accent rounded-full border border-current px-2.5 py-0.5">
             {exam.examType}
           </span>
-          <span className="bg-background-primary text-text-paragraph rounded-full border border-gray-200 px-2.5 py-0.5">
-            {exam.session}
-          </span>
+          {exam.session ? (
+            <span className="bg-background-primary text-text-paragraph rounded-full border border-gray-200 px-2.5 py-0.5">
+              {exam.session}
+            </span>
+          ) : null}
         </div>
         <h1 className="text-text-secondary mb-2 text-3xl leading-tight font-semibold md:text-4xl">
           {exam.title}
         </h1>
         <Cote
           field={exam.field}
+          fieldShortName={exam.fieldShortName}
           fieldId={exam.fieldId}
           level={exam.level}
           levelId={exam.levelId}

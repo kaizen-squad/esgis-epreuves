@@ -12,16 +12,20 @@ export interface ExamCardProps {
   /** Haut de la premiere page du fichier (`/api/exams/[slug]/preview`). */
   preview_src: string;
   name: string;
-  year: number;
+  /** Inconnue sur une vieille epreuve deposee sans annee academique (#196). */
+  year: number | null;
   matter: string;
   subjectId: string;
   class: string;
   levelId: string;
-  /** Absente des niveaux de tronc commun (L1/L2). */
+  /** Absente d'une matiere de tronc commun (L1, ou une matiere de L2 anterieure a l'option, #195). */
   option: string | null;
   field: string;
+  /** Sigle d'affichage de la filiere (#198), prefere au nom complet quand renseigne. */
+  fieldShortName: string | null;
   fieldId: string;
-  academicYear: string;
+  /** Inconnue sur une vieille epreuve deposee sans cette information (#196). */
+  academicYear: string | null;
   type: string;
   slug?: string;
   /** Taille reelle du fichier, en octets. */
@@ -57,9 +61,20 @@ const ExamCard = (data: ExamCardProps) => {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3 md:gap-3 md:p-4">
-        <div className="flex items-center justify-between gap-2">
+        {/* md:min-h-[4lh] (meme principe que le titre juste en dessous) : une epreuve a peu de
+            metadonnees (ex. pas d'option, annee inconnue) a une cote plus courte qui tiendrait sur
+            une seule ligne, quand une cote complete (5 segments, matiere longue) peut en occuper
+            jusqu'a 4 sur une carte etroite du catalogue (grille md:) ; sans cette reserve au pire
+            des cas, son titre remontait d'autant par rapport aux cartes voisines plus renseignees
+            (retour utilisateur). `text-xs` : meme taille que la Cote, dont le line-height sert de
+            base au calcul ; sans elle la div heritait du line-height du preflight Tailwind (~24px
+            au lieu des 16px du texte reel), doublant la reserve pour rien (revue Opus du lot).
+            Limite a `md:` : en colonne mobile ou sur les grilles BDE qui reutilisent cette carte
+            (RecentlyAdded, MyRecentUploads), rien ne justifie cette reserve. */}
+        <div className="flex items-start justify-between gap-2 md:min-h-[4lh] md:text-xs">
           <Cote
             field={data.field}
+            fieldShortName={data.fieldShortName}
             fieldId={data.fieldId}
             level={data.class}
             levelId={data.levelId}

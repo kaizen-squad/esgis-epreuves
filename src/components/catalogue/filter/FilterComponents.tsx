@@ -2,6 +2,7 @@ import { useId } from "react";
 import { FiX } from "react-icons/fi";
 import type { CatalogueFilterOptions } from "@/components/exams/catalogueFilters";
 import type { CatalogueFilters } from "@/components/exams/useCatalogueFilters";
+import { optionDisplayName } from "@/components/fields/fieldLabel";
 import FiliereCard from "@/components/catalogue/filter/filiere/FiliereCard";
 import HideFilterComponent from "@/components/catalogue/filter/HideFilterComponent";
 import MatiereFilterWrapper from "@/components/catalogue/filter/matiere/MatiereFilterWrapper";
@@ -27,11 +28,33 @@ const FilterComponents = ({
   const groupId = useId();
   const fieldId = filters.get("fieldId");
   const levelId = filters.get("levelId");
-  // Matieres restreintes a la filiere et au niveau choisis, s'il y en a.
+  const optionId = filters.get("optionId");
+  const isContinuousControl = filters.get("examType") === "Contrôle Continu";
+  // Options reellement presentes pour la combinaison filiere + niveau choisie (deduites des
+  // matieres) : une filiere a des options mais ses niveaux de tronc commun (ex. L1 IRT) n'en ont
+  // aucune, le filtre ne doit alors pas s'afficher pour rien (retour utilisateur, #201).
+  const optionIdsInScope = new Set(
+    options.subjects
+      .filter(
+        (subject) =>
+          (!fieldId || subject.fieldId === fieldId) &&
+          (!levelId || subject.levelId === levelId),
+      )
+      .map((subject) => subject.optionId)
+      .filter((id): id is string => id !== null),
+  );
+  const availableOptions = options.options.filter(
+    (option) =>
+      (!fieldId || option.fieldId === fieldId) &&
+      optionIdsInScope.has(option.id),
+  );
+  // Matieres restreintes a la filiere, au niveau et a l'option choisis, s'il y en a. Une option
+  // active n'affiche jamais les matieres du tronc commun (decision du 2026-11-26, #201).
   const subjects = options.subjects.filter(
     (subject) =>
       (!fieldId || subject.fieldId === fieldId) &&
-      (!levelId || subject.levelId === levelId),
+      (!levelId || subject.levelId === levelId) &&
+      (!optionId || subject.optionId === optionId),
   );
 
   return (
@@ -90,6 +113,20 @@ const FilterComponents = ({
               </div>
             </HideFilterComponent>
           )}
+          {availableOptions.length > 0 && (
+            <HideFilterComponent label="Option">
+              <div className="flex flex-wrap gap-2">
+                {availableOptions.map((option) => (
+                  <NiveauCard
+                    key={option.id}
+                    label={optionDisplayName(option.name)}
+                    active={optionId === option.id}
+                    onClick={() => filters.toggle("optionId", option.id)}
+                  />
+                ))}
+              </div>
+            </HideFilterComponent>
+          )}
           <HideFilterComponent label="Matière">
             <MatiereFilterWrapper
               name={`matiere-${groupId}`}
@@ -116,12 +153,14 @@ const FilterComponents = ({
               onChange={(value) => filters.set("examType", value)}
             />
           </HideFilterComponent>
-          <HideFilterComponent label="Session">
-            <SessionFilterWrapper
-              current={filters.get("session")}
-              onChange={(value) => filters.set("session", value)}
-            />
-          </HideFilterComponent>
+          {isContinuousControl ? null : (
+            <HideFilterComponent label="Session">
+              <SessionFilterWrapper
+                current={filters.get("session")}
+                onChange={(value) => filters.set("session", value)}
+              />
+            </HideFilterComponent>
+          )}
         </div>
       </div>
     </>

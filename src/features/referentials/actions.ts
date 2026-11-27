@@ -37,6 +37,9 @@ async function insertReferential(
   table: string,
   duplicateMessage: string,
   values: Record<string, unknown>,
+  /** Message pour une violation de cle etrangere (23503), ex. une option d'une autre filiere
+   * (contrainte composite `subjects_option_id_field_id_fkey`, #197). */
+  foreignKeyMessage = "Rattachement invalide.",
 ): Promise<ActionResult<{ id: string }>> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -46,6 +49,7 @@ async function insertReferential(
     .single();
   if (error) {
     if (error.code === "23505") return actionError(duplicateMessage);
+    if (error.code === "23503") return actionError(foreignKeyMessage);
     console.error(`${label}: insertion`, error);
     return actionError(
       `Impossible d'enregistrer ${itemLabel}. Réessayez dans un instant.`,
@@ -130,7 +134,10 @@ async function setReferentialActive(
 export async function createField(
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
-  const parsed = fieldSchema.safeParse({ name: formData.get("name") });
+  const parsed = fieldSchema.safeParse({
+    name: formData.get("name"),
+    shortName: formData.get("shortName") || undefined,
+  });
   if (!parsed.success) {
     return actionError(
       "Données invalides.",
@@ -142,7 +149,7 @@ export async function createField(
     "cette filière",
     "fields",
     "Cette filière existe déjà.",
-    parsed.data,
+    { name: parsed.data.name, short_name: parsed.data.shortName },
   );
 }
 
@@ -150,20 +157,28 @@ export async function updateField(
   id: string,
   formData: FormData,
 ): Promise<ActionResult<null>> {
-  const parsed = fieldSchema.safeParse({ name: formData.get("name") });
+  const parsed = fieldSchema.safeParse({
+    name: formData.get("name"),
+    shortName: formData.get("shortName") || undefined,
+  });
   if (!parsed.success) {
     return actionError(
       "Données invalides.",
       z.flattenError(parsed.error).fieldErrors,
     );
   }
+  // `short_name` (#198) n'est ecrit que si le formulaire l'a reellement envoye : l'ecran Admin
+  // actuel (#200, pas encore livre) n'a qu'un champ "name", et un renommage de filiere ne doit
+  // jamais effacer silencieusement son sigle faute d'un champ absent du formulaire.
+  const values: Record<string, unknown> = { name: parsed.data.name };
+  if (formData.has("shortName")) values.short_name = parsed.data.shortName;
   return updateReferential(
     "updateField",
     "cette filière",
     "fields",
     id,
     "Cette filière existe déjà.",
-    parsed.data,
+    values,
   );
 }
 
@@ -240,6 +255,7 @@ export async function createSubject(
     fieldId: formData.get("fieldId"),
     levelId: formData.get("levelId"),
     name: formData.get("name"),
+    optionId: formData.get("optionId"),
   });
   if (!parsed.success) {
     return actionError(
@@ -247,13 +263,14 @@ export async function createSubject(
       z.flattenError(parsed.error).fieldErrors,
     );
   }
-  const { fieldId, levelId, name } = parsed.data;
+  const { fieldId, levelId, name, optionId } = parsed.data;
   return insertReferential(
     "createSubject",
     "cette matière",
     "subjects",
-    "Cette matière existe déjà pour cette filière et ce niveau.",
-    { field_id: fieldId, level_id: levelId, name },
+    "Cette matière existe déjà pour cette filière, ce niveau et cette option.",
+    { field_id: fieldId, level_id: levelId, name, option_id: optionId },
+    "Cette option n'appartient pas à la filière choisie.",
   );
 }
 
@@ -275,7 +292,7 @@ export async function updateSubject(
     "cette matière",
     "subjects",
     id,
-    "Cette matière existe déjà pour cette filière et ce niveau.",
+    "Cette matière existe déjà pour cette filière, ce niveau et cette option.",
     parsed.data,
   );
 }

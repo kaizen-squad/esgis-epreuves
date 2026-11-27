@@ -5,9 +5,11 @@ import { filieresHref, type SpaceBasePath } from "@/components/layout/spaces";
 /** Fil d'Ariane de la page d'une filiere (R-14), dans l'esprit d'une cote d'archive. */
 export default function FieldBreadcrumb({
   fieldName,
+  fieldShortName = null,
   basePath,
 }: {
   fieldName: string;
+  fieldShortName?: string | null;
   basePath: SpaceBasePath;
 }) {
   return (
@@ -23,7 +25,7 @@ export default function FieldBreadcrumb({
       <li className="flex items-center gap-1">
         <span aria-hidden="true">:</span>
         <span className="text-text-default font-medium">
-          {fieldDisplayName(fieldName)}
+          {fieldDisplayName(fieldName, fieldShortName)}
         </span>
       </li>
     </ol>

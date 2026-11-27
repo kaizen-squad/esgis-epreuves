@@ -5,8 +5,10 @@ import {
 
 export type CoteFields = {
   field?: string | null;
+  /** Sigle d'affichage de la filiere (#198), prefere au nom complet quand renseigne. */
+  fieldShortName?: string | null;
   level?: string | null;
-  /** Absente des niveaux de tronc commun (L1/L2) : simplement omise de la cote. */
+  /** Absente d'une matiere de tronc commun (L1, ou une matiere de L2 anterieure a l'option, #195) : simplement omise de la cote. */
   option?: string | null;
   subject?: string | null;
   academicYear?: string | null;
@@ -36,7 +38,11 @@ export function coteSubject(subject: string): string {
 export function coteSegments(exam: CoteFields): CoteSegment[] {
   const segments: (CoteSegment | null)[] = [
     exam.field
-      ? { key: "field", label: "Filière", name: fieldDisplayName(exam.field) }
+      ? {
+          key: "field",
+          label: "Filière",
+          name: fieldDisplayName(exam.field, exam.fieldShortName),
+        }
       : null,
     exam.level ? { key: "level", label: "Niveau", name: exam.level } : null,
     exam.option
@@ -76,4 +82,44 @@ export function examCote(exam: CoteFields): string {
   return coteSegments(exam)
     .map((segment) => segment.name)
     .join(" : ");
+}
+
+export type ExamTitleFields = {
+  subject: string;
+  examType: string;
+  /** Absente pour un Controle Continu (#196) ou inconnue sur une vieille epreuve. */
+  session?: string | null;
+};
+
+/** Libelle du type d'epreuve dans le titre genere, phrase normale plutot qu'en capitales. */
+const EXAM_TYPE_TITLE_LABELS: Record<string, string> = {
+  "Contrôle Terminal": "Contrôle terminal",
+  "Contrôle Continu": "Contrôle continu",
+};
+
+const EXAM_SESSION_TITLE_LABELS: Record<string, string> = {
+  "Session Normale": "session normale",
+  Rattrapage: "rattrapage",
+};
+
+/**
+ * Titre d'une epreuve genere depuis ses metadonnees (#198), jamais saisi : "Matière : Type[,
+ * session]" (ex. "Langage C avancé : Contrôle terminal, session normale"), sans repeter la cote
+ * deja affichee juste en dessous sur la fiche et l'image de partage. La session n'apparait que
+ * quand elle est connue (absente pour un Controle Continu, #196, ou une vieille epreuve). Un
+ * rattrapage l'emporte sur le type ("Matière : Rattrapage" plutôt que "Matière : Contrôle
+ * terminal, rattrapage") : c'est l'information la plus saillante pour un rattrapage (toujours un
+ * Contrôle Terminal par construction, le dire est redondant), retour utilisateur.
+ */
+export function examTitle(exam: ExamTitleFields): string {
+  if (exam.session === "Rattrapage") return `${exam.subject} : Rattrapage`;
+
+  const typeLabel = EXAM_TYPE_TITLE_LABELS[exam.examType] ?? exam.examType;
+  const sessionLabel = exam.session
+    ? (EXAM_SESSION_TITLE_LABELS[exam.session] ?? exam.session)
+    : null;
+
+  return sessionLabel
+    ? `${exam.subject} : ${typeLabel}, ${sessionLabel}`
+    : `${exam.subject} : ${typeLabel}`;
 }

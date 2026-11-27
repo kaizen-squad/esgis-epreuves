@@ -7,6 +7,7 @@ type QueryResult = { data: unknown; error: unknown };
 function makeQueryBuilder(result: QueryResult) {
   const builder = {
     eq: vi.fn(() => builder),
+    is: vi.fn(() => builder),
     neq: vi.fn(() => builder),
     limit: vi.fn(() => builder),
     maybeSingle: vi.fn(() => Promise.resolve(result)),
@@ -109,6 +110,42 @@ describe("checkExamDuplicate", () => {
       4,
       "exam_type",
       QUADRUPLET.examType,
+    );
+  });
+
+  it("compare avec .is() plutot que .eq() une annee academique inconnue (#196)", async () => {
+    const hashBuilder = makeQueryBuilder(hashResult);
+    const quadrupletBuilder = makeQueryBuilder(quadrupletResult);
+    select
+      .mockImplementationOnce(() => hashBuilder)
+      .mockImplementationOnce(() => quadrupletBuilder);
+
+    await checkExamDuplicate(FILE_HASH, { ...QUADRUPLET, academicYear: null });
+
+    expect(quadrupletBuilder.is).toHaveBeenCalledWith("academic_year", null);
+    expect(quadrupletBuilder.eq).not.toHaveBeenCalledWith(
+      "academic_year",
+      expect.anything(),
+    );
+  });
+
+  it("compare avec .is() plutot que .eq() une session absente (#196, Controle Continu)", async () => {
+    const hashBuilder = makeQueryBuilder(hashResult);
+    const quadrupletBuilder = makeQueryBuilder(quadrupletResult);
+    select
+      .mockImplementationOnce(() => hashBuilder)
+      .mockImplementationOnce(() => quadrupletBuilder);
+
+    await checkExamDuplicate(FILE_HASH, {
+      ...QUADRUPLET,
+      session: null,
+      examType: "Contrôle Continu",
+    });
+
+    expect(quadrupletBuilder.is).toHaveBeenCalledWith("session", null);
+    expect(quadrupletBuilder.eq).not.toHaveBeenCalledWith(
+      "session",
+      expect.anything(),
     );
   });
 

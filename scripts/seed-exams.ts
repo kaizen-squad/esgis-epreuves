@@ -5,7 +5,8 @@ import process from "node:process";
 import { parseArgs } from "node:util";
 import { createClient } from "@/lib/supabase/script";
 import { putExamFile } from "@/lib/r2/upload";
-import { runSeed } from "@/features/exams/seed";
+import { examFileExists } from "@/lib/r2/exists";
+import { checkSeed, runSeed } from "@/features/exams/seed";
 
 // Script Node autonome, hors du chargement automatique de .env.local par Next.js (dev/build/start) :
 // a charger ici a la main, sans ajouter de dependance (dotenv) pour ce que le stdlib fait deja.
@@ -17,11 +18,15 @@ try {
 
 /**
  * CLI du script de seed en masse (#21). `pnpm seed:exams --csv <chemin> [--dir <dossier>] [--dry-run]`.
+ * Mode audit (#199) : `pnpm seed:exams --csv <chemin> --check [--check-r2]`, avant le lancement
+ * reel de la collecte (#23) : signale les lignes deja en base mal classees par rapport au CSV, les
+ * lignes absentes, et (avec `--check-r2`) les epreuves en base dont l'objet R2 est introuvable.
+ * Mode lecture seule : aucune credential R2/BDE requise, comme `--dry-run`.
  *
  * `--dir` fixe le dossier de base pour resoudre la colonne `fichier` du CSV (defaut : dossier du
  * CSV lui-meme, coherent avec le gabarit ou les chemins sont donnes relativement a l'echantillon).
  *
- * L'ecriture (hors `--dry-run`) exige un compte BDE (`SEED_BDE_EMAIL`/`SEED_BDE_PASSWORD`,
+ * L'ecriture (hors `--dry-run`/`--check`) exige un compte BDE (`SEED_BDE_EMAIL`/`SEED_BDE_PASSWORD`,
  * variables d'environnement jamais en argument CLI, pour ne pas finir dans l'historique du
  * shell) : seule l'INSERT sur `exams` est protegee par la RLS (`exams_write_bde`), les lectures
  * (referentiels, detection de doublon) sont publiques. Un `--dry-run` n'a donc besoin d'aucune
@@ -33,23 +38,81 @@ async function main() {
       csv: { type: "string" },
       dir: { type: "string" },
       "dry-run": { type: "boolean", default: false },
+      check: { type: "boolean", default: false },
+      "check-r2": { type: "boolean", default: false },
     },
   });
 
   if (!values.csv) {
     console.error(
-      "Usage : pnpm seed:exams --csv <chemin-vers-metadonnees.csv> [--dir <dossier>] [--dry-run]",
+      "Usage : pnpm seed:exams --csv <chemin-vers-metadonnees.csv> [--dir <dossier>] [--dry-run | --check [--check-r2]]",
     );
     process.exitCode = 1;
     return;
   }
 
   const dryRun = values["dry-run"] === true;
+  const check = values.check === true;
   const csvPath = path.resolve(values.csv);
   const baseDir = values.dir ? path.resolve(values.dir) : path.dirname(csvPath);
   const csvContent = await readFile(csvPath, "utf-8");
 
   const supabase = createClient();
+
+  if (check) {
+    const report = await checkSeed(
+      csvContent,
+      { baseDir, checkR2Objects: values["check-r2"] === true },
+      { supabase, readFile: (filePath) => readFile(filePath), examFileExists },
+    );
+
+    for (const entry of report.entries) {
+      switch (entry.status) {
+        case "conforme":
+          console.log(`[conforme] ${entry.file} -> ${entry.slug}`);
+          break;
+        case "mal_classee":
+          console.log(`[mal classee] ${entry.file} -> ${entry.slug} :`);
+          for (const m of entry.mismatches) {
+            console.log(
+              `  ${m.field} : attendu "${m.attendu}", trouve "${m.trouve}"`,
+            );
+          }
+          break;
+        case "absente":
+          console.log(`[absente] ${entry.file} : pas encore en base.`);
+          break;
+        case "error":
+          console.log(`[error] ${entry.file} : ${entry.message}`);
+          break;
+      }
+    }
+
+    if (report.orphanExams.length > 0) {
+      console.log(
+        `\n${report.orphanExams.length} epreuve(s) en base sans fichier correspondant dans le dossier de collecte :`,
+      );
+      for (const exam of report.orphanExams) console.log(`  ${exam.slug}`);
+    }
+
+    if (values["check-r2"] && report.missingR2Objects.length > 0) {
+      console.log(
+        `\n${report.missingR2Objects.length} epreuve(s) en base dont l'objet R2 est introuvable :`,
+      );
+      for (const exam of report.missingR2Objects) {
+        console.log(`  ${exam.slug} (${exam.r2Key})`);
+      }
+    }
+
+    const { summary } = report;
+    console.log(
+      `\n${summary.total} ligne(s) : ${summary.conforme} conforme(s), ${summary.mal_classee} mal classee(s), ${summary.absente} absente(s), ${summary.error} erreur(s).`,
+    );
+
+    if (summary.mal_classee > 0 || summary.error > 0) process.exitCode = 1;
+    return;
+  }
+
   if (!dryRun) {
     // Verifiees avant de traiter la moindre ligne : sans ca, un oubli de configuration R2 ne se
     // verrait qu'apres N allers-retours insertion + rollback inutiles (observe en pratique lors

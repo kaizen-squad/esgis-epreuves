@@ -23,7 +23,20 @@ const update = vi.fn<(row: Record<string, unknown>) => { eq: typeof updateEq }>(
   () => ({ eq: updateEq }),
 );
 
-const from = vi.fn(() => ({ insert, delete: del, select, update }));
+/**
+ * `subjects` a sa propre chaine de mocks (#198, `getSubjectName`) : partager `maybeSingle` avec
+ * les lectures d'epreuve de `updateExamMetadata`/`replaceExamFile` ferait retomber un test qui
+ * configure l'un sur la valeur par defaut de l'autre, sans rapport avec ce qu'il verifie vraiment.
+ */
+const subjectMaybeSingle = vi.fn();
+const subjectSelectEq = vi.fn(() => ({ maybeSingle: subjectMaybeSingle }));
+const subjectSelect = vi.fn(() => ({ eq: subjectSelectEq }));
+
+const from = vi.fn((table: string) =>
+  table === "subjects"
+    ? { select: subjectSelect }
+    : { insert, delete: del, select, update },
+);
 const putExamFile = vi.fn();
 const deleteExamFile = vi.fn();
 const checkExamDuplicate = vi.fn();
@@ -112,7 +125,11 @@ function batchForm(
         type: "application/pdf",
       });
     formData.append("files", file);
-    formData.append("title", entry.title ?? `Epreuve ${i}`);
+    // title/optionId ne sont plus envoyes par le front depuis #202 (uploadExamsBatch les ignore
+    // de toute facon, voir BATCH_FIELD_NAMES) : un test les ajoute explicitement seulement quand
+    // il verifie precisement qu'ils restent sans effet, pour ne pas laisser croire par defaut
+    // que ce sont des champs reellement attendus (revue Opus du lot).
+    if (entry.title !== undefined) formData.append("title", entry.title);
     formData.append("academicYear", entry.academicYear ?? "2024-2025");
     formData.append("session", entry.session ?? "Session Normale");
     formData.append("examType", entry.examType ?? "Contrôle Terminal");
@@ -125,7 +142,8 @@ function batchForm(
         BATCH_SUBJECT_UUIDS[0] ??
         UUID,
     );
-    formData.append("optionId", entry.optionId ?? "");
+    if (entry.optionId !== undefined)
+      formData.append("optionId", entry.optionId);
   });
   return formData;
 }
@@ -144,6 +162,9 @@ beforeEach(() => {
     error: null,
   });
   maybeSingle.mockReset().mockResolvedValue({ data: null, error: null });
+  subjectMaybeSingle
+    .mockReset()
+    .mockResolvedValue({ data: { name: "Algorithmique" }, error: null });
   updateEq.mockReset().mockImplementation(() => ({ select: updateSelect }));
   updateSelect
     .mockReset()
@@ -153,6 +174,8 @@ beforeEach(() => {
   del.mockClear();
   select.mockClear();
   selectEq.mockClear();
+  subjectSelect.mockClear();
+  subjectSelectEq.mockClear();
   update.mockClear();
   from.mockClear();
   putExamFile.mockReset().mockResolvedValue(undefined);
@@ -263,15 +286,13 @@ describe("uploadExam", () => {
     expect(result).toEqual({ ok: true, data: { slug: expect.any(String) } });
     expect(insert).toHaveBeenCalledTimes(1);
     expect(insert.mock.calls[0]![0]).toEqual({
-      title: "Algorithmique S1",
+      // Titre genere depuis la matiere (#198), jamais le titre libre envoye par uploadForm().
+      title: "Algorithmique : Contrôle terminal, session normale",
       slug: expect.any(String),
       academic_year: "2024-2025",
       session: "Session Normale",
       exam_type: "Contrôle Terminal",
-      field_id: UUID,
-      level_id: UUID,
       subject_id: UUID,
-      option_id: OPTION_UUID,
       file_hash: FILE_HASH,
       file_mime_type: "application/pdf",
       file_size: 8,
@@ -284,10 +305,30 @@ describe("uploadExam", () => {
     expect(del).not.toHaveBeenCalled();
   });
 
-  it("transmet null comme option_id quand aucune option n'est fournie", async () => {
-    await uploadExam(uploadForm());
+  it("n'envoie plus fieldId/levelId/optionId a l'insertion : le trigger les deduit de subjectId (#197)", async () => {
+    await uploadExam(uploadForm({ optionId: OPTION_UUID }));
 
-    expect(insert.mock.calls[0]![0].option_id).toBeNull();
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("field_id");
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("level_id");
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("option_id");
+  });
+
+  it("ignore un titre libre envoye par le front : le titre insere est toujours genere (#198)", async () => {
+    await uploadExam(uploadForm({ title: "Un titre choisi par erreur" }));
+
+    expect(insert.mock.calls[0]![0].title).toBe(
+      "Algorithmique : Contrôle terminal, session normale",
+    );
+  });
+
+  it("renvoie une erreur quand la matiere est introuvable, sans ecrire en base ni sur R2", async () => {
+    subjectMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+    const result = await uploadExam(uploadForm());
+
+    expect(result).toEqual({ ok: false, error: "Matiere introuvable." });
+    expect(insert).not.toHaveBeenCalled();
+    expect(putExamFile).not.toHaveBeenCalled();
   });
 
   it("traite une violation d'unicite sur le hash a l'insertion comme un doublon, sans toucher a R2", async () => {
@@ -415,26 +456,31 @@ describe("updateExamMetadata", () => {
       metadataForm({ optionId: OPTION_UUID }),
     );
 
-    expect(result).toEqual({ ok: true, data: { slug: CURRENT_EXAM.slug } });
+    expect(result).toEqual({
+      ok: true,
+      data: {
+        slug: CURRENT_EXAM.slug,
+        title: "Algorithmique : Contrôle terminal, session normale",
+      },
+    });
     expect(update).toHaveBeenCalledWith({
-      title: "Algorithmique S1",
+      title: "Algorithmique : Contrôle terminal, session normale",
       academic_year: "2024-2025",
       session: "Session Normale",
       exam_type: "Contrôle Terminal",
-      field_id: UUID,
-      level_id: UUID,
       subject_id: UUID,
-      option_id: OPTION_UUID,
     });
     expect(updateEq).toHaveBeenCalledWith("id", EXAM_ID);
   });
 
-  it("transmet null comme option_id quand aucune option n'est fournie", async () => {
+  it("n'envoie plus fieldId/levelId/optionId a la mise a jour : le trigger les deduit de subjectId (#197)", async () => {
     maybeSingle.mockResolvedValue({ data: CURRENT_EXAM, error: null });
 
     await updateExamMetadata(EXAM_ID, metadataForm());
 
-    expect(update.mock.calls[0]![0].option_id).toBeNull();
+    expect(update.mock.calls[0]![0]).not.toHaveProperty("field_id");
+    expect(update.mock.calls[0]![0]).not.toHaveProperty("level_id");
+    expect(update.mock.calls[0]![0]).not.toHaveProperty("option_id");
   });
 
   it("renvoie un avertissement non bloquant quand le quadruplet correspond a une autre epreuve", async () => {
@@ -448,7 +494,10 @@ describe("updateExamMetadata", () => {
 
     expect(result).toEqual({
       ok: true,
-      data: { slug: CURRENT_EXAM.slug },
+      data: {
+        slug: CURRENT_EXAM.slug,
+        title: "Algorithmique : Contrôle terminal, session normale",
+      },
       warning: {
         examId: "exam-2",
         slug: "algo-s1-def67890",
@@ -820,21 +869,48 @@ describe("uploadExamsBatch", () => {
 
   it("rejette un lot dont les tableaux de metadonnees ne sont pas alignes avec les fichiers", async () => {
     const formData = batchForm([{}, {}]);
-    // Retire une des deux valeurs de "title" : deux fichiers, un seul titre.
-    const titles = formData.getAll("title");
-    formData.delete("title");
-    formData.append("title", titles[0] as string);
+    // Retire une des deux valeurs de "academicYear" : deux fichiers, une seule annee.
+    const years = formData.getAll("academicYear");
+    formData.delete("academicYear");
+    formData.append("academicYear", years[0] as string);
 
     const result = await uploadExamsBatch(formData);
 
     expect(result.ok).toBe(false);
     if (!result.ok && "fieldErrors" in result) {
       expect(result.error).toBe("Donnees invalides.");
-      expect(result.fieldErrors).toHaveProperty("title");
+      expect(result.fieldErrors).toHaveProperty("academicYear");
     } else {
       expect.unreachable("fieldErrors attendu sur le resultat");
     }
     expect(from).not.toHaveBeenCalled();
+  });
+
+  it("accepte un lot construit par toBatchFormData, le vrai serialiseur du front (#202, revue Opus : le test precedent batissait son FormData a la main, aveugle a une regression de toBatchFormData lui-meme)", async () => {
+    const { addExamFormSchema, toBatchFormData } =
+      await import("@/app/(bde)/bde/epreuves/components/exam-form/examForm");
+    const parsed = addExamFormSchema.parse({
+      fieldId: UUID,
+      levelId: UUID,
+      subjectId: UUID,
+      session: "Session Normale",
+      examType: "Contrôle Terminal",
+      files: [
+        {
+          file: new File(["%PDF-1.4 lot-sans-title"], "exam-0.pdf", {
+            type: "application/pdf",
+          }),
+          academicYear: "2024-2025",
+          yearUnknown: false,
+        },
+      ],
+    });
+
+    const result = await uploadExamsBatch(toBatchFormData(parsed));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.entries[0]).toMatchObject({ status: "imported" });
   });
 
   it("traite chaque fichier independamment et renvoie un resultat par fichier", async () => {
@@ -989,19 +1065,15 @@ describe("uploadExamsBatch", () => {
     expect(result.data.entries[1]).toMatchObject({ status: "imported" });
   });
 
-  it("convertit une option vide en absence d'option a l'insertion, au bon index", async () => {
+  it("n'envoie plus fieldId/levelId/optionId a l'insertion du lot : le trigger les deduit de subjectId (#197)", async () => {
     await uploadExamsBatch(
       batchForm([{ optionId: "" }, { optionId: OPTION_UUID }]),
     );
 
-    expect(insert).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ option_id: null }),
-    );
-    expect(insert).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ option_id: OPTION_UUID }),
-    );
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("option_id");
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("field_id");
+    expect(insert.mock.calls[0]![0]).not.toHaveProperty("level_id");
+    expect(insert.mock.calls[1]![0]).not.toHaveProperty("option_id");
   });
 
   it("insere malgre un quadruplet identique a une epreuve existante, avec un avertissement non bloquant", async () => {
@@ -1053,8 +1125,9 @@ describe("uploadExamsBatch", () => {
     expect(second?.status).toBe("imported");
     expect(second?.status === "imported" ? second.warning : undefined).toEqual({
       examId: "exam-1",
-      slug: expect.stringContaining("algo-a"),
-      title: "Algo A",
+      slug: expect.stringContaining("algorithmique"),
+      // Titre genere depuis la matiere (#198), jamais le titre libre envoye par batchForm().
+      title: "Algorithmique : Contrôle terminal, session normale",
     });
   });
 

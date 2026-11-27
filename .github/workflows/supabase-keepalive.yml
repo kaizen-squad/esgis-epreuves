@@ -1,0 +1,43 @@
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Tous les 3 jours : largement sous le seuil de pause automatique Supabase (~7 jours
+    # d'inactivite sur le plan gratuit), avec de la marge si une execution est sautee.
+    #
+    # Limite connue (depot public) : GitHub desactive automatiquement les workflows planifies
+    # apres 60 jours sans aucune activite sur le depot (commit, PR, etc). Si ce projet devient
+    # inactif plus de 60 jours, ce cron s'arrete silencieusement et les deux projets Supabase
+    # finissent par se mettre en pause. `workflow_dispatch` ci-dessous permet de le relancer
+    # manuellement une fois le depot redevenu actif.
+    - cron: "0 6 */3 * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  ping:
+    name: Ping prod et preview
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - ref: omasroebckucjkfjbqkc
+            # cle publishable (anon), prevue pour etre exposee cote client : voir
+            # NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY dans les variables Vercel du meme projet.
+            # En variable de depot (non sensible) plutot qu'en dur, pour eviter le faux
+            # positif systematique d'un scanner de secrets sur un token qui ressemble a une cle.
+            key: ${{ vars.SUPABASE_PROD_PUBLISHABLE_KEY }}
+          - ref: zoaabkpmujtoahudsyab
+            key: ${{ vars.SUPABASE_PREVIEW_PUBLISHABLE_KEY }}
+    steps:
+      - name: Requete PostgREST minimale (genere une activite DB reelle, pas un simple ping reseau)
+        env:
+          SUPABASE_KEY: ${{ matrix.project.key }}
+          SUPABASE_REF: ${{ matrix.project.ref }}
+        run: |
+          curl --fail-with-body -sS \
+            -H "apikey: $SUPABASE_KEY" \
+            "https://$SUPABASE_REF.supabase.co/rest/v1/levels?select=id&limit=1"

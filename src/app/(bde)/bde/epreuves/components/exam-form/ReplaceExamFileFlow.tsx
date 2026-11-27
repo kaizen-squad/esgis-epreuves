@@ -167,7 +167,7 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
               <ExamFileCard
                 idPrefix="current"
                 name={exam.title}
-                detail={`${exam.subject} · ${exam.level} · ${exam.academicYear} · ${formatFileSize(exam.fileSize)}`}
+                detail={`${exam.subject} · ${exam.level} · ${exam.academicYear ?? "Année inconnue"} · ${formatFileSize(exam.fileSize)}`}
                 actions={
                   <a
                     href={`/api/exams/${exam.slug}`}

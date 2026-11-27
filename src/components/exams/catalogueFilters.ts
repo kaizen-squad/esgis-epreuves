@@ -1,5 +1,10 @@
 import type { ExamFilters } from "@/features/exams/types";
-import type { Field, Level, Subject } from "@/features/referentials/types";
+import type {
+  Field,
+  Level,
+  Option,
+  Subject,
+} from "@/features/referentials/types";
 
 /** Epreuves par page dans les catalogues : 12 tombe juste sur 2, 3 ou 4 colonnes de cartes. */
 export const CATALOGUE_PAGE_SIZE = 12;
@@ -10,6 +15,7 @@ export const CATALOGUE_FILTER_KEYS = [
   "fieldId",
   "levelId",
   "subjectId",
+  "optionId",
   "session",
   "examType",
   "academicYear",
@@ -28,6 +34,8 @@ export type CatalogueFilterOptions = {
   fields: Field[] | null;
   levels: Level[];
   subjects: Subject[];
+  /** Options proposees par le filtre (#201), deduites des matieres (via `Subject.optionId`). */
+  options: Option[];
   /** Annees ayant au moins une epreuve, de la plus recente a la plus ancienne. */
   academicYears: string[];
 };
@@ -46,5 +54,9 @@ export function toExamFilters(
     const first = Array.isArray(value) ? value[0] : value;
     if (first) filters[key] = first;
   }
+  // Un Controle Continu n'a jamais de session (#196) : une URL partagee ou perimee qui porterait
+  // encore les deux ne doit jamais renvoyer zero resultat en silence (#203, revue Opus du lot),
+  // l'interface masquant deja ce filtre pour ce type (`FilterComponents.tsx`/`ActiveFilters.tsx`).
+  if (filters.examType === "Contrôle Continu") delete filters.session;
   return { ...filters, pageSize: CATALOGUE_PAGE_SIZE } as ExamFilters;
 }

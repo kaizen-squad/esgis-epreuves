@@ -8,10 +8,14 @@ export type Exam = {
   id: string;
   title: string;
   slug: string;
-  academicYear: string;
-  session: ExamSession;
+  /** Inconnue sur une vieille epreuve deposee sans cette information (#196). */
+  academicYear: string | null;
+  /** Toujours absente pour un Controle Continu (#196), et facultative sur une vieille epreuve. */
+  session: ExamSession | null;
   examType: ExamType;
   field: string;
+  /** Sigle d'affichage de la filiere (#198), `null` si non renseigne. */
+  fieldShortName: string | null;
   fieldId: string;
   level: string;
   levelId: string;
@@ -70,6 +74,8 @@ export type FieldExamsResult = {
 export type FieldLevelSummary = {
   fieldId: string;
   fieldName: string;
+  /** Sigle d'affichage de la filiere (#198), `null` si non renseigne. */
+  fieldShortName: string | null;
   levelId: string;
   levelName: string;
   examCount: number;
@@ -89,6 +95,7 @@ export type FieldDirectoryLevel = FieldLevelSummary & {
 export type FieldDirectoryEntry = {
   fieldId: string;
   fieldName: string;
+  fieldShortName: string | null;
   examCount: number;
   /** Matieres couvertes (au moins une epreuve), tous niveaux confondus. */
   subjectCount: number;

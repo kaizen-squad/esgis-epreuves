@@ -25,9 +25,13 @@ test("un visiteur recherche une epreuve, l'ouvre et telecharge son fichier", asy
   const card = page.locator("article", { hasText: SEARCHABLE_EXAM_TITLE });
   await expect(card).toBeVisible();
   await card.scrollIntoViewIfNeeded();
-  // Toute la carte mene a la fiche (R-09) : plus de lien "Visualiser" distinct.
+  // Toute la carte mene a la fiche (R-09) : plus de lien "Visualiser" distinct. Le clic par
+  // defaut (centre de la carte) peut tomber sur la cote (ex. "FISCALITÉ"), qui a son propre lien
+  // vers le catalogue filtre et passe devant ce lien plein cadre par empilement volontaire (voir
+  // ExamCard.tsx) : on cible la vignette du fichier en haut a gauche, jamais couverte par un lien
+  // plus specifique.
   const link = card.getByRole("link", { name: `Voir la fiche de` });
-  await link.click();
+  await link.click({ position: { x: 10, y: 10 } });
 
   await expect(
     page.getByRole("heading", { name: SEARCHABLE_EXAM_TITLE, level: 1 }),

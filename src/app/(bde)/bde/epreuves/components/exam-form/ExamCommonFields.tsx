@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState } from "react";
 import { EXAM_SESSIONS, EXAM_TYPES } from "@/features/exams/schemas";
 import type { Field, Level, Subject } from "@/features/referentials/types";
 import ChoiceGroup from "./ChoiceGroup";
@@ -26,8 +26,10 @@ export function inputClass(error?: string) {
 
 /**
  * Champs communs aux formulaires d'ajout et de modification d'une epreuve : matiere (recherche,
- * en premier), filiere, niveau, session et type. Changer de filiere ou de niveau vide la matiere
- * devenue incompatible ; choisir une matiere renseigne sa filiere et son niveau.
+ * en premier), filiere, niveau, type et session. Choisir une matiere renseigne sa filiere et son
+ * niveau et les passe en lecture seule (#202, une matiere appartient a une seule filiere/niveau) :
+ * "Changer de matiere" les rend de nouveau modifiables. Un Controle Continu masque et vide la
+ * session (#196/#202, jamais de session pour ce type).
  */
 export default function ExamCommonFields({
   fields,
@@ -36,7 +38,6 @@ export default function ExamCommonFields({
   values,
   errors,
   onChange,
-  afterSubject,
 }: {
   fields: Field[];
   levels: Level[];
@@ -44,28 +45,16 @@ export default function ExamCommonFields({
   values: ExamCommonValues;
   errors: Partial<Record<ExamCommonField, string>>;
   onChange: (patch: Partial<ExamCommonValues>) => void;
-  /** Champ supplementaire affiche sous filiere/niveau (ex. option, en modification). */
-  afterSubject?: ReactNode;
 }) {
-  const subjectFits = (fieldId: string, levelId: string) =>
-    subjects.some(
-      (s) =>
-        s.id === values.subjectId &&
-        (!fieldId || s.fieldId === fieldId) &&
-        (!levelId || s.levelId === levelId),
-    );
+  const subjectChosen = Boolean(values.subjectId);
+  const fieldName = fields.find((f) => f.id === values.fieldId)?.name;
+  const levelName = levels.find((l) => l.id === values.levelId)?.name;
 
-  const handleFieldChange = (fieldId: string) =>
-    onChange({
-      fieldId,
-      ...(subjectFits(fieldId, values.levelId) ? {} : { subjectId: "" }),
-    });
-
-  const handleLevelChange = (levelId: string) =>
-    onChange({
-      levelId,
-      ...(subjectFits(values.fieldId, levelId) ? {} : { subjectId: "" }),
-    });
+  // Incremente uniquement par "Changer de matiere" (jamais par la frappe, qui vide aussi
+  // `subjectId` a chaque caractere apres une selection) : `SubjectSearch` ne doit remonter que sur
+  // ce geste explicite, pas sur chaque `onSelect(null)` interne a la recherche (revue Opus du lot,
+  // le precedent `key={values.subjectId}` effacait la saisie en cours a chaque frappe).
+  const [searchResetKey, setSearchResetKey] = useState(0);
 
   const handleSubjectSelect = (subject: Subject | null) =>
     onChange(
@@ -78,6 +67,18 @@ export default function ExamCommonFields({
         : { subjectId: "" },
     );
 
+  const handleChangeSubject = () => {
+    setSearchResetKey((key) => key + 1);
+    handleSubjectSelect(null);
+  };
+
+  const handleTypeChange = (examType: string) =>
+    onChange({
+      examType,
+      // Un Controle Continu n'a jamais de session (#196) : la valeur choisie devient hors sujet.
+      ...(examType === "Contrôle Continu" ? { session: "" } : {}),
+    });
+
   // Choisir une matiere renseigne deja filiere et niveau : quand la matiere elle-meme est
   // manquante, inutile de signaler separement filiere/niveau comme en erreur (#172, evite 3
   // messages redondants sur un envoi vide alors qu'une seule action les resout tous).
@@ -87,6 +88,10 @@ export default function ExamCommonFields({
   return (
     <>
       <SubjectSearch
+        // Remonte le composant seulement sur "Changer de matiere" (voir `searchResetKey`
+        // ci-dessus) : sans ca, sa recherche interne gardait l'ancien nom affiche meme apres
+        // effacement de `subjectId` (revue Opus du lot, defaut important).
+        key={searchResetKey}
         subjects={subjects}
         fields={fields}
         levels={levels}
@@ -110,70 +115,91 @@ export default function ExamCommonFields({
           coupait dans un select trop etroit dès que les deux colonnes apparaissaient (#171). */}
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <label htmlFor="fieldId" className="font-medium">
+          <label
+            htmlFor={subjectChosen ? undefined : "fieldId"}
+            className="font-medium"
+          >
             Filière *
           </label>
-          <select
-            id="fieldId"
-            name="fieldId"
-            value={values.fieldId}
-            onChange={(event) => handleFieldChange(event.target.value)}
-            aria-invalid={fieldError ? true : undefined}
-            aria-describedby={fieldError ? "fieldId-error" : undefined}
-            className={inputClass(fieldError)}
-          >
-            <option value="" disabled>
-              Choisir une filière
-            </option>
-            {fields.map((field) => (
-              <option key={field.id} value={field.id}>
-                {field.name}
+          {subjectChosen ? (
+            <>
+              <p className="text-text-paragraph bg-background-default mb-0 rounded-lg border border-gray-200 px-3 py-2">
+                {fieldName}
+              </p>
+              <input type="hidden" name="fieldId" value={values.fieldId} />
+            </>
+          ) : (
+            <select
+              id="fieldId"
+              name="fieldId"
+              value={values.fieldId}
+              onChange={(event) => onChange({ fieldId: event.target.value })}
+              aria-invalid={fieldError ? true : undefined}
+              aria-describedby={fieldError ? "fieldId-error" : undefined}
+              className={inputClass(fieldError)}
+            >
+              <option value="" disabled>
+                Choisir une filière
               </option>
-            ))}
-          </select>
+              {fields.map((field) => (
+                <option key={field.id} value={field.id}>
+                  {field.name}
+                </option>
+              ))}
+            </select>
+          )}
           <FieldError name="fieldId" error={fieldError} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="levelId" className="font-medium">
+          <label
+            htmlFor={subjectChosen ? undefined : "levelId"}
+            className="font-medium"
+          >
             Niveau *
           </label>
-          <select
-            id="levelId"
-            name="levelId"
-            value={values.levelId}
-            onChange={(event) => handleLevelChange(event.target.value)}
-            aria-invalid={levelError ? true : undefined}
-            aria-describedby={levelError ? "levelId-error" : undefined}
-            className={inputClass(levelError)}
-          >
-            <option value="" disabled>
-              Choisir un niveau
-            </option>
-            {levels.map((level) => (
-              <option key={level.id} value={level.id}>
-                {level.name}
+          {subjectChosen ? (
+            <>
+              <p className="text-text-paragraph bg-background-default mb-0 rounded-lg border border-gray-200 px-3 py-2">
+                {levelName}
+              </p>
+              <input type="hidden" name="levelId" value={values.levelId} />
+            </>
+          ) : (
+            <select
+              id="levelId"
+              name="levelId"
+              value={values.levelId}
+              onChange={(event) => onChange({ levelId: event.target.value })}
+              aria-invalid={levelError ? true : undefined}
+              aria-describedby={levelError ? "levelId-error" : undefined}
+              className={inputClass(levelError)}
+            >
+              <option value="" disabled>
+                Choisir un niveau
               </option>
-            ))}
-          </select>
+              {levels.map((level) => (
+                <option key={level.id} value={level.id}>
+                  {level.name}
+                </option>
+              ))}
+            </select>
+          )}
           <FieldError name="levelId" error={levelError} />
         </div>
       </div>
 
-      {afterSubject}
+      {subjectChosen ? (
+        <button
+          type="button"
+          onClick={handleChangeSubject}
+          className="text-text-default self-start text-sm font-medium underline"
+        >
+          Changer de matière
+        </button>
+      ) : null}
 
       <div className="grid gap-5 md:grid-cols-1">
-        <ChoiceGroup
-          name="session"
-          legend="Session *"
-          choices={EXAM_SESSIONS.map((session) => ({
-            label: SESSION_LABELS[session],
-            value: session,
-          }))}
-          value={values.session}
-          onChange={(session) => onChange({ session })}
-          error={errors.session}
-        />
         <ChoiceGroup
           name="examType"
           legend="Type *"
@@ -182,9 +208,22 @@ export default function ExamCommonFields({
             value: type,
           }))}
           value={values.examType}
-          onChange={(examType) => onChange({ examType })}
+          onChange={handleTypeChange}
           error={errors.examType}
         />
+        {values.examType !== "Contrôle Continu" ? (
+          <ChoiceGroup
+            name="session"
+            legend="Session *"
+            choices={EXAM_SESSIONS.map((session) => ({
+              label: SESSION_LABELS[session],
+              value: session,
+            }))}
+            value={values.session}
+            onChange={(session) => onChange({ session })}
+            error={errors.session}
+          />
+        ) : null}
       </div>
     </>
   );

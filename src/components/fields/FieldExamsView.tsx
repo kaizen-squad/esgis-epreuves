@@ -7,6 +7,7 @@ import {
 import {
   getLevelById,
   getLevels,
+  getOptions,
   getSubjects,
 } from "@/features/referentials/queries";
 import {
@@ -39,11 +40,12 @@ export default async function FieldExamsView({
   const filters = toExamFilters(searchParams);
   const levelId = filters.levelId;
 
-  const [result, level, levels, subjects] = await Promise.all([
+  const [result, level, levels, subjects, options] = await Promise.all([
     getFieldExams(fieldId, filters),
     levelId ? getLevelById(levelId) : null,
     getLevels(),
     getSubjects(),
+    getOptions(),
   ]);
   if (!result) notFound();
 
@@ -53,6 +55,7 @@ export default async function FieldExamsView({
   ]);
   const title = fieldPageTitle(
     result.field.name,
+    result.field.shortName,
     level?.name ?? null,
     optionNames,
   );
@@ -62,7 +65,11 @@ export default async function FieldExamsView({
   return (
     <>
       <div>
-        <FieldBreadcrumb fieldName={result.field.name} basePath={basePath} />
+        <FieldBreadcrumb
+          fieldName={result.field.name}
+          fieldShortName={result.field.shortName}
+          basePath={basePath}
+        />
         <h1 className="head-title text-center">Épreuves : {title}</h1>
         <p className="mb-6 text-center">
           Recherchez rapidement un sujet spécifique et téléchargez le fichier en
@@ -90,6 +97,9 @@ export default async function FieldExamsView({
           levels,
           subjects: subjects.filter(
             (subject) => subject.fieldId === result.field.id,
+          ),
+          options: options.filter(
+            (option) => option.fieldId === result.field.id,
           ),
           academicYears,
         }}

@@ -21,7 +21,8 @@ export default async function ExamSuggestions({
   subjectId: string;
   fieldId: string;
   levelId: string;
-  academicYear: string;
+  /** Inconnue sur une vieille epreuve (#196) : compare simplement avec `!==`, pas de cas special. */
+  academicYear: string | null;
   excludeSlug: string;
   manageable?: boolean;
 }) {

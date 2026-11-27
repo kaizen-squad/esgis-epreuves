@@ -14,12 +14,7 @@ import {
   type ExamBatchReport,
 } from "@/features/exams/actions";
 import { MAX_BATCH_FILES } from "@/features/exams/schemas";
-import type {
-  Field,
-  Level,
-  Option,
-  Subject,
-} from "@/features/referentials/types";
+import type { Field, Level, Subject } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 import { formatFileSize } from "@/lib/file-format";
 import {
@@ -28,7 +23,6 @@ import {
   addExamFormSchema,
   fileKey,
   mergeFiles,
-  titleFromFileName,
   toBatchFormData,
   toFieldErrors,
   validateExamFile,
@@ -44,19 +38,17 @@ import type { ExamFormStep } from "./ExamFormStepper";
 import ExamCommonFields from "./ExamCommonFields";
 import ExamDropzone from "./ExamDropzone";
 import ExamFileCard from "./ExamFileCard";
-import FieldError from "./FieldError";
 
 type FileEntry = {
   /** Cle stable de la carte (le fichier peut etre retire, l'index change). */
   key: string;
   file: File;
-  title: string;
   academicYear: string;
+  /** Etat propre, jamais derive de `academicYear === ""` (voir `ExamFileCard`). */
+  yearUnknown: boolean;
 };
 
-/** Valeurs communes au lot, plus l'option (facultative, proposee dès la creation comme en
- * modification, #172). */
-type AddValues = ExamCommonValues & { optionId: string };
+type AddValues = ExamCommonValues;
 
 const EMPTY_VALUES: AddValues = {
   fieldId: "",
@@ -64,7 +56,6 @@ const EMPTY_VALUES: AddValues = {
   subjectId: "",
   session: "",
   examType: "",
-  optionId: "",
 };
 
 type SubmitState =
@@ -76,13 +67,15 @@ type SubmitState =
     }
   | { status: "done"; id: number; result: ActionResult<ExamBatchReport> };
 
-/** Nouveau fichier du lot : titre propose a partir du nom de fichier, annee a choisir. */
+/** Nouveau fichier du lot : annee a choisir explicitement, jamais presupposee (revue Opus du lot :
+ * une annee courante proposee par defaut se publierait silencieusement si le BDE ne regarde pas
+ * la carte, contraire a l'objectif de qualite du lot). */
 function toEntry(file: File): FileEntry {
   return {
     key: fileKey(file),
     file,
-    title: titleFromFileName(file.name),
     academicYear: "",
+    yearUnknown: false,
   };
 }
 
@@ -90,13 +83,11 @@ export default function AddExamFlow({
   fields,
   levels,
   subjects,
-  options,
   initialSubject,
 }: {
   fields: Field[];
   levels: Level[];
   subjects: Subject[];
-  options: Option[];
   /** Lacune du fonds ouverte depuis la matrice de couverture (#174) : matiere preremplie. */
   initialSubject?: { fieldId: string; levelId: string; subjectId: string };
 }) {
@@ -114,20 +105,22 @@ export default function AddExamFlow({
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
-      // Titre et annee sont repetes une fois par carte de fichier, dans l'ordre du lot.
-      const titles = formData.getAll("title");
+      // L'annee et la case "inconnue" sont repetees une fois par carte de fichier, dans l'ordre
+      // du lot.
       const years = formData.getAll("academicYear");
+      const yearUnknownFlags = formData.getAll("yearUnknown");
       const parsed = addExamFormSchema.safeParse({
         fieldId: formData.get("fieldId") ?? "",
         levelId: formData.get("levelId") ?? "",
         subjectId: formData.get("subjectId") ?? "",
-        session: formData.get("session"),
+        // Absent du DOM pour un Controle Continu (#202, ChoiceGroup masque) : jamais `null`, que
+        // le schema rejetterait au lieu d'y voir une session vide, valide pour ce type.
+        session: formData.get("session") ?? "",
         examType: formData.get("examType"),
-        optionId: formData.get("optionId") ?? "",
         files: formData.getAll("files").map((file, index) => ({
           file,
-          title: titles[index] ?? "",
           academicYear: years[index] ?? "",
+          yearUnknown: yearUnknownFlags[index] === "true",
         })),
       });
       if (!parsed.success) {
@@ -161,19 +154,8 @@ export default function AddExamFlow({
       ? "result"
       : "form";
 
-  const availableOptions = options.filter(
-    (option) => option.fieldId === values.fieldId,
-  );
-
-  /** Une option appartient a une filiere : changer de filiere vide l'option devenue incompatible. */
   const handleCommonChange = (patch: Partial<ExamCommonValues>) =>
-    setValues((current) => {
-      const next = { ...current, ...patch };
-      const optionFits = options.some(
-        (o) => o.id === next.optionId && o.fieldId === next.fieldId,
-      );
-      return optionFits ? next : { ...next, optionId: "" };
-    });
+    setValues((current) => ({ ...current, ...patch }));
 
   const addFiles = (incoming: File[]) => {
     setFiles((current) => {
@@ -197,7 +179,9 @@ export default function AddExamFlow({
 
   /** "Appliquer a tous" (#172) : evite de choisir la meme annee fichier par fichier sur un lot. */
   const applyYearToAll = (academicYear: string) =>
-    setFiles((current) => current.map((entry) => ({ ...entry, academicYear })));
+    setFiles((current) =>
+      current.map((entry) => ({ ...entry, academicYear, yearUnknown: false })),
+    );
 
   // Deplace le focus sur le premier champ en erreur apres un echec de validation, sans scroll
   // supplementaire (le champ est deja dans le formulaire visible). Un `<fieldset>` (session,
@@ -357,10 +341,10 @@ export default function AddExamFlow({
                 Entrez les données de chaque épreuve
               </h2>
               <p className="text-text-paragraph mb-0 text-sm">
-                Tous les champs marqués * sont obligatoires. Le titre et
-                l&apos;année académique se renseignent sur chaque fichier
-                ci-dessus ; les données suivantes sont communes à tous les
-                fichiers.
+                Tous les champs marqués * sont obligatoires. L&apos;année
+                académique se renseigne sur chaque fichier ci-dessus (ou «
+                inconnue » sur une vieille épreuve) ; les données suivantes sont
+                communes à tous les fichiers.
               </p>
             </div>
 
@@ -371,41 +355,6 @@ export default function AddExamFlow({
               values={values}
               errors={errors}
               onChange={handleCommonChange}
-              afterSubject={
-                availableOptions.length > 0 || values.optionId ? (
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor="optionId" className="font-medium">
-                      Option (facultatif)
-                    </label>
-                    <select
-                      id="optionId"
-                      name="optionId"
-                      value={values.optionId}
-                      onChange={(event) =>
-                        setValues((current) => ({
-                          ...current,
-                          optionId: event.target.value,
-                        }))
-                      }
-                      aria-invalid={errors.optionId ? true : undefined}
-                      aria-describedby={
-                        errors.optionId ? "optionId-error" : undefined
-                      }
-                      className={inputClass(errors.optionId)}
-                    >
-                      <option value="">Aucune</option>
-                      {availableOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.name}
-                        </option>
-                      ))}
-                    </select>
-                    <FieldError name="optionId" error={errors.optionId} />
-                  </div>
-                ) : (
-                  <input type="hidden" name="optionId" value="" />
-                )
-              }
             />
           </section>
 
