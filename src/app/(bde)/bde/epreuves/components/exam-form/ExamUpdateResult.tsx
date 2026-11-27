@@ -48,7 +48,7 @@ export default function ExamUpdateResult({
         className="flex flex-col items-center gap-4"
       >
         <Icon
-          className={result.ok ? "text-green-600" : "text-red-600"}
+          className={result.ok ? "text-success" : "text-error"}
           size={56}
           aria-hidden="true"
         />
@@ -62,7 +62,7 @@ export default function ExamUpdateResult({
 
       {result.ok ? (
         result.warning ? (
-          <p className="mb-0 max-w-lg rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <p className="rounded-control border-warning/30 bg-warning/10 text-warning mb-0 max-w-lg border p-3 text-sm">
             Attention : une autre épreuve a la même matière, année, session et
             type : <ExamPreviewLink exam={result.warning} />. Vérifiez
             qu&apos;il ne s&apos;agit pas d&apos;un doublon.
@@ -76,7 +76,7 @@ export default function ExamUpdateResult({
             </p>
           ) : null}
           {"fieldErrors" in result && result.fieldErrors ? (
-            <ul className="text-sm text-red-700">
+            <ul className="text-error text-sm">
               {Object.values(result.fieldErrors)
                 .flat()
                 .map((message) => (
@@ -92,31 +92,20 @@ export default function ExamUpdateResult({
           <>
             <Link
               href={examHref(BDE_BASE_PATH, result.data.slug)}
-              className="flex items-center rounded-lg border border-black px-4 py-2"
+              className="btn-secondary"
             >
               Voir l&apos;épreuve
             </Link>
-            <button
-              type="button"
-              onClick={onRetry}
-              className="bg-background-accent text-text-primary cursor-pointer rounded-lg px-4 py-2"
-            >
+            <button type="button" onClick={onRetry} className="btn-primary">
               {againLabel}
             </button>
           </>
         ) : (
           <>
-            <Link
-              href="/bde/catalogue"
-              className="flex items-center rounded-lg border border-black px-4 py-2"
-            >
+            <Link href="/bde/catalogue" className="btn-secondary">
               Retour au catalogue
             </Link>
-            <button
-              type="button"
-              onClick={onRetry}
-              className="bg-background-accent text-text-primary cursor-pointer rounded-lg px-4 py-2"
-            >
+            <button type="button" onClick={onRetry} className="btn-primary">
               Revenir au formulaire
             </button>
           </>

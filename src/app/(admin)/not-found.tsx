@@ -10,10 +10,7 @@ export default function AdminNotFound() {
       <p className="text-text-paragraph">
         Ce membre, ce référentiel ou cette page n&apos;existe pas, ou plus.
       </p>
-      <Link
-        href="/admin"
-        className="bg-background-accent text-text-primary rounded-control px-4 py-2"
-      >
+      <Link href="/admin" className="btn-primary">
         Retour aux membres
       </Link>
     </div>

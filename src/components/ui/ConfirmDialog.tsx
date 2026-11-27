@@ -34,9 +34,7 @@ export default function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const confirmClassName =
-    tone === "danger"
-      ? "bg-background-accent text-text-primary"
-      : "bg-background-secondary text-text-primary";
+    tone === "danger" ? "btn-primary" : "btn-primary bg-background-secondary";
 
   return (
     <Modal open={open} onClose={onCancel} title={title} dismissible={!pending}>
@@ -45,7 +43,7 @@ export default function ConfirmDialog({
       {error ? (
         <p
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="rounded-control border-error/30 bg-error/10 text-error mt-4 border p-3 text-sm"
         >
           {error}
         </p>
@@ -56,7 +54,7 @@ export default function ConfirmDialog({
           type="button"
           onClick={onCancel}
           disabled={pending}
-          className="text-text-default cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-secondary"
         >
           {cancelLabel}
         </button>
@@ -64,7 +62,7 @@ export default function ConfirmDialog({
           type="button"
           onClick={onConfirm}
           disabled={pending}
-          className={`${confirmClassName} flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`}
+          className={confirmClassName}
         >
           {confirmLabel}
           {pending ? <CgSpinner className="animate-spin" size={16} /> : null}

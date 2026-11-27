@@ -8,7 +8,7 @@ export default function FieldError({
 }) {
   if (!error) return null;
   return (
-    <p id={`${name}-error`} className="mb-0 text-sm text-red-600">
+    <p id={`${name}-error`} className="text-error mb-0 text-sm">
       {error}
     </p>
   );

@@ -27,13 +27,6 @@ import { searchTokens } from "@/features/exams/schemas";
 import type { Field, Level, Option } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 
-const INPUT_CLASS =
-  "w-full rounded-control border px-3 py-2 outline-none focus:border-background-accent";
-
-function inputClass(error?: string) {
-  return `${INPUT_CLASS} ${error ? "border-red-400" : "border-gray-300"}`;
-}
-
 function capitalize(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
@@ -339,7 +332,7 @@ export default function ReferentialManager({
         ref={formRef}
         onSubmit={handleSubmit}
         noValidate
-        className="bg-background-primary rounded-card shadow-card flex flex-col gap-4 border border-gray-200 p-5"
+        className="bg-background-primary rounded-card shadow-card border-border-default flex flex-col gap-4 border p-5"
       >
         <h2 className="text-text-secondary mb-0 text-lg font-semibold">
           Ajouter {label.indefinite}
@@ -348,7 +341,7 @@ export default function ReferentialManager({
         {failure ? (
           <div
             role="alert"
-            className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="rounded-control border-error/30 bg-error/10 text-error flex items-start gap-3 border p-3 text-sm"
           >
             <FiAlertCircle size={18} className="mt-0.5 shrink-0" />
             {failure.error}
@@ -358,7 +351,7 @@ export default function ReferentialManager({
         {success ? (
           <div
             role="status"
-            className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+            className="rounded-control border-success/30 bg-success/10 text-success flex items-start gap-3 border p-3 text-sm"
           >
             <FiCheckCircle size={18} className="mt-0.5 shrink-0" />
             {success}
@@ -380,7 +373,7 @@ export default function ReferentialManager({
                 aria-describedby={
                   errors.fieldId ? `${kind}-fieldId-error` : undefined
                 }
-                className={inputClass(errors.fieldId)}
+                className="field-control"
               >
                 <option value="" disabled>
                   Choisir
@@ -394,7 +387,7 @@ export default function ReferentialManager({
               {errors.fieldId ? (
                 <p
                   id={`${kind}-fieldId-error`}
-                  className="mb-0 text-sm text-red-600"
+                  className="text-error mb-0 text-sm"
                 >
                   {errors.fieldId}
                 </p>
@@ -415,7 +408,7 @@ export default function ReferentialManager({
                 aria-describedby={
                   errors.levelId ? `${kind}-levelId-error` : undefined
                 }
-                className={inputClass(errors.levelId)}
+                className="field-control"
               >
                 <option value="" disabled>
                   Choisir
@@ -429,7 +422,7 @@ export default function ReferentialManager({
               {errors.levelId ? (
                 <p
                   id={`${kind}-levelId-error`}
-                  className="mb-0 text-sm text-red-600"
+                  className="text-error mb-0 text-sm"
                 >
                   {errors.levelId}
                 </p>
@@ -450,7 +443,7 @@ export default function ReferentialManager({
                 name="optionId"
                 defaultValue=""
                 disabled={!selectedFieldId}
-                className={inputClass(errors.optionId)}
+                className="field-control"
               >
                 <option value="">Tronc commun (aucune option)</option>
                 {activeOptionsForSelectedField.map((o) => (
@@ -471,13 +464,10 @@ export default function ReferentialManager({
               name="name"
               aria-invalid={errors.name ? true : undefined}
               aria-describedby={errors.name ? `${kind}-name-error` : undefined}
-              className={inputClass(errors.name)}
+              className="field-control"
             />
             {errors.name ? (
-              <p
-                id={`${kind}-name-error`}
-                className="mb-0 text-sm text-red-600"
-              >
+              <p id={`${kind}-name-error`} className="text-error mb-0 text-sm">
                 {errors.name}
               </p>
             ) : null}
@@ -492,7 +482,7 @@ export default function ReferentialManager({
                 id={`${kind}-shortName`}
                 name="shortName"
                 placeholder="ex. IRT"
-                className={inputClass()}
+                className="field-control"
               />
             </div>
           ) : null}
@@ -500,7 +490,7 @@ export default function ReferentialManager({
           <button
             type="submit"
             disabled={pending}
-            className="bg-background-accent text-text-primary rounded-control flex h-fit items-center justify-center gap-2 px-4 py-2 text-sm font-medium disabled:opacity-50"
+            className="btn-primary h-fit"
           >
             Ajouter
             {pending ? (
@@ -534,7 +524,7 @@ export default function ReferentialManager({
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Rechercher une matière, une filière, un niveau…"
             aria-label="Rechercher une matière"
-            className={`${INPUT_CLASS} border-gray-300 pl-9`}
+            className="field-control pl-9"
           />
           <p
             aria-live="polite"
@@ -545,7 +535,7 @@ export default function ReferentialManager({
         </div>
       ) : null}
 
-      <div className="bg-background-primary rounded-card shadow-card overflow-hidden border border-gray-200">
+      <div className="bg-background-primary rounded-card shadow-card border-border-default overflow-hidden border">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[42rem] text-left text-sm">
             <thead className="bg-background-default text-text-paragraph text-xs uppercase">
@@ -576,7 +566,7 @@ export default function ReferentialManager({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-border-default divide-y">
               {visibleItems.length === 0 ? (
                 <tr>
                   <td
@@ -613,7 +603,7 @@ export default function ReferentialManager({
                             ? "bg-background-accent/10"
                             : item.isActive
                               ? ""
-                              : "bg-gray-50"
+                              : "bg-background-default/60"
                         }
                       >
                         <td className="px-5 py-3">
@@ -639,18 +629,18 @@ export default function ReferentialManager({
                         ) : null}
                         <td className="px-5 py-3">
                           {item.isActive ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                            <span className="bg-success/10 text-success inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
                               <span
                                 aria-hidden
-                                className="size-1.5 rounded-full bg-green-600"
+                                className="bg-success size-1.5 rounded-full"
                               />
                               {label.activeBadge}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+                            <span className="bg-muted/15 text-muted inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
                               <span
                                 aria-hidden
-                                className="size-1.5 rounded-full bg-gray-500"
+                                className="bg-muted size-1.5 rounded-full"
                               />
                               {label.inactiveBadge}
                             </span>
@@ -756,7 +746,7 @@ function RenameCell({
         type="button"
         onClick={() => setEditing(true)}
         aria-label={`Renommer ${item.name}`}
-        className={`flex items-center gap-2 text-left font-medium ${item.isActive ? "text-text-default" : "text-gray-500"}`}
+        className={`flex items-center gap-2 text-left font-medium ${item.isActive ? "text-text-default" : "text-muted"}`}
       >
         {item.name}
         {needsShortName && item.shortName ? (
@@ -786,7 +776,7 @@ function RenameCell({
           aria-label={`Nouveau nom pour ${item.name}`}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `rename-${item.id}-error` : undefined}
-          className={`${INPUT_CLASS} py-1 ${error ? "border-red-400" : "border-gray-300"}`}
+          className="field-control py-1"
         />
         {needsShortName ? (
           <input
@@ -801,7 +791,7 @@ function RenameCell({
             }}
             placeholder="Sigle"
             aria-label={`Sigle pour ${item.name}`}
-            className={`${INPUT_CLASS} w-24 border-gray-300 py-1`}
+            className="field-control w-24 py-1"
           />
         ) : null}
         <button
@@ -809,7 +799,7 @@ function RenameCell({
           onClick={save}
           disabled={pending}
           aria-label="Enregistrer"
-          className="shrink-0 rounded p-1.5 text-green-700 hover:bg-green-50 disabled:opacity-50"
+          className="rounded-control text-success hover:bg-success/10 shrink-0 p-1.5 disabled:opacity-50"
         >
           {pending ? (
             <CgSpinner className="animate-spin" size={16} />
@@ -822,13 +812,13 @@ function RenameCell({
           onClick={cancel}
           disabled={pending}
           aria-label="Annuler"
-          className="text-text-paragraph shrink-0 rounded p-1.5 hover:bg-gray-100 disabled:opacity-50"
+          className="text-text-paragraph rounded-control hover:bg-background-default shrink-0 p-1.5 disabled:opacity-50"
         >
           <FiX size={16} />
         </button>
       </div>
       {error ? (
-        <p id={`rename-${item.id}-error`} className="mb-0 text-xs text-red-600">
+        <p id={`rename-${item.id}-error`} className="text-error mb-0 text-xs">
           {error}
         </p>
       ) : null}

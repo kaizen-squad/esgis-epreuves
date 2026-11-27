@@ -16,18 +16,18 @@ import ExamPreviewLink from "./ExamPreviewLink";
 function EntryRow({ entry }: { entry: ExamBatchEntryResult }) {
   if (entry.status === "imported") {
     return (
-      <li className="flex gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm">
-        <FiCheckCircle className="mt-0.5 shrink-0 text-green-700" size={18} />
+      <li className="rounded-control border-success/30 bg-success/10 flex gap-3 border p-3 text-sm">
+        <FiCheckCircle className="text-success mt-0.5 shrink-0" size={18} />
         <div className="min-w-0 flex-1">
           <p className="mb-0 truncate font-medium">{entry.file}</p>
-          <p className="mb-0 text-green-800">
+          <p className="text-success mb-0">
             Publiée.{" "}
             <ExamPreviewLink
               exam={{ slug: entry.slug, title: "Voir l'épreuve" }}
             />
           </p>
           {entry.warning ? (
-            <p className="mt-1 mb-0 text-amber-800">
+            <p className="text-warning mt-1 mb-0">
               Une autre épreuve a la même matière, année, session et type :{" "}
               <ExamPreviewLink exam={entry.warning} />. Vérifiez qu&apos;il ne
               s&apos;agit pas d&apos;un doublon.
@@ -46,22 +46,20 @@ function EntryRow({ entry }: { entry: ExamBatchEntryResult }) {
 
   return (
     <li
-      className={`flex gap-3 rounded-lg border p-3 text-sm ${isDuplicate ? "border-amber-200 bg-amber-50" : "border-red-200 bg-red-50"}`}
+      className={`rounded-control flex gap-3 border p-3 text-sm ${isDuplicate ? "border-warning/30 bg-warning/10" : "border-error/30 bg-error/10"}`}
     >
       {isDuplicate ? (
-        <FiCopy className="mt-0.5 shrink-0 text-amber-700" size={18} />
+        <FiCopy className="text-warning mt-0.5 shrink-0" size={18} />
       ) : (
-        <FiXCircle className="mt-0.5 shrink-0 text-red-700" size={18} />
+        <FiXCircle className="text-error mt-0.5 shrink-0" size={18} />
       )}
       <div className="min-w-0">
         <p className="mb-0 truncate font-medium">{entry.file}</p>
-        <p
-          className={`mb-0 ${isDuplicate ? "text-amber-800" : "text-red-700"}`}
-        >
+        <p className={`mb-0 ${isDuplicate ? "text-warning" : "text-error"}`}>
           {entry.message}
         </p>
         {fieldMessages.map((message) => (
-          <p key={message} className="mb-0 text-red-700">
+          <p key={message} className="text-error mb-0">
             {message}
           </p>
         ))}
@@ -100,10 +98,10 @@ export default function AddExamResult({
       ? FiAlertTriangle
       : FiXCircle;
   const iconClass = allImported
-    ? "text-green-600"
+    ? "text-success"
     : someImported
-      ? "text-amber-600"
-      : "text-red-600";
+      ? "text-warning"
+      : "text-error";
 
   const title = allImported
     ? summary.total > 1
@@ -156,33 +154,19 @@ export default function AddExamResult({
       <div className="mt-4 flex flex-wrap justify-center gap-4">
         {allImported ? (
           <>
-            <Link
-              href="/bde/catalogue"
-              className="flex items-center rounded-lg border border-black px-4 py-2"
-            >
+            <Link href="/bde/catalogue" className="btn-secondary">
               Voir le catalogue
             </Link>
-            <button
-              type="button"
-              onClick={onRestart}
-              className="bg-background-accent text-text-primary cursor-pointer rounded-lg px-4 py-2"
-            >
+            <button type="button" onClick={onRestart} className="btn-primary">
               Verser d&apos;autres épreuves
             </button>
           </>
         ) : (
           <>
-            <Link
-              href="/bde/accueil"
-              className="flex items-center rounded-lg border border-black px-4 py-2"
-            >
+            <Link href="/bde/accueil" className="btn-secondary">
               Retour à l&apos;accueil
             </Link>
-            <button
-              type="button"
-              onClick={onRetry}
-              className="bg-background-accent text-text-primary cursor-pointer rounded-lg px-4 py-2"
-            >
+            <button type="button" onClick={onRetry} className="btn-primary">
               Revenir au formulaire
             </button>
           </>

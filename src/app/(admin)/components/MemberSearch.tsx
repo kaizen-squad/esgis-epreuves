@@ -73,7 +73,7 @@ export default function MemberSearch({ resultCount }: { resultCount: number }) {
         value={query}
         onChange={(event) => handleChange(event.target.value)}
         placeholder="Rechercher par nom ou email"
-        className="focus:border-background-accent rounded-control w-full border border-gray-300 py-2 pr-9 pl-9 text-sm outline-none"
+        className="field-control pr-9 pl-9 text-sm"
       />
       {pending ? (
         <CgSpinner

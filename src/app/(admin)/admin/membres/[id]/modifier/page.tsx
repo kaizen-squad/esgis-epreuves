@@ -44,13 +44,13 @@ export default async function EditMemberPage({
             <span
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
                 member.isActive
-                  ? "bg-green-50 text-green-700"
-                  : "bg-gray-200 text-gray-600"
+                  ? "bg-success/10 text-success"
+                  : "bg-muted/15 text-muted"
               }`}
             >
               <span
                 aria-hidden
-                className={`size-1.5 rounded-full ${member.isActive ? "bg-green-600" : "bg-gray-500"}`}
+                className={`size-1.5 rounded-full ${member.isActive ? "bg-success" : "bg-muted"}`}
               />
               {member.isActive ? "Actif" : "Désactivé"}
             </span>

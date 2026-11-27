@@ -69,8 +69,8 @@ export default function ActiveToggleButton({
         aria-label={`${label} ${name}`}
         className={`rounded-control flex cursor-pointer items-center gap-1.5 border px-3 py-1.5 text-xs font-medium ${
           isActive
-            ? "border-red-200 text-red-700 hover:bg-red-50"
-            : "border-green-200 text-green-700 hover:bg-green-50"
+            ? "border-error/30 text-error hover:bg-error/10"
+            : "border-success/30 text-success hover:bg-success/10"
         }`}
       >
         <Icon size={13} /> {label}

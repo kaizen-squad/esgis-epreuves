@@ -40,9 +40,6 @@ type SubmitState =
 
 const EMPTY: Values = { lastName: "", firstNames: "", email: "", password: "" };
 
-const INPUT_CLASS =
-  "w-full rounded-lg border px-3 py-2 outline-none focus:border-background-accent";
-
 function firstErrors(
   fieldErrors?: Record<string, string[] | undefined>,
 ): Errors {
@@ -186,8 +183,8 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
 
   if (showSuccess) {
     return (
-      <div className="bg-background-primary flex max-w-2xl flex-col items-center rounded-xl border border-gray-200 px-6 py-12 text-center shadow-sm">
-        <span className="mb-5 flex size-16 items-center justify-center rounded-full bg-green-50 text-green-600">
+      <div className="bg-background-primary rounded-card border-border-default shadow-card flex max-w-2xl flex-col items-center border px-6 py-12 text-center">
+        <span className="bg-success/10 text-success mb-5 flex size-16 items-center justify-center rounded-full">
           <FiCheckCircle size={30} />
         </span>
         <h2 className="text-text-secondary mb-2 text-xl font-semibold">
@@ -228,17 +225,14 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
                 })
                 .catch(() => {});
             }}
-            className="text-text-default mb-6 flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50"
+            className="btn-secondary mb-6 px-3 py-1.5"
           >
             <FiCopy size={14} />
             {copied ? "Identifiants copiés" : "Copier les identifiants"}
           </button>
         ) : null}
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/admin"
-            className="text-text-default rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
-          >
+          <Link href="/admin" className="btn-secondary">
             Retour à la liste des membres
           </Link>
           <button
@@ -248,7 +242,7 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
               if (isEdit) set("password", "");
               else setValues(EMPTY);
             }}
-            className="bg-background-accent text-text-primary cursor-pointer rounded-lg px-4 py-2 text-sm font-medium"
+            className="btn-primary"
           >
             {isEdit ? "Continuer la modification" : "Ajouter un autre membre"}
           </button>
@@ -276,11 +270,11 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
         aria-required={required}
         aria-invalid={errors[name] ? true : undefined}
         aria-describedby={errors[name] ? `${name}-error` : undefined}
-        className={`${INPUT_CLASS} ${errors[name] ? "border-red-400" : "border-gray-300"}`}
+        className="field-control"
         {...props}
       />
       {errors[name] ? (
-        <p id={`${name}-error`} className="mb-0 text-sm text-red-600">
+        <p id={`${name}-error`} className="text-error mb-0 text-sm">
           {errors[name]}
         </p>
       ) : null}
@@ -292,12 +286,12 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
       ref={formRef}
       onSubmit={handleSubmit}
       noValidate
-      className="bg-background-primary flex max-w-2xl flex-col gap-8 rounded-xl border border-gray-200 p-6 shadow-sm md:p-8"
+      className="bg-background-primary rounded-card border-border-default shadow-card flex max-w-2xl flex-col gap-8 border p-6 md:p-8"
     >
       {failure ? (
         <div
           role="alert"
-          className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          className="rounded-control border-error/30 bg-error/10 text-error flex items-start gap-3 border p-4 text-sm"
         >
           <FiAlertCircle size={18} className="mt-0.5 shrink-0" />
           {failure.error}
@@ -355,7 +349,7 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
                   ? "password-error password-hint"
                   : "password-hint"
               }
-              className={`${INPUT_CLASS} pr-11 ${errors.password ? "border-red-400" : "border-gray-300"}`}
+              className="field-control pr-11"
             />
             <button
               type="button"
@@ -365,13 +359,13 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
                   ? "Masquer le mot de passe"
                   : "Afficher le mot de passe"
               }
-              className="text-text-paragraph absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer rounded p-1 hover:bg-gray-100"
+              className="text-text-paragraph rounded-control hover:bg-background-default absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer p-1"
             >
               {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
             </button>
           </div>
           {errors.password ? (
-            <p id="password-error" className="mb-0 text-sm text-red-600">
+            <p id="password-error" className="text-error mb-0 text-sm">
               {errors.password}
             </p>
           ) : null}
@@ -390,11 +384,7 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
         >
           Annuler
         </Link>
-        <button
-          type="submit"
-          disabled={pending}
-          className="bg-background-accent text-text-primary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 disabled:opacity-50"
-        >
+        <button type="submit" disabled={pending} className="btn-primary">
           {isEdit ? "Enregistrer les modifications" : "Ajouter le membre"}
           {pending ? <CgSpinner className="animate-spin" /> : <FiArrowRight />}
         </button>

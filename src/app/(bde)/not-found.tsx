@@ -11,10 +11,7 @@ export default function BdeNotFound() {
         Aucune épreuve versée sous cette cote, ou la page demandée n&apos;existe
         plus.
       </p>
-      <Link
-        href="/bde/accueil"
-        className="bg-background-accent text-text-primary rounded-control px-4 py-2"
-      >
+      <Link href="/bde/accueil" className="btn-primary">
         Retour à l&apos;accueil BDE
       </Link>
     </div>

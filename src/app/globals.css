@@ -28,6 +28,18 @@
   --shadow-elevated: 0 12px 32px -8px rgb(17 22 36 / 0.18);
 
   /*
+   * Encres d'etat pour l'Admin et le back-office BDE (#217) : une par etat, jamais une teinte
+   * Tailwind brute. Fonds et filets d'un message en derivent par opacite (bg-success/10,
+   * border-success/30), choisies assez foncees pour rester lisibles (AA) sur leur propre fond.
+   */
+  --color-success: #166534;
+  --color-warning: #92400e;
+  --color-error: #b91c1c;
+  --color-muted: #4b5563;
+  --color-border-default: #e5e7eb;
+  --color-border-control: #d1d5db;
+
+  /*
    * Feuilles du classeur rangees derriere la page courante : le meme papier blanc, assombri
    * par la couverture marine a mesure qu'il s'enfonce dans la pile. Pas une nouvelle teinte,
    * un melange des deux couleurs de la charte.
@@ -538,5 +550,38 @@
 
   .section-title {
     @apply text-text-secondary mb-1 text-3xl font-semibold text-balance;
+  }
+
+  /*
+   * Champ de saisie (input, select) du back-office. L'etat d'erreur suit `aria-invalid`, deja
+   * pose par chaque formulaire pour les lecteurs d'ecran : le visuel ne peut plus diverger de
+   * l'annonce. Taille de texte heritee, a preciser par l'appelant (`text-sm`).
+   */
+  .field-control {
+    @apply rounded-control border-border-control bg-background-primary w-full border px-3 py-2 outline-none;
+  }
+  .field-control[aria-invalid="true"] {
+    border-color: var(--color-error);
+  }
+  .field-control:focus {
+    border-color: var(--color-background-accent);
+  }
+
+  /* Boutons du back-office : un primaire, un secondaire, toujours un etat de survol. */
+  .btn-primary {
+    @apply bg-background-accent text-text-primary rounded-control inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-[filter];
+  }
+  .btn-secondary {
+    @apply rounded-control border-border-control bg-background-primary text-text-default inline-flex items-center justify-center gap-2 border px-4 py-2 text-sm font-medium transition-colors;
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-background-default);
+  }
+  .btn-primary:disabled,
+  .btn-secondary:disabled {
+    opacity: 0.5;
   }
 }

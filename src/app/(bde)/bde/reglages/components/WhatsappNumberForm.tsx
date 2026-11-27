@@ -128,7 +128,7 @@ export default function WhatsappNumberForm({
       action={dispatch}
       onSubmit={handleSubmit}
       noValidate
-      className="bg-background-primary rounded-card flex flex-col gap-6 border border-gray-200 p-5 shadow-(--shadow-card) sm:p-6 md:p-8"
+      className="bg-background-primary rounded-card border-border-default flex flex-col gap-6 border p-5 shadow-(--shadow-card) sm:p-6 md:p-8"
     >
       <div className="flex items-start gap-4">
         <span
@@ -166,14 +166,12 @@ export default function WhatsappNumberForm({
           onChange={(event) => setValue(event.target.value)}
           aria-invalid={state.fieldError ? true : undefined}
           aria-describedby="whatsappNumber-hint"
-          className={`rounded-control w-full border px-3 py-2.5 text-base tabular-nums outline-none focus:border-(--color-background-accent) ${
-            state.fieldError ? "border-red-400" : "border-gray-300"
-          }`}
+          className="field-control py-2.5 text-base tabular-nums"
         />
         <p
           id="whatsappNumber-hint"
           aria-live="polite"
-          className={`mb-0 text-sm ${state.fieldError ? "text-red-600" : "text-text-paragraph"}`}
+          className={`mb-0 text-sm ${state.fieldError ? "text-error" : "text-text-paragraph"}`}
         >
           {state.fieldError ??
             "Indicatif compris (+229 pour le Bénin). Laissez vide pour retirer le numéro."}
@@ -210,7 +208,7 @@ export default function WhatsappNumberForm({
           role="status"
           aria-live="polite"
           className={`mb-0 flex items-start gap-2 text-sm ${
-            state.feedback?.ok ? "text-green-700" : "text-red-600"
+            state.feedback?.ok ? "text-success" : "text-error"
           }`}
         >
           {state.feedback ? (
@@ -227,7 +225,7 @@ export default function WhatsappNumberForm({
         <button
           type="submit"
           disabled={pending}
-          className="bg-background-accent text-text-primary rounded-control flex shrink-0 items-center justify-center gap-2 px-4 py-2.5 font-semibold transition-[filter] hover:brightness-110 disabled:opacity-60"
+          className="btn-primary shrink-0"
         >
           Enregistrer le numéro
           {pending ? (

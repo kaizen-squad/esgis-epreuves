@@ -34,7 +34,7 @@ type SubmitState =
   | { status: "done"; id: number; result: ActionResult<{ slug: string }> };
 
 const ACTION_LINK_CLASS =
-  "text-text-paragraph flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-gray-100";
+  "text-text-paragraph flex items-center gap-1 rounded-control px-2 py-1 text-xs hover:bg-background-default";
 
 /**
  * Remplacement du PDF d'une epreuve (donnees inchangees), memes etapes et meme mise en forme que
@@ -205,7 +205,7 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
                         type="button"
                         onClick={() => setFile(null)}
                         aria-label={`Retirer ${file.name}`}
-                        className="text-text-paragraph cursor-pointer rounded p-1 hover:bg-gray-100"
+                        className="text-text-paragraph rounded-control hover:bg-background-default cursor-pointer p-1"
                       >
                         <FiX size={18} />
                       </button>
@@ -221,11 +221,7 @@ export default function ReplaceExamFileFlow({ exam }: { exam: Exam }) {
               href={`/bde/epreuves/${exam.slug}`}
               isDirty={file !== null}
             />
-            <button
-              type="submit"
-              disabled={pending}
-              className="bg-background-accent text-text-primary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 disabled:opacity-50"
-            >
+            <button type="submit" disabled={pending} className="btn-primary">
               Remplacer le fichier <FiArrowRight />
             </button>
           </div>

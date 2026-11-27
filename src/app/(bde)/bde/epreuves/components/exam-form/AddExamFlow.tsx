@@ -32,7 +32,6 @@ import {
 } from "./examForm";
 import AddExamResult from "./AddExamResult";
 import CancelAction from "./CancelAction";
-import { inputClass } from "./ExamCommonFields";
 import ExamFormSaving from "./ExamFormSaving";
 import type { ExamFormStep } from "./ExamFormStepper";
 import ExamCommonFields from "./ExamCommonFields";
@@ -281,7 +280,7 @@ export default function AddExamFlow({
                       id="bulk-academic-year"
                       value={bulkYear}
                       onChange={(event) => setBulkYear(event.target.value)}
-                      className={`${inputClass()} text-sm`}
+                      className="field-control text-sm"
                     >
                       <option value="" disabled>
                         Choisir une année
@@ -297,7 +296,7 @@ export default function AddExamFlow({
                     type="button"
                     disabled={!bulkYear}
                     onClick={() => applyYearToAll(bulkYear)}
-                    className="cursor-pointer rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                    className="btn-secondary px-3"
                   >
                     Appliquer à tous
                   </button>
@@ -323,7 +322,7 @@ export default function AddExamFlow({
                           type="button"
                           onClick={() => removeEntry(entry.key)}
                           aria-label={`Retirer ${entry.file.name}`}
-                          className="text-text-paragraph cursor-pointer rounded p-1 hover:bg-gray-100"
+                          className="text-text-paragraph rounded-control hover:bg-background-default cursor-pointer p-1"
                         >
                           <FiX size={18} />
                         </button>
@@ -360,11 +359,7 @@ export default function AddExamFlow({
 
           <div className="ml-auto flex items-center gap-4">
             <CancelAction href="/bde/accueil" isDirty={isDirty} />
-            <button
-              type="submit"
-              disabled={pending}
-              className="bg-background-accent text-text-primary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 disabled:opacity-50"
-            >
+            <button type="submit" disabled={pending} className="btn-primary">
               Verser {files.length > 1 ? "les épreuves" : "l'épreuve"}{" "}
               <FiArrowRight />
             </button>

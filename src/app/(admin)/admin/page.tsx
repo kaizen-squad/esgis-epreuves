@@ -61,8 +61,8 @@ export default async function AdminMembersPage({
         />
       </section>
 
-      <section className="bg-background-primary rounded-card shadow-card overflow-hidden border border-gray-200">
-        <div className="flex flex-col gap-4 border-b border-gray-200 p-5 md:flex-row md:items-center md:justify-between">
+      <section className="bg-background-primary rounded-card shadow-card border-border-default overflow-hidden border">
+        <div className="border-border-default flex flex-col gap-4 border-b p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-text-secondary mb-0 text-lg font-semibold">
               Membres du BDE
@@ -85,7 +85,7 @@ export default async function AdminMembersPage({
           <>
             <MembersTable members={members} search={search} />
             {total > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-200 px-5 py-4 sm:flex-row">
+              <div className="border-border-default flex flex-col items-center justify-between gap-3 border-t px-5 py-4 sm:flex-row">
                 <p className="text-text-paragraph mb-0 text-sm">
                   {first} à {last} sur {total} membre{total > 1 ? "s" : ""}
                 </p>
