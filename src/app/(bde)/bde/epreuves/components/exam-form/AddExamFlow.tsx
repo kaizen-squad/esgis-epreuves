@@ -105,8 +105,10 @@ export default function AddExamFlow({
 
   const [state, dispatch, pending] = useActionState<SubmitState, FormData>(
     async (_prev, formData) => {
-      // L'annee est repetee une fois par carte de fichier, dans l'ordre du lot.
+      // L'annee et la case "inconnue" sont repetees une fois par carte de fichier, dans l'ordre
+      // du lot.
       const years = formData.getAll("academicYear");
+      const yearUnknownFlags = formData.getAll("yearUnknown");
       const parsed = addExamFormSchema.safeParse({
         fieldId: formData.get("fieldId") ?? "",
         levelId: formData.get("levelId") ?? "",
@@ -118,6 +120,7 @@ export default function AddExamFlow({
         files: formData.getAll("files").map((file, index) => ({
           file,
           academicYear: years[index] ?? "",
+          yearUnknown: yearUnknownFlags[index] === "true",
         })),
       });
       if (!parsed.success) {

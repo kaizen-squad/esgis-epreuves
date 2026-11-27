@@ -30,8 +30,8 @@ const validValues = {
   examType: "Contrôle Continu",
 };
 
-function entry(file = pdf(), academicYear = "2025-2026") {
-  return { file, academicYear };
+function entry(file = pdf(), academicYear = "2025-2026", yearUnknown = false) {
+  return { file, academicYear, yearUnknown };
 }
 
 describe("academicYears", () => {
@@ -89,9 +89,21 @@ describe("addExamFormSchema", () => {
     expect(
       addExamFormSchema.safeParse({
         ...validValues,
-        files: [entry(pdf(), "")],
+        files: [entry(pdf(), "", true)],
       }).success,
     ).toBe(true);
+  });
+
+  it("refuse une annee vide sans que la case inconnue soit cochee (defaut de la revue Opus, #202 bis)", () => {
+    const result = addExamFormSchema.safeParse({
+      ...validValues,
+      files: [entry(pdf(), "", false)],
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(toFieldErrors(result.error).fileErrors).toEqual({
+      0: { academicYear: "Choisissez une année ou cochez « Année inconnue »." },
+    });
   });
 
   it("accepte un Controle Terminal sans session (inconnue sur une vieille epreuve, decision du 2026-11-26)", () => {
@@ -155,7 +167,10 @@ describe("addExamFormSchema", () => {
   it("indexe l'erreur d'annee par fichier", () => {
     const result = addExamFormSchema.safeParse({
       ...validValues,
-      files: [entry(), { file: pdf("b.pdf"), academicYear: "2024" }],
+      files: [
+        entry(),
+        { file: pdf("b.pdf"), academicYear: "2024", yearUnknown: false },
+      ],
     });
     expect(result.success).toBe(false);
     if (result.success) return;
@@ -183,7 +198,7 @@ describe("toBatchFormData", () => {
   it("aligne une valeur de chaque metadonnee par fichier", () => {
     const parsed = addExamFormSchema.parse({
       ...validValues,
-      files: [entry(pdf("a.pdf"), "2025-2026"), entry(pdf("b.pdf"), "")],
+      files: [entry(pdf("a.pdf"), "2025-2026"), entry(pdf("b.pdf"), "", true)],
     });
     const formData = toBatchFormData(parsed);
     expect(formData.getAll("files")).toHaveLength(2);
@@ -204,16 +219,37 @@ describe("toBatchFormData", () => {
 });
 
 describe("editExamFormSchema", () => {
-  const editValues = { ...validValues, academicYear: "2024-2025" };
+  const editValues = {
+    ...validValues,
+    academicYear: "2024-2025",
+    yearUnknown: false,
+  };
 
   it("accepte une epreuve en Controle Continu", () => {
     expect(editExamFormSchema.safeParse(editValues).success).toBe(true);
   });
 
-  it("accepte une annee inconnue", () => {
+  it("accepte une annee inconnue (case cochee)", () => {
     expect(
-      editExamFormSchema.safeParse({ ...editValues, academicYear: "" }).success,
+      editExamFormSchema.safeParse({
+        ...editValues,
+        academicYear: "",
+        yearUnknown: true,
+      }).success,
     ).toBe(true);
+  });
+
+  it("refuse une annee vide sans que la case inconnue soit cochee (defaut de la revue Opus, #202 bis)", () => {
+    const result = editExamFormSchema.safeParse({
+      ...editValues,
+      academicYear: "",
+      yearUnknown: false,
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(toEditFieldErrors(result.error)).toEqual({
+      academicYear: "Choisissez une année ou cochez « Année inconnue ».",
+    });
   });
 
   it("renvoie le premier message par champ", () => {
@@ -228,9 +264,12 @@ describe("editExamFormSchema", () => {
     });
   });
 
-  it("produit le FormData attendu par updateExamMetadata", () => {
+  it("produit le FormData attendu par updateExamMetadata, sans yearUnknown (usage interne a la validation, #202 bis)", () => {
     const formData = toMetadataFormData(editExamFormSchema.parse(editValues));
-    expect(Object.fromEntries(formData)).toEqual(editValues);
+    expect(Object.fromEntries(formData)).toEqual({
+      ...editValues,
+      yearUnknown: undefined,
+    });
   });
 });
 

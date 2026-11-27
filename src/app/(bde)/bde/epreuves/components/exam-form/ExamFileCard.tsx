@@ -14,7 +14,8 @@ type CardValues = { academicYear: string; yearUnknown: boolean };
  * genere cote serveur depuis #198. `yearUnknown` est un etat propre, jamais derive de
  * `academicYear === ""` : sinon un fichier tout juste ajoute (annee pas encore choisie) afficherait
  * la case cochee par defaut, masquant le select avant meme que le BDE ait pu choisir (revue Opus du
- * lot, defaut bloquant).
+ * lot, defaut bloquant). Coche elle-meme ne doit pas effacer `academicYear` : l'annee choisie reste
+ * en memoire pour reapparaitre dans le select si la case est decochee (revue Opus, second passage).
  */
 export default function ExamFileCard({
   idPrefix,
@@ -77,6 +78,11 @@ export default function ExamFileCard({
           >
             Année académique
           </label>
+          <input
+            type="hidden"
+            name="yearUnknown"
+            value={yearUnknown ? "true" : "false"}
+          />
           {yearUnknown ? (
             <input type="hidden" name="academicYear" value="" />
           ) : (
@@ -112,12 +118,10 @@ export default function ExamFileCard({
               type="checkbox"
               checked={yearUnknown}
               onChange={(event) =>
-                onChange?.({
-                  yearUnknown: event.target.checked,
-                  // Vide l'annee en cochant ; la laisse telle quelle en decochant (le select
-                  // redevient visible, deja a la valeur choisie avant, ou vide si jamais choisie).
-                  ...(event.target.checked ? { academicYear: "" } : {}),
-                })
+                // L'annee en memoire n'est jamais effacee ici : l'input cache ci-dessus envoie
+                // deja "" au serveur tant que la case est cochee, et le select la retrouve au
+                // decochage.
+                onChange?.({ yearUnknown: event.target.checked })
               }
             />
             Année inconnue

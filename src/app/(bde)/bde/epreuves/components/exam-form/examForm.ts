@@ -67,17 +67,34 @@ const academicYearSchema = z.union([
   z.string().regex(/^\d{4}-\d{4}$/, "Format attendu : AAAA-AAAA."),
 ]);
 
+const YEAR_REQUIRED_MESSAGE =
+  "Choisissez une année ou cochez « Année inconnue ».";
+
+/** Annee vide sans que la case "Annee inconnue" le justifie : un oubli, pas un choix (revue #202). */
+function requireYearChoice(data: {
+  academicYear: string;
+  yearUnknown: boolean;
+}) {
+  return data.academicYear !== "" || data.yearUnknown;
+}
+
 /** Metadonnees propres a chaque fichier du lot ; les autres sont communes a tout le lot. Le titre
  * n'est plus saisi (#202) : toujours genere cote serveur depuis #198. */
-const examFileEntrySchema = z.object({
-  file: z
-    .instanceof(File, { message: "Fichier manquant." })
-    .refine(
-      (file) => validateExamFile(file) === null,
-      "Retirez ce fichier invalide avant de publier.",
-    ),
-  academicYear: academicYearSchema,
-});
+const examFileEntrySchema = z
+  .object({
+    file: z
+      .instanceof(File, { message: "Fichier manquant." })
+      .refine(
+        (file) => validateExamFile(file) === null,
+        "Retirez ce fichier invalide avant de publier.",
+      ),
+    academicYear: academicYearSchema,
+    yearUnknown: z.boolean(),
+  })
+  .refine(requireYearChoice, {
+    message: YEAR_REQUIRED_MESSAGE,
+    path: ["academicYear"],
+  });
 
 /** Champs communs aux formulaires d'ajout et de modification (filiere, niveau, matiere...).
  * `session` vide est resolu par `validateSessionForExamType`, applique apres `.extend`. */
@@ -193,8 +210,12 @@ export function toBatchFormData(values: AddExamFormValues): FormData {
 export const editExamFormSchema = validateSessionForExamType(
   commonExamSchema.extend({
     academicYear: academicYearSchema,
+    yearUnknown: z.boolean(),
   }),
-);
+).refine(requireYearChoice, {
+  message: YEAR_REQUIRED_MESSAGE,
+  path: ["academicYear"],
+});
 
 export type EditExamFormValues = z.output<typeof editExamFormSchema>;
 export type EditExamErrors = Partial<Record<keyof EditExamFormValues, string>>;
@@ -209,10 +230,13 @@ export function toEditFieldErrors(error: z.ZodError): EditExamErrors {
   return errors;
 }
 
-/** `FormData` au format de `updateExamMetadata`. */
+/** `FormData` au format de `updateExamMetadata` : `yearUnknown` ne sert qu'a la validation cote
+ * client, le backend n'attend qu'une annee (eventuellement vide, #196). */
 export function toMetadataFormData(values: EditExamFormValues): FormData {
+  const { yearUnknown, ...fields } = values;
+  void yearUnknown;
   const formData = new FormData();
-  for (const [name, value] of Object.entries(values)) {
+  for (const [name, value] of Object.entries(fields)) {
     formData.append(name, value);
   }
   return formData;
