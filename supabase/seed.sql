@@ -54,21 +54,22 @@ sessioned_subjects as (
 -- Une annee academique sur 7 est volontairement laissee inconnue (#196), pour exercer l'affichage
 -- "Inconnue" en dev sans fausser les autres croisements de filtres.
 -- `field_id`/`level_id`/`option_id` ne sont plus fournis : le trigger `exams_set_classification`
--- (#197) les deduit de `subject_id`. Titre au meme format que `examTitle()` (#198, "Matiere :
--- Type[, session]"), jamais la matiere seule : le seed doit refleter ce que l'application ecrit
--- reellement, sinon un bug de format ne serait jamais visible en local.
+-- (#197) les deduit de `subject_id`. Titre au meme format que `examTitle()` (#198/#206, "Matiere :
+-- Rattrapage" pour un rattrapage, sinon "Matiere : Type[, session]"), jamais la matiere seule : le
+-- seed doit refleter ce que l'application ecrit reellement, sinon un bug de format ne serait
+-- jamais visible en local.
 insert into public.exams (
   title, slug, academic_year, session, exam_type,
   subject_id,
   file_hash, file_mime_type, file_size, r2_key
 )
 select
-  ts.name || ' : ' ||
-    (case ts.exam_type when 'Contrôle Continu' then 'Contrôle continu' else 'Contrôle terminal' end) ||
-    (case ts.session
-      when 'Session Normale' then ', session normale'
-      when 'Rattrapage' then ', rattrapage'
-      else ''
+  ts.name ||
+    (case
+      when ts.session = 'Rattrapage' then ' : Rattrapage'
+      when ts.exam_type = 'Contrôle Continu' then ' : Contrôle continu'
+      when ts.session = 'Session Normale' then ' : Contrôle terminal, session normale'
+      else ' : Contrôle terminal'
     end),
   lower(ts.level_name) || '-' || (case when ts.field_name = 'Gestion' then 'gestion' else 'irt' end)
     || '-' || ts.n,
