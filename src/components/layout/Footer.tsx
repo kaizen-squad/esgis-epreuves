@@ -66,8 +66,16 @@ const Footer = async ({ links }: FooterProps) => {
           © Copyright {new Date().getFullYear()}, tous droits réservés par
           Kaizen Studio.
         </p>
-        <span className="text-text-primary flex items-center gap-2 text-sm font-semibold tracking-tight">
-          Kaizen Studio <FiLinkedin size={14} aria-hidden="true" />
+        <span className="text-text-primary flex items-center gap-2 text-base font-semibold tracking-tight">
+          <Image
+            src="/images/kaizen-logo.png"
+            alt="Kaizen"
+            width={640}
+            height={131}
+            className="h-5 w-auto"
+          />
+          <span>Studio</span>
+          <FiLinkedin size={20} aria-hidden="true" />
         </span>
       </div>
 
