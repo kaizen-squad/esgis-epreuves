@@ -2,6 +2,7 @@ import { getAcademicYears, getExams } from "@/features/exams/queries";
 import {
   getFields,
   getLevels,
+  getOptions,
   getSubjects,
 } from "@/features/referentials/queries";
 import CatalogueEpreuves from "@/components/catalogue/CatalogueEpreuve";
@@ -25,13 +26,15 @@ const CatalogueEpreuveSection = async ({
    */
   forcedCreatedBy?: string;
 }) => {
-  const [result, fields, levels, subjects, academicYears] = await Promise.all([
-    getExams({ ...toExamFilters(searchParams), createdBy: forcedCreatedBy }),
-    getFields(),
-    getLevels(),
-    getSubjects(),
-    getAcademicYears(),
-  ]);
+  const [result, fields, levels, subjects, options, academicYears] =
+    await Promise.all([
+      getExams({ ...toExamFilters(searchParams), createdBy: forcedCreatedBy }),
+      getFields(),
+      getLevels(),
+      getSubjects(),
+      getOptions(),
+      getAcademicYears(),
+    ]);
 
   return (
     <section className="mx-auto mb-20 w-full max-w-7xl px-4 lg:px-6">
@@ -40,7 +43,7 @@ const CatalogueEpreuveSection = async ({
         total={result.total}
         page={result.page}
         pageSize={result.pageSize}
-        filterOptions={{ fields, levels, subjects, academicYears }}
+        filterOptions={{ fields, levels, subjects, options, academicYears }}
         manageable={manageable}
       />
     </section>

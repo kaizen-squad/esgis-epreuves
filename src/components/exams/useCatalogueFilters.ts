@@ -4,8 +4,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useTransition } from "react";
 import type { CatalogueFilterKey } from "@/components/exams/catalogueFilters";
 
-/** Changer de filiere ou de niveau rend la matiere choisie potentiellement hors sujet : on la retire. */
-const CLEARS_SUBJECT: CatalogueFilterKey[] = ["fieldId", "levelId"];
+/** Changer de filiere, de niveau ou d'option rend la matiere choisie potentiellement hors sujet : on la retire. */
+const CLEARS_SUBJECT: CatalogueFilterKey[] = ["fieldId", "levelId", "optionId"];
+/** Changer de filiere rend l'option choisie potentiellement hors sujet (#201, options propres a une filiere) : on la retire. */
+const CLEARS_OPTION: CatalogueFilterKey[] = ["fieldId"];
 
 export type CatalogueFilters = ReturnType<typeof useCatalogueFilters>;
 
@@ -37,6 +39,7 @@ export function useCatalogueFilters() {
     else params.delete(key);
     params.delete("page");
     if (CLEARS_SUBJECT.includes(key)) params.delete("subjectId");
+    if (CLEARS_OPTION.includes(key)) params.delete("optionId");
     pendingParams.current = params;
 
     const query = params.toString();

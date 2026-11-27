@@ -27,11 +27,18 @@ const FilterComponents = ({
   const groupId = useId();
   const fieldId = filters.get("fieldId");
   const levelId = filters.get("levelId");
-  // Matieres restreintes a la filiere et au niveau choisis, s'il y en a.
+  const optionId = filters.get("optionId");
+  // Options de la filiere choisie, s'il y en a.
+  const availableOptions = options.options.filter(
+    (option) => !fieldId || option.fieldId === fieldId,
+  );
+  // Matieres restreintes a la filiere, au niveau et a l'option choisis, s'il y en a. Une option
+  // active n'affiche jamais les matieres du tronc commun (decision du 2026-11-26, #201).
   const subjects = options.subjects.filter(
     (subject) =>
       (!fieldId || subject.fieldId === fieldId) &&
-      (!levelId || subject.levelId === levelId),
+      (!levelId || subject.levelId === levelId) &&
+      (!optionId || subject.optionId === optionId),
   );
 
   return (
@@ -85,6 +92,20 @@ const FilterComponents = ({
                     label={field.name}
                     checked={fieldId === field.id}
                     onChange={() => filters.toggle("fieldId", field.id)}
+                  />
+                ))}
+              </div>
+            </HideFilterComponent>
+          )}
+          {availableOptions.length > 0 && (
+            <HideFilterComponent label="Option">
+              <div className="flex flex-wrap gap-2">
+                {availableOptions.map((option) => (
+                  <NiveauCard
+                    key={option.id}
+                    label={option.name}
+                    active={optionId === option.id}
+                    onClick={() => filters.toggle("optionId", option.id)}
                   />
                 ))}
               </div>
