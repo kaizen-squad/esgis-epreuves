@@ -143,6 +143,42 @@ jobs:
           path: test-results/
           retention-days: 7
 
+  migrations-sync-check:
+    name: Migrations a jour (prod et preview)
+    # Uniquement sur push vers main (jamais sur une PR) : evite d'exposer SUPABASE_ACCESS_TOKEN,
+    # qui donne acces en ECRITURE a toute l'API de gestion du compte Supabase (pas seulement en
+    # lecture), a un run declenche par du code non revu. Ce job tourne apres le merge, en meme
+    # temps que le deploiement Vercel : il ne peut pas empecher un deploiement casse, seulement
+    # le signaler. Une migration non encore appliquee doit l'etre AVANT le merge de sa PR.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Enable pnpm (version pinned by packageManager)
+        run: corepack enable pnpm
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      # omasroebckucjkfjbqkc = esgis-epreuves (prod) ; zoaabkpmujtoahudsyab = esgis-epreuves-dev,
+      # qui alimente en realite les deploiements Preview Vercel (voir #205). Le jeton n'est passe
+      # qu'a ces deux etapes, jamais au job entier (pnpm install, notamment, ne doit pas le voir).
+      - run: pnpm tsx scripts/check-remote-migrations.ts omasroebckucjkfjbqkc
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      - run: pnpm tsx scripts/check-remote-migrations.ts zoaabkpmujtoahudsyab
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
   security:
     name: Secrets and dependencies
     runs-on: ubuntu-24.04
