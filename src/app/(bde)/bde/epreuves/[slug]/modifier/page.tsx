@@ -5,7 +5,6 @@ import { getExamCached } from "@/features/exams/queries";
 import {
   getFields,
   getLevels,
-  getOptions,
   getSubjects,
 } from "@/features/referentials/queries";
 import ExamWelcomeSection from "../../components/ExamWelcomeSection";
@@ -25,12 +24,11 @@ export default async function ModifierEpreuvePage({
 }: PageProps<"/bde/epreuves/[slug]/modifier">) {
   await requireBdeSession();
   const { slug } = await params;
-  const [exam, fields, levels, subjects, options] = await Promise.all([
+  const [exam, fields, levels, subjects] = await Promise.all([
     getExamCached(slug),
     getFields(),
     getLevels(),
     getSubjects(),
-    getOptions(),
   ]);
   if (!exam) notFound();
 
@@ -53,7 +51,6 @@ export default async function ModifierEpreuvePage({
         fields={fields}
         levels={levels}
         subjects={availableSubjects}
-        options={options}
       />
     </div>
   );

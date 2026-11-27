@@ -5,12 +5,13 @@ import { academicYears } from "./examForm";
 const INPUT_CLASS =
   "w-full rounded-lg border bg-background-primary px-3 py-2 text-sm outline-none focus:border-background-accent";
 
-type CardValues = { title: string; academicYear: string };
+type CardValues = { academicYear: string };
 
 /**
- * Carte d'un fichier d'epreuve : nom, detail (taille ou erreur), actions, et les deux metadonnees
- * propres a chaque fichier (titre, annee academique), nommees `title` et `academicYear` comme
- * l'attendent `uploadExamsBatch` (une valeur par carte, dans l'ordre du lot) et `updateExamMetadata`.
+ * Carte d'un fichier d'epreuve : nom, detail (taille ou erreur), actions, et l'annee academique,
+ * propre a chaque fichier, nommee `academicYear` comme l'attend `uploadExamsBatch` (une valeur par
+ * carte, dans l'ordre du lot) et `updateExamMetadata`. Le titre n'est plus saisi (#202) : toujours
+ * genere cote serveur depuis #198.
  */
 export default function ExamFileCard({
   idPrefix,
@@ -33,8 +34,9 @@ export default function ExamFileCard({
   onChange?: (patch: Partial<CardValues>) => void;
   actions?: ReactNode;
 }) {
-  const titleId = `${idPrefix}-title`;
   const yearId = `${idPrefix}-year`;
+  const yearUnknownId = `${idPrefix}-year-unknown`;
+  const yearUnknown = values?.academicYear === "";
   // L'annee enregistree reste proposee meme si elle sort de la plage du select.
   const years = academicYears();
   if (values?.academicYear && !years.includes(values.academicYear)) {
@@ -65,33 +67,13 @@ export default function ExamFileCard({
       </div>
 
       {values ? (
-        <div className="grid gap-3 sm:grid-cols-[1fr_11rem]">
-          <div className="flex flex-col gap-1">
-            <label htmlFor={titleId} className="text-sm font-medium">
-              Titre *
-            </label>
-            <input
-              id={titleId}
-              name="title"
-              type="text"
-              value={values.title}
-              onChange={(event) => onChange?.({ title: event.target.value })}
-              placeholder="Devoir d'Algorithmique avancée"
-              aria-invalid={errors?.title ? true : undefined}
-              aria-describedby={errors?.title ? `${titleId}-error` : undefined}
-              className={`${INPUT_CLASS} ${errors?.title ? "border-red-400" : "border-gray-300"}`}
-            />
-            {errors?.title ? (
-              <p id={`${titleId}-error`} className="mb-0 text-xs text-red-600">
-                {errors.title}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor={yearId} className="text-sm font-medium">
-              Année académique *
-            </label>
+        <div className="flex flex-col gap-1 sm:max-w-[14rem]">
+          <label htmlFor={yearId} className="text-sm font-medium">
+            Année académique
+          </label>
+          {yearUnknown ? (
+            <input type="hidden" name="academicYear" value="" />
+          ) : (
             <select
               id={yearId}
               name="academicYear"
@@ -114,12 +96,32 @@ export default function ExamFileCard({
                 </option>
               ))}
             </select>
-            {errors?.academicYear ? (
-              <p id={`${yearId}-error`} className="mb-0 text-xs text-red-600">
-                {errors.academicYear}
-              </p>
-            ) : null}
-          </div>
+          )}
+          <label
+            htmlFor={yearUnknownId}
+            className="text-text-paragraph flex items-center gap-1.5 text-xs"
+          >
+            <input
+              id={yearUnknownId}
+              type="checkbox"
+              checked={yearUnknown}
+              onChange={(event) =>
+                // Decocher propose l'annee la plus recente par defaut, plutot que de laisser le
+                // select reapparaitre vide : `yearUnknown` reste purement derive de la valeur (pas
+                // d'etat local a resynchroniser avec "Appliquer a tous", qui ecrit directement
+                // `academicYear`).
+                onChange?.({
+                  academicYear: event.target.checked ? "" : years[0],
+                })
+              }
+            />
+            Année inconnue
+          </label>
+          {errors?.academicYear ? (
+            <p id={`${yearId}-error`} className="mb-0 text-xs text-red-600">
+              {errors.academicYear}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </li>
