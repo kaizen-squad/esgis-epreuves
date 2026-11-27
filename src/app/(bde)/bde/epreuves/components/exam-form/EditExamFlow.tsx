@@ -95,6 +95,7 @@ export default function EditExamFlow({
     async (_prev, formData) => {
       const parsed = editExamFormSchema.safeParse({
         academicYear: formData.get("academicYear") ?? "",
+        yearUnknown: formData.get("yearUnknown") === "true",
         fieldId: formData.get("fieldId") ?? "",
         levelId: formData.get("levelId") ?? "",
         subjectId: formData.get("subjectId") ?? "",
