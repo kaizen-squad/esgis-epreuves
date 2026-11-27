@@ -72,9 +72,19 @@ export default async function FieldExamsView({
         />
         <h1 className="head-title text-center">Épreuves : {title}</h1>
         <p className="mb-6 text-center">
-          Recherchez rapidement un sujet spécifique et téléchargez le fichier en
-          un instant. Notre interface fluide simplifie vos révisions avant
-          l&apos;examen.
+          {basePath === "" ? (
+            <>
+              Recherche rapidement un sujet spécifique et télécharge le fichier
+              en un instant. Notre interface fluide simplifie tes révisions
+              avant l&apos;examen.
+            </>
+          ) : (
+            <>
+              Recherchez rapidement un sujet spécifique et téléchargez le
+              fichier en un instant. Notre interface fluide simplifie vos
+              révisions avant l&apos;examen.
+            </>
+          )}
         </p>
         <Research catalogueHref={contextualCatalogueHref} />
       </div>
