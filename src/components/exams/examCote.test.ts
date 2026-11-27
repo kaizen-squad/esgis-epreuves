@@ -77,14 +77,14 @@ describe("examCote", () => {
 });
 
 describe("examTitle", () => {
-  it("compose matiere, type et session quand les trois sont connus (#198)", () => {
+  it('affiche seulement "Rattrapage" pour un rattrapage, sans repeter le type (toujours un Controle Terminal, retour utilisateur)', () => {
     expect(
       examTitle({
         subject: "Langage C avancé",
         examType: "Contrôle Terminal",
         session: "Rattrapage",
       }),
-    ).toBe("Langage C avancé : Contrôle terminal, rattrapage");
+    ).toBe("Langage C avancé : Rattrapage");
   });
 
   it("omet la session absente sur un Controle Continu (#196)", () => {
@@ -103,7 +103,7 @@ describe("examTitle", () => {
     ).toBe("Algèbre : Contrôle terminal");
   });
 
-  it("affiche la session normale en minuscules, comme le rattrapage", () => {
+  it("affiche la session normale en minuscules, avec le type (contrairement au rattrapage)", () => {
     expect(
       examTitle({
         subject: "Algèbre",
