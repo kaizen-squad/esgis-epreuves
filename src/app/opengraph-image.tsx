@@ -26,8 +26,10 @@ export default function OpengraphImage() {
         fontFamily: "sans-serif",
       }}
     >
-      <div style={{ fontSize: 96, fontWeight: 700 }}>Alexandria.</div>
-      <div style={{ fontSize: 32, color: "#c41c2d" }}>
+      <div style={{ display: "flex", fontSize: 96, fontWeight: 700 }}>
+        Alexandria.
+      </div>
+      <div style={{ display: "flex", fontSize: 32, color: "#c41c2d" }}>
         Une initiative du BDE ESGIS
       </div>
       <KaizenCredit />

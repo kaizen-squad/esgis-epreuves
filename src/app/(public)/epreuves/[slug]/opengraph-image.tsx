@@ -36,9 +36,10 @@ export default async function OpengraphImage({
     >
       <KaizenCredit />
       {exam ? (
-        <>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div
             style={{
+              display: "flex",
               fontSize: 30,
               letterSpacing: 2,
               color: "#c41c2d",
@@ -47,14 +48,23 @@ export default async function OpengraphImage({
           >
             {examCote(exam)}
           </div>
-          <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.2 }}>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 56,
+              fontWeight: 700,
+              lineHeight: 1.2,
+            }}
+          >
             {exam.title}
           </div>
-        </>
+        </div>
       ) : (
-        <div style={{ fontSize: 72, fontWeight: 700 }}>Alexandria.</div>
+        <div style={{ display: "flex", fontSize: 72, fontWeight: 700 }}>
+          Alexandria.
+        </div>
       )}
-      <div style={{ fontSize: 28, color: "#9b9bab" }}>
+      <div style={{ display: "flex", fontSize: 28, color: "#9b9bab" }}>
         Alexandria, une initiative du BDE ESGIS
       </div>
     </div>,
