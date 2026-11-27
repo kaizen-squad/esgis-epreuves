@@ -72,26 +72,16 @@ export default async function FieldExamsView({
         />
         <h1 className="head-title text-center">Épreuves : {title}</h1>
         <p className="mb-6 text-center">
-          {basePath === "" ? (
-            <>
-              Recherche rapidement un sujet spécifique et télécharge le fichier
-              en un instant. Notre interface fluide simplifie tes révisions
-              avant l&apos;examen.
-            </>
-          ) : (
-            <>
-              Recherchez rapidement un sujet spécifique et téléchargez le
-              fichier en un instant. Notre interface fluide simplifie vos
-              révisions avant l&apos;examen.
-            </>
-          )}
+          Recherche rapidement un sujet spécifique et télécharge le fichier en
+          un instant. Notre interface fluide simplifie tes révisions avant
+          l&apos;examen.
         </p>
         <Research catalogueHref={contextualCatalogueHref} />
       </div>
       <ImageHandler
         className="md:hidden"
         image_url="/images/accueil_span_page.jpeg"
-        image_alt="Filière image en-tête"
+        image_alt="Image d'en-tête de la filière"
         image_className="object-cover object-top"
       />
       <FiliereCatalogueSection
