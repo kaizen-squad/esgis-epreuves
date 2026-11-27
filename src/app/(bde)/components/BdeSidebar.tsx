@@ -42,9 +42,10 @@ const BDE_LINKS: BdeLink[] = [
     isActive: (pathname) => pathname === "/bde/epreuves/ajouter",
   },
   {
-    // Versements du membre connecte (modifier, remplacer, supprimer) : actif aussi sur les pages
-    // d'une epreuve precise, qui ne s'atteignent qu'en partant de cette liste (#192, corrige le
-    // lien qui pointait vers le catalogue de toute l'equipe).
+    // Versements du membre connecte (modifier, remplacer, supprimer), #192, corrige le lien qui
+    // pointait vers le catalogue de toute l'equipe. Actif aussi sur une page d'epreuve precise
+    // (modifier/remplacer), meme atteinte depuis ailleurs (recherche, catalogue) : ces pages
+    // restent la suite logique d'un versement, pas celle du catalogue retire de la sidebar.
     name: "Mes épreuves",
     href: BDE_MES_EPREUVES_HREF,
     icon: FiFolder,
