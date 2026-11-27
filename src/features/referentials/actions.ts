@@ -37,6 +37,9 @@ async function insertReferential(
   table: string,
   duplicateMessage: string,
   values: Record<string, unknown>,
+  /** Message pour une violation de cle etrangere (23503), ex. une option d'une autre filiere
+   * (contrainte composite `subjects_option_id_field_id_fkey`, #197). */
+  foreignKeyMessage = "Rattachement invalide.",
 ): Promise<ActionResult<{ id: string }>> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -46,6 +49,7 @@ async function insertReferential(
     .single();
   if (error) {
     if (error.code === "23505") return actionError(duplicateMessage);
+    if (error.code === "23503") return actionError(foreignKeyMessage);
     console.error(`${label}: insertion`, error);
     return actionError(
       `Impossible d'enregistrer ${itemLabel}. Réessayez dans un instant.`,
@@ -251,6 +255,7 @@ export async function createSubject(
     fieldId: formData.get("fieldId"),
     levelId: formData.get("levelId"),
     name: formData.get("name"),
+    optionId: formData.get("optionId"),
   });
   if (!parsed.success) {
     return actionError(
@@ -258,13 +263,14 @@ export async function createSubject(
       z.flattenError(parsed.error).fieldErrors,
     );
   }
-  const { fieldId, levelId, name } = parsed.data;
+  const { fieldId, levelId, name, optionId } = parsed.data;
   return insertReferential(
     "createSubject",
     "cette matière",
     "subjects",
-    "Cette matière existe déjà pour cette filière et ce niveau.",
-    { field_id: fieldId, level_id: levelId, name },
+    "Cette matière existe déjà pour cette filière, ce niveau et cette option.",
+    { field_id: fieldId, level_id: levelId, name, option_id: optionId },
+    "Cette option n'appartient pas à la filière choisie.",
   );
 }
 

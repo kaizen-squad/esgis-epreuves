@@ -268,7 +268,7 @@ describe("createLevel", () => {
 });
 
 describe("createSubject", () => {
-  it("insere la matiere avec les colonnes field_id/level_id", async () => {
+  it("insere la matiere en tronc commun (optionId absent -> option_id null)", async () => {
     insertSingle.mockResolvedValue({ data: { id: FIELD_UUID }, error: null });
 
     await createSubject(
@@ -280,6 +280,27 @@ describe("createSubject", () => {
       field_id: FIELD_UUID,
       level_id: FIELD_UUID,
       name: "Algorithmique",
+      option_id: null,
+    });
+  });
+
+  it("insere la matiere rattachee a une option (#200)", async () => {
+    insertSingle.mockResolvedValue({ data: { id: FIELD_UUID }, error: null });
+
+    await createSubject(
+      form({
+        fieldId: FIELD_UUID,
+        levelId: FIELD_UUID,
+        name: "Anglais technique",
+        optionId: UNKNOWN_UUID,
+      }),
+    );
+
+    expect(insert).toHaveBeenCalledWith({
+      field_id: FIELD_UUID,
+      level_id: FIELD_UUID,
+      name: "Anglais technique",
+      option_id: UNKNOWN_UUID,
     });
   });
 
@@ -290,6 +311,27 @@ describe("createSubject", () => {
 
     expect(result.ok).toBe(false);
     expect(from).not.toHaveBeenCalled();
+  });
+
+  it("renvoie un message dedie sur une option d'une autre filiere (23503, #197)", async () => {
+    insertSingle.mockResolvedValue({
+      data: null,
+      error: { code: "23503", message: "foreign key violation" },
+    });
+
+    const result = await createSubject(
+      form({
+        fieldId: FIELD_UUID,
+        levelId: FIELD_UUID,
+        name: "Algo",
+        optionId: UNKNOWN_UUID,
+      }),
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Cette option n'appartient pas à la filière choisie.",
+    });
   });
 });
 

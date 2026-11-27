@@ -24,7 +24,7 @@ import {
 } from "react-icons/fi";
 import ActiveToggleButton from "@/app/(admin)/components/ActiveToggleButton";
 import { searchTokens } from "@/features/exams/schemas";
-import type { Field, Level } from "@/features/referentials/types";
+import type { Field, Level, Option } from "@/features/referentials/types";
 import type { ActionResult } from "@/lib/action-result";
 
 const INPUT_CLASS =
@@ -102,6 +102,10 @@ export type ReferentialItem = {
   isActive: boolean;
   fieldId?: string;
   levelId?: string;
+  /** Option rattachee (#197), matieres seulement ; `null`/absent pour le tronc commun. */
+  optionId?: string | null;
+  /** Sigle d'affichage (#198), filieres seulement. */
+  shortName?: string | null;
 };
 
 type CreateState =
@@ -121,6 +125,7 @@ export default function ReferentialManager({
   items,
   fields,
   levels,
+  options,
   examCounts = {},
   create,
   update,
@@ -134,6 +139,9 @@ export default function ReferentialManager({
   fields?: Field[];
   /** Niveaux, meme role que `fields`. Requis pour matiere seulement. */
   levels?: Level[];
+  /** Options (actives et inactives), pour le selecteur de rattachement (#200). Requis pour matiere
+   * seulement ; filtrees cote client sur la filiere choisie dans le formulaire. */
+  options?: Option[];
   /** Nombre d'epreuves rattachees a chaque item (#168), pour annoncer l'impact d'une desactivation. */
   examCounts?: Record<string, number>;
   create: (formData: FormData) => Promise<ActionResult<{ id: string }>>;
@@ -146,8 +154,12 @@ export default function ReferentialManager({
   const label = LABELS[kind];
   const needsField = kind === "subject" || kind === "option";
   const needsLevel = kind === "subject";
+  const needsOption = kind === "subject";
+  const needsShortName = kind === "field";
   const formRef = useRef<HTMLFormElement>(null);
   const [query, setQuery] = useState("");
+  // Controle pour que le selecteur d'option se limite a la filiere en cours de choix (#200).
+  const [selectedFieldId, setSelectedFieldId] = useState("");
 
   const fieldName = useMemo(
     () => new Map((fields ?? []).map((f) => [f.id, f.name])),
@@ -157,8 +169,15 @@ export default function ReferentialManager({
     () => new Map((levels ?? []).map((l) => [l.id, l.name])),
     [levels],
   );
+  const optionName = useMemo(
+    () => new Map((options ?? []).map((o) => [o.id, o.name])),
+    [options],
+  );
   const activeFields = (fields ?? []).filter((f) => f.isActive);
   const activeLevels = (levels ?? []).filter((l) => l.isActive);
+  const activeOptionsForSelectedField = (options ?? []).filter(
+    (o) => o.isActive && o.fieldId === selectedFieldId,
+  );
 
   // Recherche/filtre reserve a Matieres (#168) : seule liste assez longue (22 items a plat,
   // melangeant filieres et niveaux) pour en avoir besoin ; les 3 autres referentiels restent courts.
@@ -176,6 +195,7 @@ export default function ReferentialManager({
                 item.name,
                 item.fieldId ? fieldName.get(item.fieldId) : "",
                 item.levelId ? levelName.get(item.levelId) : "",
+                item.optionId ? optionName.get(item.optionId) : "",
               ].join(" "),
             ).join(" ");
             return queryTokens.every((token) => haystack.includes(token));
@@ -196,7 +216,7 @@ export default function ReferentialManager({
       if (levelCompare !== 0) return levelCompare;
       return a.name.localeCompare(b.name);
     });
-  }, [items, searchable, queryTokens, fieldName, levelName]);
+  }, [items, searchable, queryTokens, fieldName, levelName, optionName]);
 
   const [state, dispatch, pending] = useActionState<CreateState, FormData>(
     async (_prev, formData) => {
@@ -237,6 +257,20 @@ export default function ReferentialManager({
   const success = createdId
     ? `${capitalize(label.indefinite)} a bien été ${label.added}.`
     : null;
+
+  // Reajuste le filtre d'option pendant le rendu plutot que dans l'effet ci-dessous (regle
+  // react-hooks/set-state-in-effect) : la creation remet aussi la filiere choisie a vide. Suit
+  // `state.id` (horodatage du succes) pour ne reagir qu'une fois par soumission, jamais a une
+  // selection de filiere faite apres coup par l'utilisateur.
+  const [handledSuccessId, setHandledSuccessId] = useState<number | null>(null);
+  if (
+    state.status === "done" &&
+    state.result.ok &&
+    state.id !== handledSuccessId
+  ) {
+    setHandledSuccessId(state.id);
+    setSelectedFieldId("");
+  }
 
   useEffect(() => {
     if (state.status === "done" && state.result.ok) {
@@ -279,13 +313,24 @@ export default function ReferentialManager({
     return `${examSentence}${cascadeSentence}`;
   };
 
-  const fieldCount = 1 + (needsField ? 1 : 0) + (needsLevel ? 1 : 0);
+  // Nom + (filiere) + (niveau) + (option) + statut + actions (#200 : colonne Option en plus).
+  const columnCount =
+    2 + (needsField ? 1 : 0) + (needsLevel ? 1 : 0) + (needsOption ? 1 : 0) + 1;
+
+  const fieldCount =
+    1 +
+    (needsField ? 1 : 0) +
+    (needsLevel ? 1 : 0) +
+    (needsOption ? 1 : 0) +
+    (needsShortName ? 1 : 0);
   const gridColsClass =
-    fieldCount === 3
-      ? "sm:grid-cols-[1fr_1fr_1fr_auto]"
-      : fieldCount === 2
-        ? "sm:grid-cols-[1fr_1fr_auto]"
-        : "sm:grid-cols-[1fr_auto]";
+    fieldCount === 4
+      ? "sm:grid-cols-[1fr_1fr_1fr_1fr_auto]"
+      : fieldCount === 3
+        ? "sm:grid-cols-[1fr_1fr_1fr_auto]"
+        : fieldCount === 2
+          ? "sm:grid-cols-[1fr_1fr_auto]"
+          : "sm:grid-cols-[1fr_auto]";
 
   return (
     <div className="flex flex-col gap-6">
@@ -329,7 +374,8 @@ export default function ReferentialManager({
               <select
                 id={`${kind}-fieldId`}
                 name="fieldId"
-                defaultValue=""
+                value={selectedFieldId}
+                onChange={(event) => setSelectedFieldId(event.target.value)}
                 aria-invalid={errors.fieldId ? true : undefined}
                 aria-describedby={
                   errors.fieldId ? `${kind}-fieldId-error` : undefined
@@ -391,6 +437,31 @@ export default function ReferentialManager({
             </div>
           ) : null}
 
+          {needsOption ? (
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`${kind}-optionId`} className="font-medium">
+                Option
+              </label>
+              <select
+                // La cle force le reselecteur a se reinitialiser quand la filiere change : une
+                // option choisie pour une autre filiere n'a plus de sens (#200).
+                key={selectedFieldId}
+                id={`${kind}-optionId`}
+                name="optionId"
+                defaultValue=""
+                disabled={!selectedFieldId}
+                className={inputClass(errors.optionId)}
+              >
+                <option value="">Tronc commun (aucune option)</option>
+                {activeOptionsForSelectedField.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-1">
             <label htmlFor={`${kind}-name`} className="font-medium">
               Nom *
@@ -411,6 +482,20 @@ export default function ReferentialManager({
               </p>
             ) : null}
           </div>
+
+          {needsShortName ? (
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`${kind}-shortName`} className="font-medium">
+                Sigle
+              </label>
+              <input
+                id={`${kind}-shortName`}
+                name="shortName"
+                placeholder="ex. IRT"
+                className={inputClass()}
+              />
+            </div>
+          ) : null}
 
           <button
             type="submit"
@@ -478,6 +563,11 @@ export default function ReferentialManager({
                     Niveau
                   </th>
                 ) : null}
+                {needsOption ? (
+                  <th scope="col" className="px-5 py-3 font-medium">
+                    Option
+                  </th>
+                ) : null}
                 <th scope="col" className="px-5 py-3 font-medium">
                   Statut
                 </th>
@@ -490,9 +580,7 @@ export default function ReferentialManager({
               {visibleItems.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={
-                      2 + (needsField ? 1 : 0) + (needsLevel ? 1 : 0) + 1
-                    }
+                    colSpan={columnCount}
                     className="text-text-paragraph px-5 py-10 text-center"
                   >
                     {searchable && queryTokens.length > 0
@@ -510,12 +598,7 @@ export default function ReferentialManager({
                       {showFieldGroupHeader ? (
                         <tr key={`group-${item.fieldId ?? "none"}`}>
                           <td
-                            colSpan={
-                              2 +
-                              (needsField ? 1 : 0) +
-                              (needsLevel ? 1 : 0) +
-                              1
-                            }
+                            colSpan={columnCount}
                             className="bg-background-default text-text-secondary px-5 py-1.5 text-xs font-semibold"
                           >
                             {(item.fieldId && fieldName.get(item.fieldId)) ||
@@ -534,7 +617,7 @@ export default function ReferentialManager({
                         }
                       >
                         <td className="px-5 py-3">
-                          <RenameCell item={item} update={update} />
+                          <RenameCell item={item} update={update} kind={kind} />
                         </td>
                         {needsField ? (
                           <td className="text-text-paragraph px-5 py-3">
@@ -546,6 +629,12 @@ export default function ReferentialManager({
                           <td className="text-text-paragraph px-5 py-3">
                             {(item.levelId && levelName.get(item.levelId)) ||
                               "Aucun"}
+                          </td>
+                        ) : null}
+                        {needsOption ? (
+                          <td className="text-text-paragraph px-5 py-3">
+                            {(item.optionId && optionName.get(item.optionId)) ||
+                              "Tronc commun"}
                           </td>
                         ) : null}
                         <td className="px-5 py-3">
@@ -607,13 +696,17 @@ export default function ReferentialManager({
 function RenameCell({
   item,
   update,
+  kind,
 }: {
   item: ReferentialItem;
   update: (id: string, formData: FormData) => Promise<ActionResult<null>>;
+  kind: Kind;
 }) {
   const router = useRouter();
+  const needsShortName = kind === "field";
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(item.name);
+  const [shortName, setShortName] = useState(item.shortName ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startRenameTransition] = useTransition();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -621,6 +714,7 @@ function RenameCell({
   const cancel = () => {
     setEditing(false);
     setValue(item.name);
+    setShortName(item.shortName ?? "");
     setError(null);
     triggerRef.current?.focus();
   };
@@ -633,6 +727,7 @@ function RenameCell({
     }
     const formData = new FormData();
     formData.set("name", name);
+    if (needsShortName) formData.set("shortName", shortName.trim());
     startRenameTransition(async () => {
       let result;
       try {
@@ -664,6 +759,11 @@ function RenameCell({
         className={`flex items-center gap-2 text-left font-medium ${item.isActive ? "text-text-default" : "text-gray-500"}`}
       >
         {item.name}
+        {needsShortName && item.shortName ? (
+          <span className="text-text-paragraph text-xs">
+            ({item.shortName})
+          </span>
+        ) : null}
         <FiEdit2 size={13} className="text-text-paragraph" />
       </button>
     );
@@ -688,6 +788,22 @@ function RenameCell({
           aria-describedby={error ? `rename-${item.id}-error` : undefined}
           className={`${INPUT_CLASS} py-1 ${error ? "border-red-400" : "border-gray-300"}`}
         />
+        {needsShortName ? (
+          <input
+            value={shortName}
+            onChange={(event) => setShortName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                save();
+              }
+              if (event.key === "Escape") cancel();
+            }}
+            placeholder="Sigle"
+            aria-label={`Sigle pour ${item.name}`}
+            className={`${INPUT_CLASS} w-24 border-gray-300 py-1`}
+          />
+        ) : null}
         <button
           type="button"
           onClick={save}
