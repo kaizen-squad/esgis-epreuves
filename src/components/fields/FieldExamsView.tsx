@@ -24,9 +24,9 @@ import { catalogueHref, type SpaceBasePath } from "@/components/layout/spaces";
 import ImageHandler from "@/components/ui/ImageHandler";
 
 /**
- * Page d'une filiere (#53), partagee par l'espace public et l'espace BDE : en-tete, recherche et
- * catalogue filtre sur la filiere. `basePath` garde la recherche et les liens dans l'espace ;
- * cote BDE (`"/bde"`), les cartes ont le menu de gestion.
+ * Page d'une filiere (#53), utilisee par l'espace public (le pendant BDE affiche
+ * `FieldCoverageMatrix`, pas ce composant). `basePath` garde la recherche, le catalogue cible et
+ * le registre (tu/vous) coherents avec l'espace appelant.
  */
 export default async function FieldExamsView({
   fieldId,
@@ -90,7 +90,6 @@ export default async function FieldExamsView({
         total={result.exams.total}
         page={result.exams.page}
         pageSize={result.exams.pageSize}
-        manageable={basePath === "/bde"}
         filterOptions={{
           // Filiere fixee par la page : pas de filtre filiere, matieres de cette filiere seulement.
           fields: null,
