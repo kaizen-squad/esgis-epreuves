@@ -44,6 +44,8 @@ type FileEntry = {
   key: string;
   file: File;
   academicYear: string;
+  /** Etat propre, jamais derive de `academicYear === ""` (voir `ExamFileCard`). */
+  yearUnknown: boolean;
 };
 
 type AddValues = ExamCommonValues;
@@ -65,15 +67,15 @@ type SubmitState =
     }
   | { status: "done"; id: number; result: ActionResult<ExamBatchReport> };
 
-/** Nouveau fichier du lot : titre propose a partir du nom de fichier, annee a choisir. */
-/** Nouveau fichier du lot : annee academique courante proposee par defaut (plutot que vide), pour
- * que la case "Année inconnue" (#202, derivee de `academicYear === ""`) parte decochee, select
- * visible, au lieu de masquer le select d'emblee sur un simple ajout de fichier. */
+/** Nouveau fichier du lot : annee a choisir explicitement, jamais presupposee (revue Opus du lot :
+ * une annee courante proposee par defaut se publierait silencieusement si le BDE ne regarde pas
+ * la carte, contraire a l'objectif de qualite du lot). */
 function toEntry(file: File): FileEntry {
   return {
     key: fileKey(file),
     file,
-    academicYear: academicYears()[0] ?? "",
+    academicYear: "",
+    yearUnknown: false,
   };
 }
 
@@ -174,7 +176,9 @@ export default function AddExamFlow({
 
   /** "Appliquer a tous" (#172) : evite de choisir la meme annee fichier par fichier sur un lot. */
   const applyYearToAll = (academicYear: string) =>
-    setFiles((current) => current.map((entry) => ({ ...entry, academicYear })));
+    setFiles((current) =>
+      current.map((entry) => ({ ...entry, academicYear, yearUnknown: false })),
+    );
 
   // Deplace le focus sur le premier champ en erreur apres un echec de validation, sans scroll
   // supplementaire (le champ est deja dans le formulaire visible). Un `<fieldset>` (session,

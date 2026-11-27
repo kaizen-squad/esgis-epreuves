@@ -94,17 +94,25 @@ describe("addExamFormSchema", () => {
     ).toBe(true);
   });
 
-  it("exige une session pour un Controle Terminal", () => {
-    const result = addExamFormSchema.safeParse({
-      ...validValues,
-      examType: "Contrôle Terminal",
-      files: [entry()],
-    });
-    expect(result.success).toBe(false);
-    if (result.success) return;
-    expect(toFieldErrors(result.error).errors.session).toBe(
-      "Choisissez une session.",
-    );
+  it("accepte un Controle Terminal sans session (inconnue sur une vieille epreuve, decision du 2026-11-26)", () => {
+    expect(
+      addExamFormSchema.safeParse({
+        ...validValues,
+        examType: "Contrôle Terminal",
+        files: [entry()],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepte un Controle Terminal avec une session renseignee", () => {
+    expect(
+      addExamFormSchema.safeParse({
+        ...validValues,
+        session: "Rattrapage",
+        examType: "Contrôle Terminal",
+        files: [entry()],
+      }).success,
+    ).toBe(true);
   });
 
   it("refuse une session pour un Controle Continu", () => {

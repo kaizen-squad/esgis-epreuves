@@ -5,13 +5,16 @@ import { academicYears } from "./examForm";
 const INPUT_CLASS =
   "w-full rounded-lg border bg-background-primary px-3 py-2 text-sm outline-none focus:border-background-accent";
 
-type CardValues = { academicYear: string };
+type CardValues = { academicYear: string; yearUnknown: boolean };
 
 /**
  * Carte d'un fichier d'epreuve : nom, detail (taille ou erreur), actions, et l'annee academique,
  * propre a chaque fichier, nommee `academicYear` comme l'attend `uploadExamsBatch` (une valeur par
  * carte, dans l'ordre du lot) et `updateExamMetadata`. Le titre n'est plus saisi (#202) : toujours
- * genere cote serveur depuis #198.
+ * genere cote serveur depuis #198. `yearUnknown` est un etat propre, jamais derive de
+ * `academicYear === ""` : sinon un fichier tout juste ajoute (annee pas encore choisie) afficherait
+ * la case cochee par defaut, masquant le select avant meme que le BDE ait pu choisir (revue Opus du
+ * lot, defaut bloquant).
  */
 export default function ExamFileCard({
   idPrefix,
@@ -36,7 +39,7 @@ export default function ExamFileCard({
 }) {
   const yearId = `${idPrefix}-year`;
   const yearUnknownId = `${idPrefix}-year-unknown`;
-  const yearUnknown = values?.academicYear === "";
+  const yearUnknown = values?.yearUnknown ?? false;
   // L'annee enregistree reste proposee meme si elle sort de la plage du select.
   const years = academicYears();
   if (values?.academicYear && !years.includes(values.academicYear)) {
@@ -68,7 +71,10 @@ export default function ExamFileCard({
 
       {values ? (
         <div className="flex flex-col gap-1 sm:max-w-[14rem]">
-          <label htmlFor={yearId} className="text-sm font-medium">
+          <label
+            htmlFor={yearUnknown ? undefined : yearId}
+            className="text-sm font-medium"
+          >
             Année académique
           </label>
           {yearUnknown ? (
@@ -106,12 +112,11 @@ export default function ExamFileCard({
               type="checkbox"
               checked={yearUnknown}
               onChange={(event) =>
-                // Decocher propose l'annee la plus recente par defaut, plutot que de laisser le
-                // select reapparaitre vide : `yearUnknown` reste purement derive de la valeur (pas
-                // d'etat local a resynchroniser avec "Appliquer a tous", qui ecrit directement
-                // `academicYear`).
                 onChange?.({
-                  academicYear: event.target.checked ? "" : years[0],
+                  yearUnknown: event.target.checked,
+                  // Vide l'annee en cochant ; la laisse telle quelle en decochant (le select
+                  // redevient visible, deja a la valeur choisie avant, ou vide si jamais choisie).
+                  ...(event.target.checked ? { academicYear: "" } : {}),
                 })
               }
             />

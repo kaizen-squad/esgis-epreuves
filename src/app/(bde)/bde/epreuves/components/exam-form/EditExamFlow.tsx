@@ -32,6 +32,8 @@ import ExamUpdateResult from "./ExamUpdateResult";
 
 type EditValues = ExamCommonValues & {
   academicYear: string;
+  /** Etat propre, jamais derive de `academicYear === ""` (voir `ExamFileCard`). */
+  yearUnknown: boolean;
 };
 
 type SubmitState =
@@ -51,6 +53,9 @@ function initialValues(exam: Exam): EditValues {
     // Inconnues possibles sur une vieille epreuve (#196) : la case part vide plutot que de
     // planter, a remplir par le BDE si besoin (formulaire aligne par #202).
     academicYear: exam.academicYear ?? "",
+    // Une epreuve deja enregistree sans annee l'est reellement "inconnue" (jamais juste "pas
+    // encore choisie", contrairement a un nouveau depot) : la case part donc cochee.
+    yearUnknown: exam.academicYear === null,
     fieldId: exam.fieldId,
     levelId: exam.levelId,
     subjectId: exam.subjectId,

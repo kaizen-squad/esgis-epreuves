@@ -93,10 +93,11 @@ export type ExamCommonField = keyof z.output<typeof commonExamSchema>;
 export type ExamCommonValues = Record<ExamCommonField, string>;
 
 /**
- * Un Controle Continu n'a jamais de session, une session est sinon obligatoire (#202, meme regle
- * que `refuseSessionOnContinuousControl` cote serveur, `exams/schemas.ts`). Appliquee apres
- * `.extend` comme son equivalent serveur : un `superRefine` rend le schema un `ZodEffects`, qui n'a
- * plus de `.extend`.
+ * Un Controle Continu n'a jamais de session (#196), meme regle que
+ * `refuseSessionOnContinuousControl` cote serveur, `exams/schemas.ts`. La session d'un Controle
+ * Terminal reste facultative (decision du 2026-11-26 : inconnue possible sur une vieille epreuve),
+ * jamais exigee ici. Appliquee apres `.extend` comme son equivalent serveur : un `superRefine` rend
+ * le schema un `ZodEffects`, qui n'a plus de `.extend`.
  */
 function validateSessionForExamType<
   T extends z.ZodType<{ examType: string; session: string }>,
@@ -107,12 +108,6 @@ function validateSessionForExamType<
         code: "custom",
         path: ["session"],
         message: "Un Contrôle Continu n'a jamais de session.",
-      });
-    } else if (data.examType === "Contrôle Terminal" && data.session === "") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["session"],
-        message: "Choisissez une session.",
       });
     }
   });
