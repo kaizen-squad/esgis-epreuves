@@ -38,6 +38,8 @@ export type CatalogueFilterOptions = {
   options: Option[];
   /** Annees ayant au moins une epreuve, de la plus recente a la plus ancienne. */
   academicYears: string[];
+  /** Nombre d'epreuves par matiere (#147), connu seulement sur la page d'une filiere. */
+  examCountsBySubjectId?: Record<string, number>;
 };
 
 /**
