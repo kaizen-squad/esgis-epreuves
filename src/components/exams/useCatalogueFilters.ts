@@ -40,6 +40,11 @@ export function useCatalogueFilters() {
     params.delete("page");
     if (CLEARS_SUBJECT.includes(key)) params.delete("subjectId");
     if (CLEARS_OPTION.includes(key)) params.delete("optionId");
+    // Un Controle Continu n'a jamais de session (#196/#203) : la session choisie devient hors
+    // sujet, la combinaison ne renverrait jamais rien.
+    if (key === "examType" && value === "Contrôle Continu") {
+      params.delete("session");
+    }
     pendingParams.current = params;
 
     const query = params.toString();

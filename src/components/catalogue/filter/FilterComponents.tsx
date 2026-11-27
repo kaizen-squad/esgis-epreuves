@@ -29,6 +29,7 @@ const FilterComponents = ({
   const fieldId = filters.get("fieldId");
   const levelId = filters.get("levelId");
   const optionId = filters.get("optionId");
+  const isContinuousControl = filters.get("examType") === "Contrôle Continu";
   // Options reellement presentes pour la combinaison filiere + niveau choisie (deduites des
   // matieres) : une filiere a des options mais ses niveaux de tronc commun (ex. L1 IRT) n'en ont
   // aucune, le filtre ne doit alors pas s'afficher pour rien (retour utilisateur, #201).
@@ -152,12 +153,14 @@ const FilterComponents = ({
               onChange={(value) => filters.set("examType", value)}
             />
           </HideFilterComponent>
-          <HideFilterComponent label="Session">
-            <SessionFilterWrapper
-              current={filters.get("session")}
-              onChange={(value) => filters.set("session", value)}
-            />
-          </HideFilterComponent>
+          {isContinuousControl ? null : (
+            <HideFilterComponent label="Session">
+              <SessionFilterWrapper
+                current={filters.get("session")}
+                onChange={(value) => filters.set("session", value)}
+              />
+            </HideFilterComponent>
+          )}
         </div>
       </div>
     </>

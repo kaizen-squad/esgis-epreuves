@@ -106,9 +106,11 @@ export default async function ExamDetailView({
           <span className="text-background-accent rounded-full border border-current px-2.5 py-0.5">
             {exam.examType}
           </span>
-          <span className="bg-background-primary text-text-paragraph rounded-full border border-gray-200 px-2.5 py-0.5">
-            {exam.session}
-          </span>
+          {exam.session ? (
+            <span className="bg-background-primary text-text-paragraph rounded-full border border-gray-200 px-2.5 py-0.5">
+              {exam.session}
+            </span>
+          ) : null}
         </div>
         <h1 className="text-text-secondary mb-2 text-3xl leading-tight font-semibold md:text-4xl">
           {exam.title}
