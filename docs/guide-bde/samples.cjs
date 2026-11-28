@@ -2,10 +2,34 @@
 const { open } = require("./lib.cjs");
 const fs = require("fs");
 const samples = [
-  ["Algorithmique CT 2024-2025.pdf", "Algorithmique de base", "Contrôle terminal, session normale", "2024-2025", "Licence 1, IRT"],
-  ["Algorithmique CT 2023-2024.pdf", "Algorithmique de base", "Contrôle terminal, session normale", "2023-2024", "Licence 1, IRT"],
-  ["Droit du travail CT 2024-2025.pdf", "Droit du Travail", "Contrôle terminal, session normale", "2024-2025", "Licence 1, Gestion"],
-  ["Algorithmique CT 2024-2025 version lisible.pdf", "Algorithmique de base", "Contrôle terminal, session normale", "2024-2025", "Licence 1, IRT (scan corrigé)"],
+  [
+    "Algorithmique CT 2024-2025.pdf",
+    "Algorithmique de base",
+    "Contrôle terminal, session normale",
+    "2024-2025",
+    "Licence 1, IRT",
+  ],
+  [
+    "Algorithmique CT 2023-2024.pdf",
+    "Algorithmique de base",
+    "Contrôle terminal, session normale",
+    "2023-2024",
+    "Licence 1, IRT",
+  ],
+  [
+    "Droit du travail CT 2024-2025.pdf",
+    "Droit du Travail",
+    "Contrôle terminal, session normale",
+    "2024-2025",
+    "Licence 1, Gestion",
+  ],
+  [
+    "Algorithmique CT 2024-2025 version lisible.pdf",
+    "Algorithmique de base",
+    "Contrôle terminal, session normale",
+    "2024-2025",
+    "Licence 1, IRT (scan corrigé)",
+  ],
 ];
 (async () => {
   const { browser, page, SP } = await open({ login: false });

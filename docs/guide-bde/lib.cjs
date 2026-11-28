@@ -1,11 +1,16 @@
 const { chromium } = require("@playwright/test");
 const SP = __dirname;
 const BASE = "http://localhost:3000";
-const HIDE = "nextjs-portal{display:none!important} *{caret-color:transparent!important}";
+const HIDE =
+  "nextjs-portal{display:none!important} *{caret-color:transparent!important}";
 
 async function open({ login = true, height = 900 } = {}) {
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 1440, height }, deviceScaleFactor: 2, locale: "fr-FR" });
+  const ctx = await browser.newContext({
+    viewport: { width: 1440, height },
+    deviceScaleFactor: 2,
+    locale: "fr-FR",
+  });
   const page = await ctx.newPage();
   if (login) {
     await page.goto(BASE + "/login");

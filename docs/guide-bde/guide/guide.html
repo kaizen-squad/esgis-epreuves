@@ -1,548 +1,1311 @@
 <!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8">
-<title>Alexandria : guide du membre BDE</title>
-<style>
-  /* Archivo, police de l'interface, en fichiers statiques (une graisse par fichier) pour un PDF net. */
-  @font-face { font-family: Archivo; font-weight: 400; src: url(fonts/archivo-latin-400-normal.woff2); }
-  @font-face { font-family: Archivo; font-weight: 500; src: url(fonts/archivo-latin-500-normal.woff2); }
-  @font-face { font-family: Archivo; font-weight: 600; src: url(fonts/archivo-latin-600-normal.woff2); }
-  @font-face { font-family: Archivo; font-weight: 700; src: url(fonts/archivo-latin-700-normal.woff2); }
-  @font-face { font-family: Archivo; font-weight: 800; src: url(fonts/archivo-latin-800-normal.woff2); }
+  <head>
+    <meta charset="utf-8" />
+    <title>Alexandria : guide du membre BDE</title>
+    <style>
+      /* Archivo, police de l'interface, en fichiers statiques (une graisse par fichier) pour un PDF net. */
+      @font-face {
+        font-family: Archivo;
+        font-weight: 400;
+        src: url(fonts/archivo-latin-400-normal.woff2);
+      }
+      @font-face {
+        font-family: Archivo;
+        font-weight: 500;
+        src: url(fonts/archivo-latin-500-normal.woff2);
+      }
+      @font-face {
+        font-family: Archivo;
+        font-weight: 600;
+        src: url(fonts/archivo-latin-600-normal.woff2);
+      }
+      @font-face {
+        font-family: Archivo;
+        font-weight: 700;
+        src: url(fonts/archivo-latin-700-normal.woff2);
+      }
+      @font-face {
+        font-family: Archivo;
+        font-weight: 800;
+        src: url(fonts/archivo-latin-800-normal.woff2);
+      }
 
-  :root {
-    --marine: #0f2155;
-    --rouge: #c41c2d;
-    --fond: #f4f4f4;
-    --texte: #1d2433;
-    --gris: #5b6475;
-    --trait: #d9dde5;
-    --info: #eef1f8;
-    --alerte: #fbeced;
-  }
-  @page {
-    size: A4;
-    margin: 20mm 20mm 22mm;
-    @bottom-left {
-      content: "Alexandria · Guide du membre BDE";
-      font: 500 7.5pt Archivo, sans-serif;
-      color: #8a92a3;
-    }
-    @bottom-right {
-      content: counter(page) " / " counter(pages);
-      font: 600 7.5pt Archivo, sans-serif;
-      color: #8a92a3;
-    }
-  }
-  @page cover {
-    margin: 0;
-    @bottom-left { content: none; }
-    @bottom-right { content: none; }
-  }
-  * { box-sizing: border-box; }
-  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body {
-    margin: 0;
-    font-family: Archivo, sans-serif;
-    font-size: 10pt;
-    line-height: 1.55;
-    color: var(--texte);
-    background: #fff;
-    counter-reset: figure;
-  }
-  p { margin: 0 0 3mm; }
-  strong { font-weight: 600; color: var(--marine); }
-  .ui { font-weight: 600; color: var(--marine); white-space: nowrap; }
+      :root {
+        --marine: #0f2155;
+        --rouge: #c41c2d;
+        --fond: #f4f4f4;
+        --texte: #1d2433;
+        --gris: #5b6475;
+        --trait: #d9dde5;
+        --info: #eef1f8;
+        --alerte: #fbeced;
+      }
+      @page {
+        size: A4;
+        margin: 20mm 20mm 22mm;
+        @bottom-left {
+          content: "Alexandria · Guide du membre BDE";
+          font:
+            500 7.5pt Archivo,
+            sans-serif;
+          color: #8a92a3;
+        }
+        @bottom-right {
+          content: counter(page) " / " counter(pages);
+          font:
+            600 7.5pt Archivo,
+            sans-serif;
+          color: #8a92a3;
+        }
+      }
+      @page cover {
+        margin: 0;
+        @bottom-left {
+          content: none;
+        }
+        @bottom-right {
+          content: none;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      body {
+        margin: 0;
+        font-family: Archivo, sans-serif;
+        font-size: 10pt;
+        line-height: 1.55;
+        color: var(--texte);
+        background: #fff;
+        counter-reset: figure;
+      }
+      p {
+        margin: 0 0 3mm;
+      }
+      strong {
+        font-weight: 600;
+        color: var(--marine);
+      }
+      .ui {
+        font-weight: 600;
+        color: var(--marine);
+        white-space: nowrap;
+      }
 
-  /* Couverture */
-  .cover {
-    page: cover;
-    width: 210mm;
-    height: 297mm;
-    background: var(--marine);
-    color: #fff;
-    padding: 34mm 24mm 24mm;
-    display: flex;
-    flex-direction: column;
-  }
-  .wordmark { font-size: 40pt; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
-  .wordmark span { color: var(--rouge); }
-  .cover .kicker { margin-top: 5mm; font-size: 10pt; color: rgba(255,255,255,.62); }
-  .cover .bloc { margin-top: auto; }
-  .cover .rule { width: 18mm; height: 1.2mm; background: var(--rouge); margin-bottom: 8mm; }
-  .cover h1 { margin: 0; font-size: 30pt; line-height: 1.1; font-weight: 700; letter-spacing: -0.01em; }
-  .cover .sous-titre { margin-top: 5mm; font-size: 13pt; line-height: 1.4; color: rgba(255,255,255,.8); max-width: 130mm; }
-  .cover .edition {
-    margin-top: 22mm; padding-top: 5mm; border-top: 0.3mm solid rgba(255,255,255,.22);
-    display: flex; justify-content: space-between; font-size: 8.5pt; color: rgba(255,255,255,.62);
-  }
+      /* Couverture */
+      .cover {
+        page: cover;
+        width: 210mm;
+        height: 297mm;
+        background: var(--marine);
+        color: #fff;
+        padding: 34mm 24mm 24mm;
+        display: flex;
+        flex-direction: column;
+      }
+      .wordmark {
+        font-size: 40pt;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1;
+      }
+      .wordmark span {
+        color: var(--rouge);
+      }
+      .cover .kicker {
+        margin-top: 5mm;
+        font-size: 10pt;
+        color: rgba(255, 255, 255, 0.62);
+      }
+      .cover .bloc {
+        margin-top: auto;
+      }
+      .cover .rule {
+        width: 18mm;
+        height: 1.2mm;
+        background: var(--rouge);
+        margin-bottom: 8mm;
+      }
+      .cover h1 {
+        margin: 0;
+        font-size: 30pt;
+        line-height: 1.1;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .cover .sous-titre {
+        margin-top: 5mm;
+        font-size: 13pt;
+        line-height: 1.4;
+        color: rgba(255, 255, 255, 0.8);
+        max-width: 130mm;
+      }
+      .cover .edition {
+        margin-top: 22mm;
+        padding-top: 5mm;
+        border-top: 0.3mm solid rgba(255, 255, 255, 0.22);
+        display: flex;
+        justify-content: space-between;
+        font-size: 8.5pt;
+        color: rgba(255, 255, 255, 0.62);
+      }
 
-  /* Sections */
-  section { break-before: page; }
-  h2 {
-    margin: 0 0 5mm;
-    font-size: 20pt;
-    line-height: 1.15;
-    font-weight: 700;
-    color: var(--marine);
-    letter-spacing: -0.01em;
-  }
-  h2 .num { color: var(--rouge); margin-right: 2.5mm; }
-  h2::before {
-    content: "";
-    display: block;
-    width: 12mm; height: 1mm;
-    background: var(--rouge);
-    margin-bottom: 5mm;
-  }
-  h3 {
-    margin: 7mm 0 2.5mm;
-    font-size: 12pt;
-    font-weight: 700;
-    color: var(--marine);
-    break-after: avoid;
-  }
-  .chapo { font-size: 11pt; line-height: 1.5; color: #333b4c; margin-bottom: 5mm; }
+      /* Sections */
+      section {
+        break-before: page;
+      }
+      h2 {
+        margin: 0 0 5mm;
+        font-size: 20pt;
+        line-height: 1.15;
+        font-weight: 700;
+        color: var(--marine);
+        letter-spacing: -0.01em;
+      }
+      h2 .num {
+        color: var(--rouge);
+        margin-right: 2.5mm;
+      }
+      h2::before {
+        content: "";
+        display: block;
+        width: 12mm;
+        height: 1mm;
+        background: var(--rouge);
+        margin-bottom: 5mm;
+      }
+      h3 {
+        margin: 7mm 0 2.5mm;
+        font-size: 12pt;
+        font-weight: 700;
+        color: var(--marine);
+        break-after: avoid;
+      }
+      .chapo {
+        font-size: 11pt;
+        line-height: 1.5;
+        color: #333b4c;
+        margin-bottom: 5mm;
+      }
 
-  /* Etapes numerotees */
-  ol.etapes { list-style: none; margin: 0 0 4mm; padding: 0; counter-reset: etape var(--depart, 0); }
-  ol.etapes > li {
-    counter-increment: etape;
-    position: relative;
-    padding-left: 9.5mm;
-    margin-bottom: 2.6mm;
-    break-inside: avoid;
-  }
-  ol.etapes > li::before {
-    content: counter(etape);
-    position: absolute; left: 0; top: 0.1mm;
-    width: 6mm; height: 6mm; border-radius: 50%;
-    background: var(--rouge); color: #fff;
-    font-size: 8.5pt; font-weight: 700; line-height: 6mm; text-align: center;
-  }
-  ul.points { margin: 0 0 4mm; padding-left: 5mm; }
-  ul.points li { margin-bottom: 1.6mm; }
-  ul.points li::marker { color: var(--rouge); }
+      /* Etapes numerotees */
+      ol.etapes {
+        list-style: none;
+        margin: 0 0 4mm;
+        padding: 0;
+        counter-reset: etape var(--depart, 0);
+      }
+      ol.etapes > li {
+        counter-increment: etape;
+        position: relative;
+        padding-left: 9.5mm;
+        margin-bottom: 2.6mm;
+        break-inside: avoid;
+      }
+      ol.etapes > li::before {
+        content: counter(etape);
+        position: absolute;
+        left: 0;
+        top: 0.1mm;
+        width: 6mm;
+        height: 6mm;
+        border-radius: 50%;
+        background: var(--rouge);
+        color: #fff;
+        font-size: 8.5pt;
+        font-weight: 700;
+        line-height: 6mm;
+        text-align: center;
+      }
+      ul.points {
+        margin: 0 0 4mm;
+        padding-left: 5mm;
+      }
+      ul.points li {
+        margin-bottom: 1.6mm;
+      }
+      ul.points li::marker {
+        color: var(--rouge);
+      }
 
-  /* Encadres */
-  .encadre {
-    border-left: 1mm solid var(--marine);
-    background: var(--info);
-    border-radius: 0 2mm 2mm 0;
-    padding: 3.5mm 4.5mm 1mm;
-    margin: 4mm 0 5mm;
-    break-inside: avoid;
-  }
-  .encadre.alerte { border-left-color: var(--rouge); background: var(--alerte); }
-  .encadre .titre { font-weight: 700; color: var(--marine); margin-bottom: 1.5mm; font-size: 9.5pt; }
-  .encadre.alerte .titre { color: var(--rouge); }
-  .encadre p, .encadre li { font-size: 9.5pt; }
-  .encadre ul { margin: 0 0 2.5mm; padding-left: 4.5mm; }
-  .encadre ul li { margin-bottom: 1.2mm; }
+      /* Encadres */
+      .encadre {
+        border-left: 1mm solid var(--marine);
+        background: var(--info);
+        border-radius: 0 2mm 2mm 0;
+        padding: 3.5mm 4.5mm 1mm;
+        margin: 4mm 0 5mm;
+        break-inside: avoid;
+      }
+      .encadre.alerte {
+        border-left-color: var(--rouge);
+        background: var(--alerte);
+      }
+      .encadre .titre {
+        font-weight: 700;
+        color: var(--marine);
+        margin-bottom: 1.5mm;
+        font-size: 9.5pt;
+      }
+      .encadre.alerte .titre {
+        color: var(--rouge);
+      }
+      .encadre p,
+      .encadre li {
+        font-size: 9.5pt;
+      }
+      .encadre ul {
+        margin: 0 0 2.5mm;
+        padding-left: 4.5mm;
+      }
+      .encadre ul li {
+        margin-bottom: 1.2mm;
+      }
 
-  /* Figures */
-  figure { margin: 4mm auto 6mm; break-inside: avoid; counter-increment: figure; }
-  figure img {
-    display: block; width: 100%;
-    border: 0.25mm solid var(--trait);
-    border-radius: 1.6mm;
-  }
-  figcaption { margin-top: 2mm; font-size: 8.5pt; color: var(--gris); text-align: center; }
-  figcaption::before { content: "Figure " counter(figure) ". "; font-weight: 600; color: var(--marine); }
-  .w100 { width: 100%; } .w90 { width: 90%; } .w80 { width: 80%; } .w70 { width: 70%; } .w60 { width: 60%; } .w50 { width: 50%; } .w45 { width: 45%; }
-  /* Etapes a gauche, capture a droite : pour les captures etroites et hautes. */
-  .cote { display: grid; grid-template-columns: 1fr 70mm; gap: 8mm; align-items: start; margin: 0 0 5mm; break-inside: avoid; }
-  .bloc { break-inside: avoid; }
-  .cote figure { width: 100%; margin: 0.5mm 0 0; }
-  .cote figcaption { text-align: left; }
-  .duo { display: flex; gap: 6mm; justify-content: center; }
-  .duo img { width: 62mm; }
+      /* Figures */
+      figure {
+        margin: 4mm auto 6mm;
+        break-inside: avoid;
+        counter-increment: figure;
+      }
+      figure img {
+        display: block;
+        width: 100%;
+        border: 0.25mm solid var(--trait);
+        border-radius: 1.6mm;
+      }
+      figcaption {
+        margin-top: 2mm;
+        font-size: 8.5pt;
+        color: var(--gris);
+        text-align: center;
+      }
+      figcaption::before {
+        content: "Figure " counter(figure) ". ";
+        font-weight: 600;
+        color: var(--marine);
+      }
+      .w100 {
+        width: 100%;
+      }
+      .w90 {
+        width: 90%;
+      }
+      .w80 {
+        width: 80%;
+      }
+      .w70 {
+        width: 70%;
+      }
+      .w60 {
+        width: 60%;
+      }
+      .w50 {
+        width: 50%;
+      }
+      .w45 {
+        width: 45%;
+      }
+      /* Etapes a gauche, capture a droite : pour les captures etroites et hautes. */
+      .cote {
+        display: grid;
+        grid-template-columns: 1fr 70mm;
+        gap: 8mm;
+        align-items: start;
+        margin: 0 0 5mm;
+        break-inside: avoid;
+      }
+      .bloc {
+        break-inside: avoid;
+      }
+      .cote figure {
+        width: 100%;
+        margin: 0.5mm 0 0;
+      }
+      .cote figcaption {
+        text-align: left;
+      }
+      .duo {
+        display: flex;
+        gap: 6mm;
+        justify-content: center;
+      }
+      .duo img {
+        width: 62mm;
+      }
 
-  /* Legende de l'accueil */
-  .legende { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 7mm; margin: 0 0 4mm; font-size: 9.5pt; }
-  .legende div { display: flex; gap: 2.5mm; align-items: baseline; break-inside: avoid; }
-  .pastille {
-    flex: none; width: 5.2mm; height: 5.2mm; border-radius: 50%;
-    background: var(--rouge); color: #fff; font-size: 7.5pt; font-weight: 700;
-    line-height: 5.2mm; text-align: center; transform: translateY(0.6mm);
-  }
+      /* Legende de l'accueil */
+      .legende {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2mm 7mm;
+        margin: 0 0 4mm;
+        font-size: 9.5pt;
+      }
+      .legende div {
+        display: flex;
+        gap: 2.5mm;
+        align-items: baseline;
+        break-inside: avoid;
+      }
+      .pastille {
+        flex: none;
+        width: 5.2mm;
+        height: 5.2mm;
+        border-radius: 50%;
+        background: var(--rouge);
+        color: #fff;
+        font-size: 7.5pt;
+        font-weight: 700;
+        line-height: 5.2mm;
+        text-align: center;
+        transform: translateY(0.6mm);
+      }
 
-  /* Sommaire */
-  .toc { margin: 2mm 0 8mm; padding: 0; list-style: none; }
-  .toc li {
-    display: flex; align-items: baseline; gap: 3mm;
-    padding: 2.6mm 0; border-bottom: 0.25mm solid var(--trait);
-    font-size: 10.5pt;
-  }
-  .toc .n { color: var(--rouge); font-weight: 700; width: 6mm; }
-  .toc .t { font-weight: 600; color: var(--marine); }
-  .toc .d { color: var(--gris); font-size: 9pt; margin-left: 2mm; }
-  .toc .p { margin-left: auto; font-weight: 600; color: var(--marine); }
+      /* Sommaire */
+      .toc {
+        margin: 2mm 0 8mm;
+        padding: 0;
+        list-style: none;
+      }
+      .toc li {
+        display: flex;
+        align-items: baseline;
+        gap: 3mm;
+        padding: 2.6mm 0;
+        border-bottom: 0.25mm solid var(--trait);
+        font-size: 10.5pt;
+      }
+      .toc .n {
+        color: var(--rouge);
+        font-weight: 700;
+        width: 6mm;
+      }
+      .toc .t {
+        font-weight: 600;
+        color: var(--marine);
+      }
+      .toc .d {
+        color: var(--gris);
+        font-size: 9pt;
+        margin-left: 2mm;
+      }
+      .toc .p {
+        margin-left: auto;
+        font-weight: 600;
+        color: var(--marine);
+      }
 
-  .essentiel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; margin: 3mm 0 0; }
-  .essentiel div { background: var(--fond); border-radius: 2mm; padding: 4mm; font-size: 9pt; line-height: 1.45; }
-  .essentiel b { display: block; color: var(--marine); font-size: 10pt; margin-bottom: 1mm; }
+      .essentiel {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 4mm;
+        margin: 3mm 0 0;
+      }
+      .essentiel div {
+        background: var(--fond);
+        border-radius: 2mm;
+        padding: 4mm;
+        font-size: 9pt;
+        line-height: 1.45;
+      }
+      .essentiel b {
+        display: block;
+        color: var(--marine);
+        font-size: 10pt;
+        margin-bottom: 1mm;
+      }
 
-  /* Tableau des difficultes */
-  table { width: 100%; border-collapse: collapse; font-size: 9.2pt; }
-  th { text-align: left; background: var(--marine); color: #fff; font-weight: 600; padding: 2.5mm 3.5mm; }
-  th:first-child { border-radius: 1.5mm 0 0 0; } th:last-child { border-radius: 0 1.5mm 0 0; }
-  td { padding: 2.6mm 3.5mm; border-bottom: 0.25mm solid var(--trait); vertical-align: top; }
-  tr { break-inside: avoid; }
-  td:first-child { width: 42%; font-weight: 600; color: var(--marine); }
-  tr:nth-child(even) td { background: #fafbfc; }
-  .fin { margin-top: 8mm; font-size: 9.5pt; color: var(--gris); }
-</style>
-</head>
-<body>
-
-<!-- Couverture -->
-<div class="cover">
-  <div class="wordmark">Alexandria<span>.</span></div>
-  <div class="kicker">Dépôt et consultation des épreuves de l'ESGIS</div>
-  <div class="bloc">
-    <div class="rule"></div>
-    <h1>Guide du membre BDE</h1>
-    <p class="sous-titre">Verser, retrouver et tenir à jour les épreuves d'examen, pas à pas et écran par écran.</p>
-    <div class="edition"><span>Espace BDE</span><span>Édition de novembre 2026</span></div>
-  </div>
-</div>
-
-<!-- Avant-propos et sommaire -->
-<section class="intro">
-  <h2>Bienvenue dans l'espace BDE</h2>
-  <p class="chapo">Alexandria est la bibliothèque en ligne des épreuves d'examen de l'ESGIS. En tant que membre du BDE, vous la faites vivre : vous versez les épreuves que vous collectez, vous corrigez celles qui comportent une erreur et vous repérez les matières qui n'en ont pas encore. Ce guide vous accompagne pas à pas, captures d'écran à l'appui.</p>
-
-  <div class="essentiel">
-    <div><b>Votre compte</b>Il est créé par l'administrateur, qui vous remet votre adresse e-mail de connexion et votre mot de passe.</div>
-    <div><b>Vos fichiers</b>Uniquement des PDF, de 900 Ko au plus chacun, jusqu'à quatre par versement.</div>
-    <div><b>Vos publications</b>Une épreuve versée est aussitôt visible et téléchargeable par les étudiants sur le site public.</div>
-  </div>
-
-  <h3 style="margin-top:10mm">Sommaire</h3>
-  <ol class="toc">
-    <li><span class="n">1</span><span class="t">Se connecter</span><span class="d">et se déconnecter</span><span class="p" data-toc="s1"></span></li>
-    <li><span class="n">2</span><span class="t">Découvrir votre espace</span><span class="d">l'accueil, le menu, le téléphone</span><span class="p" data-toc="s2"></span></li>
-    <li><span class="n">3</span><span class="t">Verser une épreuve</span><span class="d">un ou plusieurs fichiers</span><span class="p" data-toc="s3"></span></li>
-    <li><span class="n">4</span><span class="t">Retrouver une épreuve</span><span class="d">recherche et filtres</span><span class="p" data-toc="s4"></span></li>
-    <li><span class="n">5</span><span class="t">Corriger ou retirer une épreuve</span><span class="d">modifier, remplacer, supprimer</span><span class="p" data-toc="s5"></span></li>
-    <li><span class="n">6</span><span class="t">Combler les épreuves manquantes</span><span class="d">votre liste de collecte</span><span class="p" data-toc="s6"></span></li>
-    <li><span class="n">7</span><span class="t">Tenir à jour le numéro WhatsApp</span><span class="d">le contact du site public</span><span class="p" data-toc="s7"></span></li>
-    <li><span class="n">8</span><span class="t">Passation entre deux bureaux</span><span class="d">quand l'équipe change</span><span class="p" data-toc="s8"></span></li>
-    <li><span class="n">9</span><span class="t">En cas de difficulté</span><span class="d">les situations courantes et leur solution</span><span class="p" data-toc="s9"></span></li>
-  </ol>
-</section>
-
-<!-- 1 -->
-<section id="s1">
-  <h2><span class="num">1.</span>Se connecter</h2>
-  <p class="chapo">L'espace BDE est réservé aux membres du bureau. Il s'ouvre avec les identifiants que l'administrateur vous a remis.</p>
-  <ol class="etapes">
-    <li>Ouvrez la page de connexion dans votre navigateur : <span class="ui">esgis-alexandria.vercel.app/login</span>. Ajoutez-la à vos favoris, elle vous servira à chaque fois.</li>
-    <li>Saisissez votre adresse dans le champ <span class="ui">Adresse email</span>.</li>
-    <li>Saisissez votre mot de passe. L'icône en forme d'œil, à droite du champ, affiche ce que vous tapez : pratique pour repérer une faute de frappe.</li>
-    <li>Cliquez sur <span class="ui">Se connecter</span>. Vous arrivez sur l'accueil de votre espace.</li>
-  </ol>
-  <figure class="w100">
-    <img src="img/01-connexion.png" alt="Écran de connexion">
-    <figcaption>L'écran de connexion, commun à l'administration et au BDE.</figcaption>
-  </figure>
-  <div class="encadre">
-    <div class="titre">Si la connexion échoue</div>
-    <ul>
-      <li><strong>« Email ou mot de passe incorrect »</strong> : vérifiez l'adresse et le mot de passe, majuscules comprises, puis réessayez.</li>
-      <li><strong>« Ce compte est désactivé »</strong> : votre accès a été fermé, par exemple après une passation. Seul l'administrateur peut le rouvrir.</li>
-      <li><strong>Mot de passe oublié</strong> : il n'existe pas de réinitialisation automatique. Contactez l'administrateur, qui vous en attribuera un nouveau.</li>
-    </ul>
-  </div>
-  <h3>Se déconnecter</h3>
-  <p>Cliquez sur <span class="ui">Se déconnecter</span>, tout en bas du menu de gauche. Pensez-y systématiquement sur un ordinateur partagé, à la bibliothèque ou en salle informatique.</p>
-</section>
-
-<!-- 2 -->
-<section id="s2">
-  <h2><span class="num">2.</span>Découvrir votre espace</h2>
-  <p class="chapo">Après la connexion, vous arrivez sur l'accueil. Le menu de gauche reste affiché sur toutes les pages : il vous mène partout en un clic.</p>
-  <figure class="w100">
-    <img src="img/02-accueil.png" alt="Accueil de l'espace BDE, éléments numérotés">
-    <figcaption>L'accueil de l'espace BDE. Les numéros renvoient à la légende ci-dessous.</figcaption>
-  </figure>
-  <div class="legende">
-    <div><span class="pastille">1</span><span><strong>Accueil</strong> : revient à cette page.</span></div>
-    <div><span class="pastille">6</span><span><strong>Se déconnecter</strong> : ferme votre session.</span></div>
-    <div><span class="pastille">2</span><span><strong>Verser</strong> : dépose une ou plusieurs épreuves (section 3).</span></div>
-    <div><span class="pastille">7</span><span><strong>Verser une épreuve</strong> : le même formulaire, en raccourci.</span></div>
-    <div><span class="pastille">3</span><span><strong>Mes épreuves</strong> : tout ce que vous avez versé (section 5).</span></div>
-    <div><span class="pastille">8</span><span><strong>Matières sans épreuve archivée</strong> : le nombre de lacunes du fonds. Ce lien disparaît quand tout est couvert.</span></div>
-    <div><span class="pastille">4</span><span><strong>Épreuves manquantes</strong> : les matières à collecter en priorité (section 6).</span></div>
-    <div><span class="pastille">9</span><span><strong>Recherche</strong> : retrouve n'importe quelle épreuve du fonds (section 4).</span></div>
-    <div><span class="pastille">5</span><span><strong>Réglages</strong> : le numéro WhatsApp du site public (section 7).</span></div>
-    <div><span class="pastille">10</span><span><strong>Mes derniers versements</strong> : vos dépôts les plus récents. <span class="ui">Voir tous mes versements</span> ouvre la liste complète.</span></div>
-  </div>
-  <p>Plus bas sur la même page, <strong>Dernières épreuves de l'équipe</strong> présente ce que les autres membres du BDE ont déposé récemment.</p>
-
-  <h3>Sur téléphone</h3>
-  <p>Alexandria fonctionne aussi sur smartphone. Le menu y est replié pour laisser la place au contenu : touchez le bouton rouge à trois traits, en haut à droite, pour l'ouvrir, puis la croix pour le refermer.</p>
-  <figure>
-    <div class="duo">
-      <img src="img/16-mobile.png" alt="Accueil sur téléphone, menu fermé">
-      <img src="img/16-mobile-menu.png" alt="Accueil sur téléphone, menu ouvert">
+      /* Tableau des difficultes */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9.2pt;
+      }
+      th {
+        text-align: left;
+        background: var(--marine);
+        color: #fff;
+        font-weight: 600;
+        padding: 2.5mm 3.5mm;
+      }
+      th:first-child {
+        border-radius: 1.5mm 0 0 0;
+      }
+      th:last-child {
+        border-radius: 0 1.5mm 0 0;
+      }
+      td {
+        padding: 2.6mm 3.5mm;
+        border-bottom: 0.25mm solid var(--trait);
+        vertical-align: top;
+      }
+      tr {
+        break-inside: avoid;
+      }
+      td:first-child {
+        width: 42%;
+        font-weight: 600;
+        color: var(--marine);
+      }
+      tr:nth-child(even) td {
+        background: #fafbfc;
+      }
+      .fin {
+        margin-top: 8mm;
+        font-size: 9.5pt;
+        color: var(--gris);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Couverture -->
+    <div class="cover">
+      <div class="wordmark">Alexandria<span>.</span></div>
+      <div class="kicker">Dépôt et consultation des épreuves de l'ESGIS</div>
+      <div class="bloc">
+        <div class="rule"></div>
+        <h1>Guide du membre BDE</h1>
+        <p class="sous-titre">
+          Verser, retrouver et tenir à jour les épreuves d'examen, pas à pas et
+          écran par écran.
+        </p>
+        <div class="edition">
+          <span>Espace BDE</span><span>Édition de novembre 2026</span>
+        </div>
+      </div>
     </div>
-    <figcaption>L'accueil sur téléphone, menu fermé puis ouvert.</figcaption>
-  </figure>
-</section>
 
-<!-- 3 -->
-<section id="s3">
-  <h2><span class="num">3.</span>Verser une épreuve</h2>
-  <p class="chapo">Un même versement accepte jusqu'à quatre fichiers, à condition qu'ils portent sur la même matière, le même type et la même session : c'est le cas typique de plusieurs années d'un même examen. Pour des matières différentes, faites un versement par matière.</p>
-  <div class="encadre">
-    <div class="titre">Avant de commencer, vérifiez votre fichier</div>
-    <ul>
-      <li>Il est au format <strong>PDF</strong>. Une photo prise au téléphone doit d'abord être convertie en PDF, par exemple avec une application de numérisation.</li>
-      <li>Il pèse <strong>900 Ko au plus</strong>. Au-delà, compressez-le avec un outil de compression PDF en ligne.</li>
-      <li>Il est <strong>lisible et complet</strong> : toutes les pages, dans le bon sens.</li>
-    </ul>
-  </div>
+    <!-- Avant-propos et sommaire -->
+    <section class="intro">
+      <h2>Bienvenue dans l'espace BDE</h2>
+      <p class="chapo">
+        Alexandria est la bibliothèque en ligne des épreuves d'examen de
+        l'ESGIS. En tant que membre du BDE, vous la faites vivre : vous versez
+        les épreuves que vous collectez, vous corrigez celles qui comportent une
+        erreur et vous repérez les matières qui n'en ont pas encore. Ce guide
+        vous accompagne pas à pas, captures d'écran à l'appui.
+      </p>
 
-  <h3>Étape A : ajouter les fichiers</h3>
-  <div class="cote">
-    <ol class="etapes">
-      <li>Cliquez sur <span class="ui">Verser</span> dans le menu.</li>
-      <li>Faites glisser vos fichiers dans le cadre en pointillés, ou cliquez sur <span class="ui">Importez vos fichiers</span> pour les choisir sur votre appareil.</li>
-      <li>Choisissez l'année académique de chaque fichier. Si tous sont de la même année, choisissez-la une seule fois en haut, puis cliquez sur <span class="ui">Appliquer à tous</span>. Pour une ancienne épreuve dont l'année est inconnue, cochez <span class="ui">Année inconnue</span>.</li>
-      <li>Un fichier ajouté par erreur se retire avec la croix, à droite de sa carte.</li>
-    </ol>
-    <figure>
-      <img src="img/03-verser-fichiers.png" alt="Deux fichiers ajoutés avec leur année académique">
-      <figcaption>Deux fichiers ajoutés, chacun avec son année académique.</figcaption>
-    </figure>
-  </div>
+      <div class="essentiel">
+        <div>
+          <b>Votre compte</b>Il est créé par l'administrateur, qui vous remet
+          votre adresse e-mail de connexion et votre mot de passe.
+        </div>
+        <div>
+          <b>Vos fichiers</b>Uniquement des PDF, de 900 Ko au plus chacun,
+          jusqu'à quatre par versement.
+        </div>
+        <div>
+          <b>Vos publications</b>Une épreuve versée est aussitôt visible et
+          téléchargeable par les étudiants sur le site public.
+        </div>
+      </div>
 
-  <div class="bloc">
-    <h3>Étape B : décrire l'épreuve</h3>
-    <ol class="etapes" style="--depart: 4">
-      <li>Dans <span class="ui">Matière</span>, tapez les premières lettres de son nom, puis choisissez-la dans la liste qui s'affiche. La filière et le niveau se remplissent tout seuls.</li>
-    </ol>
-    <figure class="w80">
-      <img src="img/04-verser-matiere.png" alt="Recherche de la matière">
-      <figcaption>La recherche de la matière : quelques lettres suffisent.</figcaption>
-    </figure>
-  </div>
-  <div class="cote">
-    <ol class="etapes" style="--depart: 5">
-      <li>Choisissez le type d'épreuve : <span class="ui">Terminal</span> pour un contrôle terminal, <span class="ui">Continu</span> pour un contrôle continu.</li>
-      <li>Pour un contrôle terminal, choisissez la session : <span class="ui">Normale</span> ou <span class="ui">Rattrapage</span>. Un contrôle continu n'a pas de session : la question disparaît d'elle-même.</li>
-      <li>Cliquez sur <span class="ui">Verser les épreuves</span> (ou <span class="ui">Verser l'épreuve</span> s'il n'y a qu'un fichier).</li>
-    </ol>
-    <figure>
-      <img src="img/05-verser-formulaire.png" alt="Formulaire rempli, prêt à être envoyé">
-      <figcaption>Le formulaire rempli, prêt à être envoyé.</figcaption>
-    </figure>
-  </div>
-  <div class="encadre">
-    <div class="titre">Bon à savoir</div>
-    <ul>
-      <li>Vous n'avez aucun titre à écrire : Alexandria le compose à partir de la matière, du type et de la session, par exemple « Algorithmique de base : Contrôle terminal, session normale ».</li>
-      <li>La matière n'apparaît pas dans la liste ? Cliquez sur <span class="ui">Demandez son ajout à l'administrateur</span>, sous le champ : seul l'administrateur peut créer une matière.</li>
-      <li>Le bouton <span class="ui">Annuler</span> vous demande confirmation si vous avez déjà saisi quelque chose : les informations et les fichiers choisis seraient perdus.</li>
-    </ul>
-  </div>
-
-  <div class="bloc">
-    <h3>Étape C : vérifier le résultat</h3>
-    <p>Un écran récapitule le versement, fichier par fichier. Chaque fichier publié apparaît en vert, avec un lien <span class="ui">Voir l'épreuve</span> pour contrôler le rendu. Vous pouvez ensuite enchaîner avec <span class="ui">Verser d'autres épreuves</span>.</p>
-    <figure class="w60">
-      <img src="img/06-verser-resultat.png" alt="Écran de confirmation : épreuves publiées">
-      <figcaption>Le versement est terminé : les deux épreuves sont en ligne.</figcaption>
-    </figure>
-  </div>
-  <div class="encadre alerte">
-    <div class="titre">Si tout ne s'est pas bien passé</div>
-    <ul>
-      <li><strong>Fichier déjà déposé</strong> : le même fichier existe déjà dans Alexandria. Il est refusé et le message indique l'épreuve existante. Il n'y a rien d'autre à faire.</li>
-      <li><strong>Avertissement en orange</strong> : une autre épreuve a déjà la même matière, la même année, la même session et le même type. La vôtre est tout de même publiée : ouvrez les deux pour vérifier qu'il ne s'agit pas d'un doublon, et supprimez-en une si besoin (section 5).</li>
-      <li><strong>Publication partielle</strong> : certains fichiers sont en ligne, d'autres non. Le motif s'affiche sous chaque fichier en rouge : corrigez-le, puis versez de nouveau ces fichiers seulement.</li>
-    </ul>
-  </div>
-</section>
-
-<!-- 4 -->
-<section id="s4">
-  <h2><span class="num">4.</span>Retrouver une épreuve</h2>
-  <p class="chapo">La barre de recherche de l'accueil parcourt toutes les épreuves du fonds, pas seulement les vôtres.</p>
-  <ol class="etapes">
-    <li>Sur l'accueil, tapez un mot du nom de la matière, par exemple « Algorithmique », puis cliquez sur <span class="ui">Rechercher</span>.</li>
-    <li>Le catalogue s'ouvre sur les résultats. Affinez-les avec les filtres de gauche : niveau, filière, option, matière, année académique, type d'évaluation et session. <span class="ui">Masquer les filtres</span> les replie.</li>
-    <li>Cliquez sur une carte pour ouvrir la fiche de l'épreuve, ou sur <span class="ui">Télécharger</span> pour récupérer directement le PDF.</li>
-  </ol>
-  <figure class="w100">
-    <img src="img/14-recherche.png" alt="Catalogue filtré par une recherche">
-    <figcaption>Les résultats d'une recherche, avec les filtres à gauche.</figcaption>
-  </figure>
-  <div class="encadre">
-    <div class="titre">Bon à savoir</div>
-    <p>Depuis le catalogue, les épreuves versées par les autres membres se gèrent exactement comme les vôtres, avec le menu à trois points de leur carte (section 5). Vous pouvez ainsi corriger une erreur repérée dans le travail de toute l'équipe.</p>
-  </div>
-</section>
-
-<!-- 5 -->
-<section id="s5">
-  <h2><span class="num">5.</span>Corriger ou retirer une épreuve</h2>
-  <p class="chapo">Une matière mal choisie, un scan illisible, un dépôt en double : tout se corrige après coup, sans repartir de zéro.</p>
-
-  <h3>Vos versements</h3>
-  <p>La page <span class="ui">Mes épreuves</span> rassemble toutes les épreuves que vous avez versées, avec la même recherche et les mêmes filtres que le catalogue. Le bouton à trois points de chaque carte ouvre un menu de trois actions : <span class="ui">Modifier les données</span>, <span class="ui">Remplacer le fichier</span> et <span class="ui">Supprimer l'épreuve</span>.</p>
-  <figure class="w80">
-    <img src="img/07-mes-epreuves-menu.png" alt="Menu d'une carte ouvert dans Mes épreuves">
-    <figcaption>Le menu d'une épreuve, ouvert depuis sa carte.</figcaption>
-  </figure>
-
-  <h3>La fiche d'une épreuve</h3>
-  <p>Un clic sur une carte ouvre la fiche de l'épreuve : un aperçu du PDF, ses détails, et trois boutons pour la diffuser : <span class="ui">Télécharger l'épreuve</span> enregistre le PDF sur votre appareil, <span class="ui">Partager sur WhatsApp</span> prépare un message contenant le lien de l'épreuve, et <span class="ui">Copier le lien</span> vous permet de le coller dans toute autre messagerie. Le bloc <span class="ui">Gestion</span> reprend les trois actions du menu.</p>
-  <figure class="w80">
-    <img src="img/08-fiche.png" alt="Fiche d'une épreuve">
-    <figcaption>La fiche d'une épreuve, avec son aperçu et le bloc Gestion.</figcaption>
-  </figure>
-
-  <h3>Modifier les données</h3>
-  <div class="cote">
-    <div>
-      <p>Pour corriger la matière, l'année, le type ou la session. Le fichier PDF, lui, n'est pas touché.</p>
-      <ol class="etapes">
-        <li>Choisissez <span class="ui">Modifier les données</span>.</li>
-        <li>Corrigez ce qui doit l'être. L'année se règle dans la carte du fichier, en haut de la page. Pour changer de matière, cliquez d'abord sur <span class="ui">Changer de matière</span>.</li>
-        <li>Cliquez sur <span class="ui">Enregistrer les modifications</span>, en bas de la page. Le titre de l'épreuve se met à jour tout seul.</li>
+      <h3 style="margin-top: 10mm">Sommaire</h3>
+      <ol class="toc">
+        <li>
+          <span class="n">1</span><span class="t">Se connecter</span
+          ><span class="d">et se déconnecter</span
+          ><span class="p" data-toc="s1"></span>
+        </li>
+        <li>
+          <span class="n">2</span><span class="t">Découvrir votre espace</span
+          ><span class="d">l'accueil, le menu, le téléphone</span
+          ><span class="p" data-toc="s2"></span>
+        </li>
+        <li>
+          <span class="n">3</span><span class="t">Verser une épreuve</span
+          ><span class="d">un ou plusieurs fichiers</span
+          ><span class="p" data-toc="s3"></span>
+        </li>
+        <li>
+          <span class="n">4</span><span class="t">Retrouver une épreuve</span
+          ><span class="d">recherche et filtres</span
+          ><span class="p" data-toc="s4"></span>
+        </li>
+        <li>
+          <span class="n">5</span
+          ><span class="t">Corriger ou retirer une épreuve</span
+          ><span class="d">modifier, remplacer, supprimer</span
+          ><span class="p" data-toc="s5"></span>
+        </li>
+        <li>
+          <span class="n">6</span
+          ><span class="t">Combler les épreuves manquantes</span
+          ><span class="d">votre liste de collecte</span
+          ><span class="p" data-toc="s6"></span>
+        </li>
+        <li>
+          <span class="n">7</span
+          ><span class="t">Tenir à jour le numéro WhatsApp</span
+          ><span class="d">le contact du site public</span
+          ><span class="p" data-toc="s7"></span>
+        </li>
+        <li>
+          <span class="n">8</span
+          ><span class="t">Passation entre deux bureaux</span
+          ><span class="d">quand l'équipe change</span
+          ><span class="p" data-toc="s8"></span>
+        </li>
+        <li>
+          <span class="n">9</span><span class="t">En cas de difficulté</span
+          ><span class="d">les situations courantes et leur solution</span
+          ><span class="p" data-toc="s9"></span>
+        </li>
       </ol>
-    </div>
-    <figure>
-      <img src="img/09-modifier.png" alt="Page Modifier une épreuve">
-      <figcaption>La page de modification, préremplie avec les données actuelles.</figcaption>
-    </figure>
-  </div>
+    </section>
 
-  <h3>Remplacer le fichier</h3>
-  <div class="cote">
-    <div>
-      <p>Pour mettre en ligne un scan de meilleure qualité ou une version complète. Les données de l'épreuve sont conservées.</p>
+    <!-- 1 -->
+    <section id="s1">
+      <h2><span class="num">1.</span>Se connecter</h2>
+      <p class="chapo">
+        L'espace BDE est réservé aux membres du bureau. Il s'ouvre avec les
+        identifiants que l'administrateur vous a remis.
+      </p>
       <ol class="etapes">
-        <li>Choisissez <span class="ui">Remplacer le fichier</span>.</li>
-        <li>Déposez le nouveau PDF : un seul fichier, 900 Ko au plus.</li>
-        <li>Cliquez sur <span class="ui">Remplacer le fichier</span>, puis confirmez avec <span class="ui">Remplacer</span>. L'ancien fichier est remplacé définitivement.</li>
+        <li>
+          Ouvrez la page de connexion dans votre navigateur :
+          <span class="ui">esgis-alexandria.vercel.app/login</span>. Ajoutez-la
+          à vos favoris, elle vous servira à chaque fois.
+        </li>
+        <li>
+          Saisissez votre adresse dans le champ
+          <span class="ui">Adresse email</span>.
+        </li>
+        <li>
+          Saisissez votre mot de passe. L'icône en forme d'œil, à droite du
+          champ, affiche ce que vous tapez : pratique pour repérer une faute de
+          frappe.
+        </li>
+        <li>
+          Cliquez sur <span class="ui">Se connecter</span>. Vous arrivez sur
+          l'accueil de votre espace.
+        </li>
       </ol>
-    </div>
-    <figure>
-      <img src="img/10-remplacer.png" alt="Page Remplacer le fichier">
-      <figcaption>Le fichier actuel en haut, le nouveau en dessous.</figcaption>
-    </figure>
-  </div>
+      <figure class="w100">
+        <img src="img/01-connexion.png" alt="Écran de connexion" />
+        <figcaption>
+          L'écran de connexion, commun à l'administration et au BDE.
+        </figcaption>
+      </figure>
+      <div class="encadre">
+        <div class="titre">Si la connexion échoue</div>
+        <ul>
+          <li>
+            <strong>« Email ou mot de passe incorrect »</strong> : vérifiez
+            l'adresse et le mot de passe, majuscules comprises, puis réessayez.
+          </li>
+          <li>
+            <strong>« Ce compte est désactivé »</strong> : votre accès a été
+            fermé, par exemple après une passation. Seul l'administrateur peut
+            le rouvrir.
+          </li>
+          <li>
+            <strong>Mot de passe oublié</strong> : il n'existe pas de
+            réinitialisation automatique. Contactez l'administrateur, qui vous
+            en attribuera un nouveau.
+          </li>
+        </ul>
+      </div>
+      <h3>Se déconnecter</h3>
+      <p>
+        Cliquez sur <span class="ui">Se déconnecter</span>, tout en bas du menu
+        de gauche. Pensez-y systématiquement sur un ordinateur partagé, à la
+        bibliothèque ou en salle informatique.
+      </p>
+    </section>
 
-  <h3>Supprimer une épreuve</h3>
-  <div class="cote">
-    <ol class="etapes">
-      <li>Choisissez <span class="ui">Supprimer l'épreuve</span>.</li>
-      <li>Une fenêtre rappelle le titre de l'épreuve et demande confirmation. Cliquez sur <span class="ui">Supprimer</span> pour confirmer, ou sur <span class="ui">Annuler</span> pour renoncer.</li>
-    </ol>
-    <figure>
-      <img src="img/11-supprimer.png" alt="Fenêtre de confirmation de suppression">
-      <figcaption>La confirmation demandée avant toute suppression.</figcaption>
-    </figure>
-  </div>
-  <div class="encadre alerte">
-    <div class="titre">Attention</div>
-    <p>La suppression est définitive : l'épreuve et son fichier disparaissent du site, sans corbeille ni retour possible. En cas de doute, préférez <span class="ui">Modifier les données</span> ou <span class="ui">Remplacer le fichier</span>.</p>
-  </div>
-</section>
+    <!-- 2 -->
+    <section id="s2">
+      <h2><span class="num">2.</span>Découvrir votre espace</h2>
+      <p class="chapo">
+        Après la connexion, vous arrivez sur l'accueil. Le menu de gauche reste
+        affiché sur toutes les pages : il vous mène partout en un clic.
+      </p>
+      <figure class="w100">
+        <img
+          src="img/02-accueil.png"
+          alt="Accueil de l'espace BDE, éléments numérotés"
+        />
+        <figcaption>
+          L'accueil de l'espace BDE. Les numéros renvoient à la légende
+          ci-dessous.
+        </figcaption>
+      </figure>
+      <div class="legende">
+        <div>
+          <span class="pastille">1</span
+          ><span><strong>Accueil</strong> : revient à cette page.</span>
+        </div>
+        <div>
+          <span class="pastille">6</span
+          ><span><strong>Se déconnecter</strong> : ferme votre session.</span>
+        </div>
+        <div>
+          <span class="pastille">2</span
+          ><span
+            ><strong>Verser</strong> : dépose une ou plusieurs épreuves (section
+            3).</span
+          >
+        </div>
+        <div>
+          <span class="pastille">7</span
+          ><span
+            ><strong>Verser une épreuve</strong> : le même formulaire, en
+            raccourci.</span
+          >
+        </div>
+        <div>
+          <span class="pastille">3</span
+          ><span
+            ><strong>Mes épreuves</strong> : tout ce que vous avez versé
+            (section 5).</span
+          >
+        </div>
+        <div>
+          <span class="pastille">8</span
+          ><span
+            ><strong>Matières sans épreuve archivée</strong> : le nombre de
+            lacunes du fonds. Ce lien disparaît quand tout est couvert.</span
+          >
+        </div>
+        <div>
+          <span class="pastille">4</span
+          ><span
+            ><strong>Épreuves manquantes</strong> : les matières à collecter en
+            priorité (section 6).</span
+          >
+        </div>
+        <div>
+          <span class="pastille">9</span
+          ><span
+            ><strong>Recherche</strong> : retrouve n'importe quelle épreuve du
+            fonds (section 4).</span
+          >
+        </div>
+        <div>
+          <span class="pastille">5</span
+          ><span
+            ><strong>Réglages</strong> : le numéro WhatsApp du site public
+            (section 7).</span
+          >
+        </div>
+        <div>
+          <span class="pastille">10</span
+          ><span
+            ><strong>Mes derniers versements</strong> : vos dépôts les plus
+            récents. <span class="ui">Voir tous mes versements</span> ouvre la
+            liste complète.</span
+          >
+        </div>
+      </div>
+      <p>
+        Plus bas sur la même page,
+        <strong>Dernières épreuves de l'équipe</strong> présente ce que les
+        autres membres du BDE ont déposé récemment.
+      </p>
 
-<!-- 6 -->
-<section id="s6">
-  <h2><span class="num">6.</span>Combler les épreuves manquantes</h2>
-  <p class="chapo">La page <span class="ui">Épreuves manquantes</span> montre, filière par filière et niveau par niveau, combien d'épreuves sont archivées pour chaque matière. C'est votre liste de collecte.</p>
-  <div class="cote">
-    <ul class="points">
-      <li>Les matières <strong>en bleu</strong>, marquées <span class="ui">Aucune épreuve</span>, n'ont encore rien : ce sont les priorités.</li>
-      <li>À droite du nom de chaque filière, un compteur indique le nombre de matières sans épreuve, ou <span class="ui">Tout est couvert</span> quand il n'en reste aucune.</li>
-      <li>Pour une matière déjà couverte, le chiffre indique son nombre d'épreuves : cliquez dessus pour les voir dans le catalogue.</li>
-      <li>Cliquez sur le nom d'une filière pour l'afficher seule.</li>
-    </ul>
-    <figure>
-      <img src="img/12-manquantes.png" alt="Liste des matières de la filière Gestion, niveau L1">
-      <figcaption>Gestion, niveau L1 : quatre matières attendent encore une épreuve.</figcaption>
-    </figure>
-  </div>
-  <h3>Verser directement depuis une lacune</h3>
-  <ol class="etapes">
-    <li>Cliquez sur une matière marquée <span class="ui">Aucune épreuve</span>.</li>
-    <li>Le formulaire de versement s'ouvre avec la matière, la filière et le niveau déjà remplis.</li>
-    <li>Ajoutez le fichier et son année, choisissez le type et la session, puis versez comme d'habitude (section 3). La matière quitte ensuite la liste des lacunes.</li>
-  </ol>
-  <figure class="w60">
-    <img src="img/13-manquante-prerempli.png" alt="Formulaire de versement prérempli">
-    <figcaption>Ouvert depuis une lacune, le formulaire est déjà prérempli.</figcaption>
-  </figure>
-</section>
+      <h3>Sur téléphone</h3>
+      <p>
+        Alexandria fonctionne aussi sur smartphone. Le menu y est replié pour
+        laisser la place au contenu : touchez le bouton rouge à trois traits, en
+        haut à droite, pour l'ouvrir, puis la croix pour le refermer.
+      </p>
+      <figure>
+        <div class="duo">
+          <img
+            src="img/16-mobile.png"
+            alt="Accueil sur téléphone, menu fermé"
+          />
+          <img
+            src="img/16-mobile-menu.png"
+            alt="Accueil sur téléphone, menu ouvert"
+          />
+        </div>
+        <figcaption>
+          L'accueil sur téléphone, menu fermé puis ouvert.
+        </figcaption>
+      </figure>
+    </section>
 
-<!-- 7 -->
-<section id="s7">
-  <h2><span class="num">7.</span>Tenir à jour le numéro WhatsApp</h2>
-  <p class="chapo">Sur le site public, le bouton « Nous contacter » du pied de page et la FAQ de l'accueil ouvrent une conversation WhatsApp avec le BDE. C'est par là que les étudiants vous envoient une épreuve ou vous signalent une erreur : ce numéro doit toujours être le bon.</p>
-  <div class="cote">
-    <ol class="etapes">
-      <li>Cliquez sur <span class="ui">Réglages</span> dans le menu.</li>
-      <li>Saisissez le numéro au format international, indicatif compris : +229 pour le Bénin, par exemple <span class="ui">+229 01 97 00 00 00</span>.</li>
-      <li>Cliquez sur <span class="ui">Enregistrer le numéro</span>. Le message « Numéro enregistré » confirme qu'il est déjà en ligne.</li>
-      <li>Cliquez sur <span class="ui">Tester le lien</span> pour vérifier que WhatsApp s'ouvre bien sur la bonne conversation.</li>
-    </ol>
-    <figure>
-      <img src="img/15-reglages.png" alt="Réglages : numéro WhatsApp enregistré">
-      <figcaption>Le numéro enregistré, avec le lien de test.</figcaption>
-    </figure>
-  </div>
-  <div class="encadre alerte">
-    <div class="titre">Attention</div>
-    <p>Pour retirer le numéro, videz le champ, cliquez sur <span class="ui">Enregistrer le numéro</span>, puis confirmez avec <span class="ui">Retirer le numéro</span>. Sans numéro, le bouton du site ouvre WhatsApp sans destinataire : les étudiants ne peuvent plus vous joindre. Vérifiez ce réglage à chaque passation.</p>
-  </div>
-</section>
+    <!-- 3 -->
+    <section id="s3">
+      <h2><span class="num">3.</span>Verser une épreuve</h2>
+      <p class="chapo">
+        Un même versement accepte jusqu'à quatre fichiers, à condition qu'ils
+        portent sur la même matière, le même type et la même session : c'est le
+        cas typique de plusieurs années d'un même examen. Pour des matières
+        différentes, faites un versement par matière.
+      </p>
+      <div class="encadre">
+        <div class="titre">Avant de commencer, vérifiez votre fichier</div>
+        <ul>
+          <li>
+            Il est au format <strong>PDF</strong>. Une photo prise au téléphone
+            doit d'abord être convertie en PDF, par exemple avec une application
+            de numérisation.
+          </li>
+          <li>
+            Il pèse <strong>900 Ko au plus</strong>. Au-delà, compressez-le avec
+            un outil de compression PDF en ligne.
+          </li>
+          <li>
+            Il est <strong>lisible et complet</strong> : toutes les pages, dans
+            le bon sens.
+          </li>
+        </ul>
+      </div>
 
-<!-- 8 -->
-<section id="s8">
-  <h2><span class="num">8.</span>Passation entre deux bureaux</h2>
-  <p class="chapo">Quand l'équipe du BDE change, les comptes changent aussi. Leur création et leur désactivation reviennent à l'administrateur, mais chaque membre doit connaître le déroulé.</p>
-  <ol class="etapes">
-    <li>Le bureau sortant prévient l'administrateur du changement, par un contact direct, en dehors d'Alexandria, et lui indique les noms et adresses e-mail des nouveaux membres.</li>
-    <li>L'administrateur crée les comptes des nouveaux membres et désactive ceux des membres sortants. Un compte désactivé ne peut plus se connecter, mais les épreuves qu'il a versées restent en ligne.</li>
-    <li>Chaque nouveau membre se connecte avec les identifiants reçus (section 1).</li>
-    <li>Le nouveau bureau vérifie le numéro WhatsApp dans <span class="ui">Réglages</span> et le remplace si le contact change (section 7).</li>
-    <li>Il consulte <span class="ui">Épreuves manquantes</span> pour reprendre la collecte là où elle s'est arrêtée (section 6).</li>
-  </ol>
-  <div class="encadre">
-    <div class="titre">Bon à savoir</div>
-    <p><span class="ui">Mes épreuves</span> ne montre que vos propres versements : la page d'un nouveau membre est donc vide au départ. Les épreuves versées par vos prédécesseurs restent accessibles, et modifiables, depuis la recherche (section 4).</p>
-  </div>
-</section>
+      <h3>Étape A : ajouter les fichiers</h3>
+      <div class="cote">
+        <ol class="etapes">
+          <li>Cliquez sur <span class="ui">Verser</span> dans le menu.</li>
+          <li>
+            Faites glisser vos fichiers dans le cadre en pointillés, ou cliquez
+            sur <span class="ui">Importez vos fichiers</span> pour les choisir
+            sur votre appareil.
+          </li>
+          <li>
+            Choisissez l'année académique de chaque fichier. Si tous sont de la
+            même année, choisissez-la une seule fois en haut, puis cliquez sur
+            <span class="ui">Appliquer à tous</span>. Pour une ancienne épreuve
+            dont l'année est inconnue, cochez
+            <span class="ui">Année inconnue</span>.
+          </li>
+          <li>
+            Un fichier ajouté par erreur se retire avec la croix, à droite de sa
+            carte.
+          </li>
+        </ol>
+        <figure>
+          <img
+            src="img/03-verser-fichiers.png"
+            alt="Deux fichiers ajoutés avec leur année académique"
+          />
+          <figcaption>
+            Deux fichiers ajoutés, chacun avec son année académique.
+          </figcaption>
+        </figure>
+      </div>
 
-<!-- 9 -->
-<section id="s9">
-  <h2><span class="num">9.</span>En cas de difficulté</h2>
-  <p class="chapo">Les situations les plus courantes et la marche à suivre pour chacune.</p>
-  <table>
-    <thead><tr><th>Situation</th><th>Que faire</th></tr></thead>
-    <tbody>
-      <tr><td>J'ai oublié mon mot de passe.</td><td>Contactez l'administrateur : il n'existe pas de réinitialisation automatique.</td></tr>
-      <tr><td>La connexion affiche « Ce compte est désactivé ».</td><td>Demandez à l'administrateur de réactiver votre compte.</td></tr>
-      <tr><td>Mon fichier est refusé : ce n'est pas un PDF valide.</td><td>Enregistrez ou numérisez le document au format PDF, puis versez-le de nouveau.</td></tr>
-      <tr><td>Mon fichier dépasse 900 Ko.</td><td>Compressez-le avec un outil de compression PDF en ligne, puis versez-le de nouveau.</td></tr>
-      <tr><td>La matière n'existe pas dans la liste.</td><td>Cliquez sur « Demandez son ajout à l'administrateur », sous le champ Matière.</td></tr>
-      <tr><td>Le message « Impossible de joindre le serveur » s'affiche.</td><td>Vérifiez votre connexion Internet, consultez <span class="ui">Mes épreuves</span> pour voir ce qui a déjà été publié, puis relancez le reste.</td></tr>
-      <tr><td>Le fichier a déjà été déposé.</td><td>Rien à faire : l'épreuve existe déjà. Le message indique laquelle.</td></tr>
-      <tr><td>Une épreuve publiée comporte une erreur.</td><td>Corrigez ses données ou remplacez son fichier (section 5).</td></tr>
-      <tr><td>Une même épreuve apparaît en double.</td><td>Ouvrez les deux fiches pour comparer, puis supprimez la moins bonne (section 5).</td></tr>
-      <tr><td>Un étudiant n'arrive pas à joindre le BDE.</td><td>Vérifiez le numéro dans <span class="ui">Réglages</span> et cliquez sur <span class="ui">Tester le lien</span> (section 7).</td></tr>
-    </tbody>
-  </table>
-  <p class="fin">Pour toute autre question, contactez l'administrateur d'Alexandria.</p>
-</section>
+      <div class="bloc">
+        <h3>Étape B : décrire l'épreuve</h3>
+        <ol class="etapes" style="--depart: 4">
+          <li>
+            Dans <span class="ui">Matière</span>, tapez les premières lettres de
+            son nom, puis choisissez-la dans la liste qui s'affiche. La filière
+            et le niveau se remplissent tout seuls.
+          </li>
+        </ol>
+        <figure class="w80">
+          <img src="img/04-verser-matiere.png" alt="Recherche de la matière" />
+          <figcaption>
+            La recherche de la matière : quelques lettres suffisent.
+          </figcaption>
+        </figure>
+      </div>
+      <div class="cote">
+        <ol class="etapes" style="--depart: 5">
+          <li>
+            Choisissez le type d'épreuve : <span class="ui">Terminal</span> pour
+            un contrôle terminal, <span class="ui">Continu</span> pour un
+            contrôle continu.
+          </li>
+          <li>
+            Pour un contrôle terminal, choisissez la session :
+            <span class="ui">Normale</span> ou
+            <span class="ui">Rattrapage</span>. Un contrôle continu n'a pas de
+            session : la question disparaît d'elle-même.
+          </li>
+          <li>
+            Cliquez sur <span class="ui">Verser les épreuves</span> (ou
+            <span class="ui">Verser l'épreuve</span> s'il n'y a qu'un fichier).
+          </li>
+        </ol>
+        <figure>
+          <img
+            src="img/05-verser-formulaire.png"
+            alt="Formulaire rempli, prêt à être envoyé"
+          />
+          <figcaption>Le formulaire rempli, prêt à être envoyé.</figcaption>
+        </figure>
+      </div>
+      <div class="encadre">
+        <div class="titre">Bon à savoir</div>
+        <ul>
+          <li>
+            Vous n'avez aucun titre à écrire : Alexandria le compose à partir de
+            la matière, du type et de la session, par exemple « Algorithmique de
+            base : Contrôle terminal, session normale ».
+          </li>
+          <li>
+            La matière n'apparaît pas dans la liste ? Cliquez sur
+            <span class="ui">Demandez son ajout à l'administrateur</span>, sous
+            le champ : seul l'administrateur peut créer une matière.
+          </li>
+          <li>
+            Le bouton <span class="ui">Annuler</span> vous demande confirmation
+            si vous avez déjà saisi quelque chose : les informations et les
+            fichiers choisis seraient perdus.
+          </li>
+        </ul>
+      </div>
 
-</body>
+      <div class="bloc">
+        <h3>Étape C : vérifier le résultat</h3>
+        <p>
+          Un écran récapitule le versement, fichier par fichier. Chaque fichier
+          publié apparaît en vert, avec un lien
+          <span class="ui">Voir l'épreuve</span> pour contrôler le rendu. Vous
+          pouvez ensuite enchaîner avec
+          <span class="ui">Verser d'autres épreuves</span>.
+        </p>
+        <figure class="w60">
+          <img
+            src="img/06-verser-resultat.png"
+            alt="Écran de confirmation : épreuves publiées"
+          />
+          <figcaption>
+            Le versement est terminé : les deux épreuves sont en ligne.
+          </figcaption>
+        </figure>
+      </div>
+      <div class="encadre alerte">
+        <div class="titre">Si tout ne s'est pas bien passé</div>
+        <ul>
+          <li>
+            <strong>Fichier déjà déposé</strong> : le même fichier existe déjà
+            dans Alexandria. Il est refusé et le message indique l'épreuve
+            existante. Il n'y a rien d'autre à faire.
+          </li>
+          <li>
+            <strong>Avertissement en orange</strong> : une autre épreuve a déjà
+            la même matière, la même année, la même session et le même type. La
+            vôtre est tout de même publiée : ouvrez les deux pour vérifier qu'il
+            ne s'agit pas d'un doublon, et supprimez-en une si besoin (section
+            5).
+          </li>
+          <li>
+            <strong>Publication partielle</strong> : certains fichiers sont en
+            ligne, d'autres non. Le motif s'affiche sous chaque fichier en rouge
+            : corrigez-le, puis versez de nouveau ces fichiers seulement.
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="s4">
+      <h2><span class="num">4.</span>Retrouver une épreuve</h2>
+      <p class="chapo">
+        La barre de recherche de l'accueil parcourt toutes les épreuves du
+        fonds, pas seulement les vôtres.
+      </p>
+      <ol class="etapes">
+        <li>
+          Sur l'accueil, tapez un mot du nom de la matière, par exemple «
+          Algorithmique », puis cliquez sur <span class="ui">Rechercher</span>.
+        </li>
+        <li>
+          Le catalogue s'ouvre sur les résultats. Affinez-les avec les filtres
+          de gauche : niveau, filière, option, matière, année académique, type
+          d'évaluation et session.
+          <span class="ui">Masquer les filtres</span> les replie.
+        </li>
+        <li>
+          Cliquez sur une carte pour ouvrir la fiche de l'épreuve, ou sur
+          <span class="ui">Télécharger</span> pour récupérer directement le PDF.
+        </li>
+      </ol>
+      <figure class="w100">
+        <img
+          src="img/14-recherche.png"
+          alt="Catalogue filtré par une recherche"
+        />
+        <figcaption>
+          Les résultats d'une recherche, avec les filtres à gauche.
+        </figcaption>
+      </figure>
+      <div class="encadre">
+        <div class="titre">Bon à savoir</div>
+        <p>
+          Depuis le catalogue, les épreuves versées par les autres membres se
+          gèrent exactement comme les vôtres, avec le menu à trois points de
+          leur carte (section 5). Vous pouvez ainsi corriger une erreur repérée
+          dans le travail de toute l'équipe.
+        </p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="s5">
+      <h2><span class="num">5.</span>Corriger ou retirer une épreuve</h2>
+      <p class="chapo">
+        Une matière mal choisie, un scan illisible, un dépôt en double : tout se
+        corrige après coup, sans repartir de zéro.
+      </p>
+
+      <h3>Vos versements</h3>
+      <p>
+        La page <span class="ui">Mes épreuves</span> rassemble toutes les
+        épreuves que vous avez versées, avec la même recherche et les mêmes
+        filtres que le catalogue. Le bouton à trois points de chaque carte ouvre
+        un menu de trois actions : <span class="ui">Modifier les données</span>,
+        <span class="ui">Remplacer le fichier</span> et
+        <span class="ui">Supprimer l'épreuve</span>.
+      </p>
+      <figure class="w80">
+        <img
+          src="img/07-mes-epreuves-menu.png"
+          alt="Menu d'une carte ouvert dans Mes épreuves"
+        />
+        <figcaption>Le menu d'une épreuve, ouvert depuis sa carte.</figcaption>
+      </figure>
+
+      <h3>La fiche d'une épreuve</h3>
+      <p>
+        Un clic sur une carte ouvre la fiche de l'épreuve : un aperçu du PDF,
+        ses détails, et trois boutons pour la diffuser :
+        <span class="ui">Télécharger l'épreuve</span> enregistre le PDF sur
+        votre appareil, <span class="ui">Partager sur WhatsApp</span> prépare un
+        message contenant le lien de l'épreuve, et
+        <span class="ui">Copier le lien</span> vous permet de le coller dans
+        toute autre messagerie. Le bloc <span class="ui">Gestion</span> reprend
+        les trois actions du menu.
+      </p>
+      <figure class="w80">
+        <img src="img/08-fiche.png" alt="Fiche d'une épreuve" />
+        <figcaption>
+          La fiche d'une épreuve, avec son aperçu et le bloc Gestion.
+        </figcaption>
+      </figure>
+
+      <h3>Modifier les données</h3>
+      <div class="cote">
+        <div>
+          <p>
+            Pour corriger la matière, l'année, le type ou la session. Le fichier
+            PDF, lui, n'est pas touché.
+          </p>
+          <ol class="etapes">
+            <li>Choisissez <span class="ui">Modifier les données</span>.</li>
+            <li>
+              Corrigez ce qui doit l'être. L'année se règle dans la carte du
+              fichier, en haut de la page. Pour changer de matière, cliquez
+              d'abord sur <span class="ui">Changer de matière</span>.
+            </li>
+            <li>
+              Cliquez sur <span class="ui">Enregistrer les modifications</span>,
+              en bas de la page. Le titre de l'épreuve se met à jour tout seul.
+            </li>
+          </ol>
+        </div>
+        <figure>
+          <img src="img/09-modifier.png" alt="Page Modifier une épreuve" />
+          <figcaption>
+            La page de modification, préremplie avec les données actuelles.
+          </figcaption>
+        </figure>
+      </div>
+
+      <h3>Remplacer le fichier</h3>
+      <div class="cote">
+        <div>
+          <p>
+            Pour mettre en ligne un scan de meilleure qualité ou une version
+            complète. Les données de l'épreuve sont conservées.
+          </p>
+          <ol class="etapes">
+            <li>Choisissez <span class="ui">Remplacer le fichier</span>.</li>
+            <li>Déposez le nouveau PDF : un seul fichier, 900 Ko au plus.</li>
+            <li>
+              Cliquez sur <span class="ui">Remplacer le fichier</span>, puis
+              confirmez avec <span class="ui">Remplacer</span>. L'ancien fichier
+              est remplacé définitivement.
+            </li>
+          </ol>
+        </div>
+        <figure>
+          <img src="img/10-remplacer.png" alt="Page Remplacer le fichier" />
+          <figcaption>
+            Le fichier actuel en haut, le nouveau en dessous.
+          </figcaption>
+        </figure>
+      </div>
+
+      <h3>Supprimer une épreuve</h3>
+      <div class="cote">
+        <ol class="etapes">
+          <li>Choisissez <span class="ui">Supprimer l'épreuve</span>.</li>
+          <li>
+            Une fenêtre rappelle le titre de l'épreuve et demande confirmation.
+            Cliquez sur <span class="ui">Supprimer</span> pour confirmer, ou sur
+            <span class="ui">Annuler</span> pour renoncer.
+          </li>
+        </ol>
+        <figure>
+          <img
+            src="img/11-supprimer.png"
+            alt="Fenêtre de confirmation de suppression"
+          />
+          <figcaption>
+            La confirmation demandée avant toute suppression.
+          </figcaption>
+        </figure>
+      </div>
+      <div class="encadre alerte">
+        <div class="titre">Attention</div>
+        <p>
+          La suppression est définitive : l'épreuve et son fichier disparaissent
+          du site, sans corbeille ni retour possible. En cas de doute, préférez
+          <span class="ui">Modifier les données</span> ou
+          <span class="ui">Remplacer le fichier</span>.
+        </p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="s6">
+      <h2><span class="num">6.</span>Combler les épreuves manquantes</h2>
+      <p class="chapo">
+        La page <span class="ui">Épreuves manquantes</span> montre, filière par
+        filière et niveau par niveau, combien d'épreuves sont archivées pour
+        chaque matière. C'est votre liste de collecte.
+      </p>
+      <div class="cote">
+        <ul class="points">
+          <li>
+            Les matières <strong>en bleu</strong>, marquées
+            <span class="ui">Aucune épreuve</span>, n'ont encore rien : ce sont
+            les priorités.
+          </li>
+          <li>
+            À droite du nom de chaque filière, un compteur indique le nombre de
+            matières sans épreuve, ou
+            <span class="ui">Tout est couvert</span> quand il n'en reste aucune.
+          </li>
+          <li>
+            Pour une matière déjà couverte, le chiffre indique son nombre
+            d'épreuves : cliquez dessus pour les voir dans le catalogue.
+          </li>
+          <li>Cliquez sur le nom d'une filière pour l'afficher seule.</li>
+        </ul>
+        <figure>
+          <img
+            src="img/12-manquantes.png"
+            alt="Liste des matières de la filière Gestion, niveau L1"
+          />
+          <figcaption>
+            Gestion, niveau L1 : quatre matières attendent encore une épreuve.
+          </figcaption>
+        </figure>
+      </div>
+      <h3>Verser directement depuis une lacune</h3>
+      <ol class="etapes">
+        <li>
+          Cliquez sur une matière marquée
+          <span class="ui">Aucune épreuve</span>.
+        </li>
+        <li>
+          Le formulaire de versement s'ouvre avec la matière, la filière et le
+          niveau déjà remplis.
+        </li>
+        <li>
+          Ajoutez le fichier et son année, choisissez le type et la session,
+          puis versez comme d'habitude (section 3). La matière quitte ensuite la
+          liste des lacunes.
+        </li>
+      </ol>
+      <figure class="w60">
+        <img
+          src="img/13-manquante-prerempli.png"
+          alt="Formulaire de versement prérempli"
+        />
+        <figcaption>
+          Ouvert depuis une lacune, le formulaire est déjà prérempli.
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- 7 -->
+    <section id="s7">
+      <h2><span class="num">7.</span>Tenir à jour le numéro WhatsApp</h2>
+      <p class="chapo">
+        Sur le site public, le bouton « Nous contacter » du pied de page et la
+        FAQ de l'accueil ouvrent une conversation WhatsApp avec le BDE. C'est
+        par là que les étudiants vous envoient une épreuve ou vous signalent une
+        erreur : ce numéro doit toujours être le bon.
+      </p>
+      <div class="cote">
+        <ol class="etapes">
+          <li>Cliquez sur <span class="ui">Réglages</span> dans le menu.</li>
+          <li>
+            Saisissez le numéro au format international, indicatif compris :
+            +229 pour le Bénin, par exemple
+            <span class="ui">+229 01 97 00 00 00</span>.
+          </li>
+          <li>
+            Cliquez sur <span class="ui">Enregistrer le numéro</span>. Le
+            message « Numéro enregistré » confirme qu'il est déjà en ligne.
+          </li>
+          <li>
+            Cliquez sur <span class="ui">Tester le lien</span> pour vérifier que
+            WhatsApp s'ouvre bien sur la bonne conversation.
+          </li>
+        </ol>
+        <figure>
+          <img
+            src="img/15-reglages.png"
+            alt="Réglages : numéro WhatsApp enregistré"
+          />
+          <figcaption>Le numéro enregistré, avec le lien de test.</figcaption>
+        </figure>
+      </div>
+      <div class="encadre alerte">
+        <div class="titre">Attention</div>
+        <p>
+          Pour retirer le numéro, videz le champ, cliquez sur
+          <span class="ui">Enregistrer le numéro</span>, puis confirmez avec
+          <span class="ui">Retirer le numéro</span>. Sans numéro, le bouton du
+          site ouvre WhatsApp sans destinataire : les étudiants ne peuvent plus
+          vous joindre. Vérifiez ce réglage à chaque passation.
+        </p>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="s8">
+      <h2><span class="num">8.</span>Passation entre deux bureaux</h2>
+      <p class="chapo">
+        Quand l'équipe du BDE change, les comptes changent aussi. Leur création
+        et leur désactivation reviennent à l'administrateur, mais chaque membre
+        doit connaître le déroulé.
+      </p>
+      <ol class="etapes">
+        <li>
+          Le bureau sortant prévient l'administrateur du changement, par un
+          contact direct, en dehors d'Alexandria, et lui indique les noms et
+          adresses e-mail des nouveaux membres.
+        </li>
+        <li>
+          L'administrateur crée les comptes des nouveaux membres et désactive
+          ceux des membres sortants. Un compte désactivé ne peut plus se
+          connecter, mais les épreuves qu'il a versées restent en ligne.
+        </li>
+        <li>
+          Chaque nouveau membre se connecte avec les identifiants reçus (section
+          1).
+        </li>
+        <li>
+          Le nouveau bureau vérifie le numéro WhatsApp dans
+          <span class="ui">Réglages</span> et le remplace si le contact change
+          (section 7).
+        </li>
+        <li>
+          Il consulte <span class="ui">Épreuves manquantes</span> pour reprendre
+          la collecte là où elle s'est arrêtée (section 6).
+        </li>
+      </ol>
+      <div class="encadre">
+        <div class="titre">Bon à savoir</div>
+        <p>
+          <span class="ui">Mes épreuves</span> ne montre que vos propres
+          versements : la page d'un nouveau membre est donc vide au départ. Les
+          épreuves versées par vos prédécesseurs restent accessibles, et
+          modifiables, depuis la recherche (section 4).
+        </p>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="s9">
+      <h2><span class="num">9.</span>En cas de difficulté</h2>
+      <p class="chapo">
+        Les situations les plus courantes et la marche à suivre pour chacune.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Situation</th>
+            <th>Que faire</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>J'ai oublié mon mot de passe.</td>
+            <td>
+              Contactez l'administrateur : il n'existe pas de réinitialisation
+              automatique.
+            </td>
+          </tr>
+          <tr>
+            <td>La connexion affiche « Ce compte est désactivé ».</td>
+            <td>Demandez à l'administrateur de réactiver votre compte.</td>
+          </tr>
+          <tr>
+            <td>Mon fichier est refusé : ce n'est pas un PDF valide.</td>
+            <td>
+              Enregistrez ou numérisez le document au format PDF, puis versez-le
+              de nouveau.
+            </td>
+          </tr>
+          <tr>
+            <td>Mon fichier dépasse 900 Ko.</td>
+            <td>
+              Compressez-le avec un outil de compression PDF en ligne, puis
+              versez-le de nouveau.
+            </td>
+          </tr>
+          <tr>
+            <td>La matière n'existe pas dans la liste.</td>
+            <td>
+              Cliquez sur « Demandez son ajout à l'administrateur », sous le
+              champ Matière.
+            </td>
+          </tr>
+          <tr>
+            <td>Le message « Impossible de joindre le serveur » s'affiche.</td>
+            <td>
+              Vérifiez votre connexion Internet, consultez
+              <span class="ui">Mes épreuves</span> pour voir ce qui a déjà été
+              publié, puis relancez le reste.
+            </td>
+          </tr>
+          <tr>
+            <td>Le fichier a déjà été déposé.</td>
+            <td>
+              Rien à faire : l'épreuve existe déjà. Le message indique laquelle.
+            </td>
+          </tr>
+          <tr>
+            <td>Une épreuve publiée comporte une erreur.</td>
+            <td>Corrigez ses données ou remplacez son fichier (section 5).</td>
+          </tr>
+          <tr>
+            <td>Une même épreuve apparaît en double.</td>
+            <td>
+              Ouvrez les deux fiches pour comparer, puis supprimez la moins
+              bonne (section 5).
+            </td>
+          </tr>
+          <tr>
+            <td>Un étudiant n'arrive pas à joindre le BDE.</td>
+            <td>
+              Vérifiez le numéro dans <span class="ui">Réglages</span> et
+              cliquez sur <span class="ui">Tester le lien</span> (section 7).
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="fin">
+        Pour toute autre question, contactez l'administrateur d'Alexandria.
+      </p>
+    </section>
+  </body>
 </html>
