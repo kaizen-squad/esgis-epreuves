@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getCurrentProfileStatus } from "@/features/members/queries";
 import { createClient } from "@/lib/supabase/server";
 import LoginForm from "@/features/auth/ui/LoginForm";
-import Image from "next/image";
 
 export default async function LoginPage() {
   const status = await getCurrentProfileStatus();
@@ -20,24 +19,24 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="relative flex h-dvh flex-col md:h-screen md:flex-row">
-      <div className="relative h-[42dvh] w-full shrink-0 md:h-auto md:flex-1">
-        <Image
-          src="/images/resume_image2.png"
-          alt="Connexion Image"
-          fill
-          priority
-          className="object-cover"
-        />
+    <main className="flex min-h-dvh flex-col md:flex-row">
+      <div className="bg-background-secondary flex shrink-0 items-center justify-center px-6 py-10 md:w-[38%] md:py-0">
+        <div className="max-w-sm">
+          <p className="text-text-primary text-2xl font-extrabold md:text-3xl">
+            Alexandria<span className="text-background-accent">.</span>
+          </p>
+          <p className="text-text-primary/60 mt-3 text-sm font-medium md:text-base">
+            Dépôt et consultation des épreuves de l&apos;ESGIS. Accès réservé à
+            l&apos;administration et au BDE.
+          </p>
+        </div>
       </div>
 
-      <div className="bg-background-primary relative z-10 -mt-6 flex w-full flex-1 flex-col justify-center rounded-t-4xl px-2 pt-8 pb-6 max-md:overflow-y-auto md:mt-0 md:flex-1 md:rounded-none md:px-0 md:pt-0">
-        <div className="mx-auto h-fit w-full md:w-130">
-          <h1 className="section-title text-center lg:text-start">
-            Bienvenue ...
-          </h1>
-          <p className="text-text-default mb-8 text-center font-medium lg:text-start">
-            Entrez vos données pour accéder à votre compte
+      <div className="flex w-full flex-1 items-center justify-center px-6 py-10 md:py-0">
+        <div className="w-full max-w-sm">
+          <h1 className="section-title">Connexion</h1>
+          <p className="text-text-paragraph mb-8">
+            Entrez vos identifiants pour accéder à votre espace.
           </p>
           <LoginForm />
         </div>
