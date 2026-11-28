@@ -566,6 +566,17 @@
   .field-control:focus {
     border-color: var(--color-background-accent);
   }
+  /*
+   * Chrome applique un fond grille force sur un champ autoremplis, qui reste colle apres un
+   * changement de `type` (bascule afficher/masquer le mot de passe) au lieu de suivre le focus :
+   * le forcer a notre propre fond via le delai de transition, technique standard pour ce bug.
+   */
+  .field-control:autofill,
+  .field-control:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-text-default);
+    box-shadow: 0 0 0 1000px var(--color-background-primary) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
 
   /* Boutons du back-office : un primaire, un secondaire, toujours un etat de survol. */
   .btn-primary {
