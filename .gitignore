@@ -46,3 +46,9 @@ yarn-error.log*
 next-env.d.ts
 
 package-lock.json
+
+# guide BDE : artefacts regeneres par les scripts de docs/guide-bde/
+docs/guide-bde/shots/
+docs/guide-bde/samples/
+docs/guide-bde/guide/guide-inline.html
+docs/guide-bde/guide/guide-bde.pdf
