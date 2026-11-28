@@ -355,9 +355,7 @@ export default function MemberForm({ member }: { member?: BdeMemberDetail }) {
               type="button"
               onClick={() => setShowPassword((shown) => !shown)}
               aria-label={
-                showPassword
-                  ? "Masquer le mot de passe"
-                  : "Afficher le mot de passe"
+                showPassword ? "Masquer la saisie" : "Afficher la saisie"
               }
               className="text-text-paragraph rounded-control hover:bg-background-default absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer p-1"
             >
